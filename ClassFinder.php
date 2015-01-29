@@ -1,0 +1,302 @@
+<?php
+require './vendor/autoload.php' ;
+ini_set('xdebug.max_nesting_level', 2000);
+
+/*
+  上下文对象
+  存储全局信息（类信息）
+  要做成单例模式
+*/
+class Context{
+	public $records ;    //上下文中全部类的记录
+	private static $instance ;   //单例
+
+	private function __construct(){
+		$this->records = array() ;
+	}
+
+	/*
+		在Context中设置新的一条记录
+	*/
+	public function setRecord($record){
+		array_push($this->records,$record) ;
+	}
+
+	/*
+		更新上下文的记录
+		$mode  更新的类型，包括更新类属性和类方法
+		$classname  要更新的类名字
+		$updateinfo  要更新的内容
+	*/
+	public function updateRecord($mode,$classname,$updateinfo=array()){
+		$oldrecord = NULL ;
+		foreach ($this->records as $key => $value) {
+			if($value['name'] == $classname){
+				$oldrecord = $value ;
+				break ;
+			}
+		}
+		if(!$oldrecord) die('上下文中没有找到该类') ;
+		switch ($mode) {
+			case 'properties':
+				array_push($oldrecord['class_properties'],$updateinfo) ;
+				break;
+			
+			case 'methods':
+				array($oldrecord['class_methods'],$updateinfo) ;
+				break;
+		}
+	}
+
+	/*
+		获取单例Context的方法
+	*/
+	public static function getInstance(){
+		if(!(self::$instance instanceof self)){
+			self::$instance = new self ;
+		}
+		return self::$instance ;
+	}
+
+	private function __clone(){
+
+	}
+}
+
+/*
+	记录类
+	是Context中的一条记录
+	For_example:
+	'Class_name'=>'Test',
+	'Class_properties'=>array('ip','name'),
+	'Class_methods'=>array(
+						0=>array('name'=>'test','params'=>array('a','b')),
+						1=>array('name'=>'hello','params'=>NULL)
+                     )
+*/
+class Record{
+	public $class_name ;   //类名称
+	public $class_properties;   //类的属性
+	public $class_methods;  //类的方法
+	public $class_implements;  //类实现的接口
+	public $class_extends ;  //类继承的父类
+	public $path ;   //类所在的存储路径
+	public function __construct(){
+		$this->class_name = array() ;
+		$this->class_properties = array();
+		$this->class_methods = array() ;
+		$this->class_implements = array() ;
+		$this->class_extends = '' ;
+		$this->path = '' ;
+	}
+
+}
+
+
+/*
+	文件操作类
+*/
+class FileUtil{
+
+	public function __construct(){
+
+	}
+
+	/*
+		获取文件
+		@param @path 文件夹路径
+		@return 文件夹下的所有文件的数组（递归）
+	*/
+	public function getDir($path){
+		static $ret = array() ;
+		if(!is_dir($path)){
+			array_push($ret, $path) ;
+			return $ret ;
+		}
+		if(($handle = opendir($path)) == false){
+			return $ret ;
+		}
+		while(($file = readdir($handle))!=false){
+			if($file == "." || $file == ".."){
+				continue ;
+			}
+			if(is_dir($path . "/" . $file)){
+				$this->getDir($path ."/".$file) ;
+			}else{
+				//只返回php后缀的文件
+				if(strchr($path ."/" .$file,".php") == ".php"){
+					array_push($ret,$path ."/".$file) ;	
+				}
+				
+			}
+		}	
+		closedir($handle) ;
+		return $ret ;
+	}
+
+}
+
+use PhpParser\Node ;
+class MyVisitor extends PhpParser\NodeVisitorAbstract{
+
+	public $class_path = '' ;   //当前正在扫描的文件名
+
+	public function leaveNode(Node $node){
+		if($node instanceof Node\Stmt\Class_){
+			$record = new Record ;
+			$record->path = $this->class_path ;
+			//设置类的名字
+			echo "Class_name:$node->name<br/>";
+			$record->class_name = $node->name ;
+
+			if($node->extends) $record->class_extends = $node->extends->parts[0];
+			$record->class_implements = $node->implements ;
+
+			//设置类的成员变量
+			echo "Class_properties:" ;
+			$props = array() ;
+			foreach($node->stmts as $key => $value){
+				//找到类属性信息
+				if($value instanceof Node\Stmt\Property){
+					echo $value->props[0]->name ."<br/>";
+					array_push($props,$value->props[0]->name) ;
+				}
+			}
+			$record->class_properties = $props ;
+
+			//设置类的方法
+			echo "Class_methods:<br/>" ;
+			foreach ($node->stmts as $key => $value) {
+				if($value instanceof Node\Stmt\ClassMethod){
+					$method = array('name'=>'','params'=>array());
+					echo "[methods_name]:" .$value->name ."<br/>";
+					$method['name'] = $value->name ;
+					echo "[methods_params]:";
+					for($i=0;$i<count($value->params);$i++){
+						echo $value->params[$i]->name ."\t";
+						array_push($method['params'],$value->params[$i]->name) ;
+					}
+					echo "<br>" ;
+					array_push($record->class_methods,$method);
+				}
+				
+			}
+
+			$context = Context::getInstance() ;
+			$context->setRecord($record) ;
+		}
+	}
+}
+
+
+/*
+	遍历出审计工程中的所有代码
+	并抽取出所有类的信息
+*/
+class ClassFinder{
+	private $parser = NULL ;   //代码解析器
+	private $fileUtil = NULL ;  //文件工具类
+	private $visitor = NULL ;   //访问者
+	private $traverser  = NULL;  //遍历AST对象
+	private $path = '' ;   //工程入口路径
+	
+	/*
+		构造函数
+	*/
+	public function __construct($path){
+		$this->path = $path ;
+		$this->parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+		$this->fileUtil = new FileUtil ;
+		$this->visitor = new MyVisitor ;
+		$this->traverser = new PhpParser\NodeTraverser ;
+		$this->traverser->addVisitor($this->visitor) ;
+	}
+
+	/*
+		获取所有的源文件的路径
+	*/
+	private function getAllSourceFiles(){
+		return $this->fileUtil->getDir($this->path) ;
+	}
+
+	/*
+		获取上下文
+		使用AST进行类定义判断，通过识别相应的节点类型来对类的信息进行收集
+		收集完成之后，将信息设置到Context中（序列化）
+	*/
+	public function getContext(){
+		//判断本地序列化文件中是否存在Context
+		if(($serial_str = file_get_contents("./data/serialdata"))){
+			$records = unserialize($serial_str) ;
+			$context = Context::getInstance() ;
+			$context->setRecord($records) ;
+			return ;
+		}
+
+		$filearr = $this->getAllSourceFiles() ;
+		$len = count($filearr) ;
+		for($i=0;$i<$len;$i++){
+			$this->visitor->class_path = $filearr[$i] ;
+			$code = file_get_contents($this->visitor->class_path);
+			try{
+				$stmts = $this->parser->parse($code) ;	
+			}catch (PhpParser\Error $e) {
+    			echo 'Parse Error: ', $e->getMessage();
+    			continue ;
+			}
+			
+			$this->traverser->traverse($stmts) ;  //遍历AST
+		}
+
+		//对Context进行序列化，加快下次读取速度
+		$this->serializeContext() ;
+
+		//补充类通过继承获得的属性和方法
+		$context = Context::getInstance() ;
+		$this->getExtendsInfo($context) ;
+	}
+
+	public function serializeContext(){
+		$context = Context::getInstance() ;
+		file_put_contents("./data/serialdata",serialize($context->records)) ;
+	}
+
+	/*
+		通过继承关系对类继承的属性和方法进行补充
+		@param $context上下文对象
+	*/
+	public function getExtendsInfo($context){
+		foreach ($context->records as $key => $record) {
+			if($record->class_extends){
+				//发现继承父类的类记录
+				$parent = NULL ;
+				foreach ($context->records as $key => $value) {
+					$extends_info = $record->class_extends ;
+					if($value->class_name == $extends_info){
+						$parent = $value ;
+					}else{
+						continue ;
+					}
+				}
+				if(!$parent) return ;
+				$record->class_properties = array_merge($record->class_properties, $parent->class_properties) ;
+				$record->class_methods = array_merge($record->class_methods,$parent->class_methods) ;
+			}
+		}
+	}
+
+
+}
+
+
+//具体使用方法
+$path = "E:/School_of_software/information_security/PHPVulScanner_project/CMS/chengshiCMS/Cscmsv3.5.6/upload" ;
+//$path = "source.class.php" ;
+//$path = "./test" ;
+$finder = new  ClassFinder($path) ;
+$finder->getContext() ;
+$context = Context::getInstance() ;
+echo "<pre>" ;
+print_r($context->records) ;
+
+?>
