@@ -7,6 +7,7 @@ ini_set('xdebug.max_nesting_level', 2000);
   存储全局信息（类信息）
   要做成单例模式
 */
+
 class Context{
 	public $records ;    //上下文中全部类的记录
 	private static $instance ;   //单例
@@ -49,6 +50,51 @@ class Context{
 	}
 
 	/*
+		获取类中的一个函数的AST节点
+		@param $funcname  给定一个方法的名称
+		@param $path  方法所在的PHP文件路径
+		@return 返回相应的AST上的方法节点
+	*/
+	public function getFunctionBody($funcname,$path){
+		$method = NULL ;
+		$code = '' ;
+		$records = $this->records ;
+		//print_r($records);
+		//寻找相应的method
+		for($i=0;$i<count($records);$i++) {
+			foreach($this->records[$i]->class_methods as $k => $item){
+				if($item['name'] ==  $funcname && $this->records[$i]->path == $path){
+					$method = $item ;
+				}
+			}
+		}
+
+		//设置code
+		$code = file_get_contents($path) ;
+		
+		//找到了相应的方法名称
+		if($method && $code){
+			$startLine = $method['startLine'] ;
+			$endLine = $method['endLine'] ;
+
+			$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+			$visitor = new FunctionBodyVisitor ;
+			$traverser = new PhpParser\NodeTraverser ;
+			$visitor->startLine = $startLine ;
+			$visitor->endLine = $endLine ;
+
+			
+			$stmts = $parser->parse($code) ;
+			$traverser->addVisitor($visitor) ;
+			$traverser->traverse($stmts) ;
+			return $visitor->getFunctionBody() ;
+
+		}else{
+			return NULL ;
+		}
+	}
+
+	/*
 		获取单例Context的方法
 	*/
 	public static function getInstance(){
@@ -61,6 +107,7 @@ class Context{
 	private function __clone(){
 
 	}
+
 }
 
 /*
@@ -70,8 +117,8 @@ class Context{
 	'Class_name'=>'Test',
 	'Class_properties'=>array('ip','name'),
 	'Class_methods'=>array(
-						0=>array('name'=>'test','params'=>array('a','b')),
-						1=>array('name'=>'hello','params'=>NULL)
+						0=>array('name'=>'test','params'=>array('a','b'),'startLine'=>1,'endLine'=>5),
+						1=>array('name'=>'hello','params'=>NULL,'startLine'=>1,'endLine'=>5)
                      )
 */
 class Record{
@@ -82,7 +129,7 @@ class Record{
 	public $class_extends ;  //类继承的父类
 	public $path ;   //类所在的存储路径
 	public function __construct(){
-		$this->class_name = array() ;
+		$this->class_name = '';
 		$this->class_properties = array();
 		$this->class_methods = array() ;
 		$this->class_implements = array() ;
@@ -168,15 +215,28 @@ class MyVisitor extends PhpParser\NodeVisitorAbstract{
 			echo "Class_methods:<br/>" ;
 			foreach ($node->stmts as $key => $value) {
 				if($value instanceof Node\Stmt\ClassMethod){
-					$method = array('name'=>'','params'=>array());
+					//初始化类方法的描述
+					$method = array('name'=>'','params'=>array(),'startLine'=>0,'endLine'=>0);
+					
+					//设置方法名称
 					echo "[methods_name]:" .$value->name ."<br/>";
 					$method['name'] = $value->name ;
+
+					//设置方法的参数
 					echo "[methods_params]:";
 					for($i=0;$i<count($value->params);$i++){
 						echo $value->params[$i]->name ."\t";
 						array_push($method['params'],$value->params[$i]->name) ;
 					}
 					echo "<br>" ;
+
+					//设置方法的起始行号和终止行号
+					echo "[method_Lineinfo]:" ;
+					$method['startLine'] = $value->getAttribute("startLine") ;
+					$method['endLine'] = $value->getAttribute("endLine") ;
+					//echo "startLine:$method['startLine'],endLine:$method['endLine']" ;
+					echo "<br>" ;
+
 					array_push($record->class_methods,$method);
 				}
 				
@@ -186,6 +246,27 @@ class MyVisitor extends PhpParser\NodeVisitorAbstract{
 			$context->setRecord($record) ;
 		}
 	}
+}
+
+
+/*
+	用来获取方法体的遍历
+*/
+class FunctionBodyVisitor extends PhpParser\NodeVisitorAbstract{
+	public $func_body = NULL ;
+	public $startLine ;
+	public $endLine ;
+
+	public function leaveNode(PhpParser\Node $node){
+		if(($node->getAttribute('startLine') == $this->startLine) && ($node->getAttribute('endLine') == $this->endLine)){
+			$this->func_body = $node ;
+		}
+	}
+
+	public function getFunctionBody(){
+		return $this->func_body ;
+	}
+
 }
 
 
@@ -229,7 +310,7 @@ class ClassFinder{
 		if(($serial_str = file_get_contents("./data/serialdata"))){
 			$records = unserialize($serial_str) ;
 			$context = Context::getInstance() ;
-			$context->setRecord($records) ;
+			$context->records = $records ;
 			return ;
 		}
 
@@ -248,16 +329,16 @@ class ClassFinder{
 			$this->traverser->traverse($stmts) ;  //遍历AST
 		}
 
-		//对Context进行序列化，加快下次读取速度
-		$this->serializeContext() ;
-
+		
 		//补充类通过继承获得的属性和方法
 		$context = Context::getInstance() ;
 		$this->getExtendsInfo($context) ;
+
+		//对Context进行序列化，加快下次读取速度
+		$this->serializeContext($context) ;
 	}
 
-	public function serializeContext(){
-		$context = Context::getInstance() ;
+	public function serializeContext($context){
 		file_put_contents("./data/serialdata",serialize($context->records)) ;
 	}
 
@@ -278,7 +359,7 @@ class ClassFinder{
 						continue ;
 					}
 				}
-				if(!$parent) return ;
+				if(!$parent) continue ;
 				$record->class_properties = array_merge($record->class_properties, $parent->class_properties) ;
 				$record->class_methods = array_merge($record->class_methods,$parent->class_methods) ;
 			}
@@ -297,6 +378,10 @@ $finder = new  ClassFinder($path) ;
 $finder->getContext() ;
 $context = Context::getInstance() ;
 echo "<pre>" ;
-print_r($context->records) ;
+//print_r($context->records) ;
+
+
+$node = $context->getFunctionBody("down","E:/School_of_software/information_security/PHPVulScanner_project/CMS/chengshiCMS/Cscmsv3.5.6/upload/app/controllers/admin/packs.php") ;
+print_r($node) ;
 
 ?>

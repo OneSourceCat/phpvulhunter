@@ -46,9 +46,34 @@ ini_set('xdebug.max_nesting_level', 2000);
 // $stmts = $traverser->traverse($stmts) ;
 
 $pvf = array(
-	array('mysql_query',array(1)) ;
+	array('mysql_query',array(1)),
 ) ;
 
+
+use PhpParser\Node ;
+class MyVisitor extends PhpParser\NodeVisitorAbstract{
+	public function beforeTraverse(array $nodes){
+		//print_r($nodes) ;
+	}
+	
+	public function enterNode(PhpParser\Node $node){}
+	
+	public function leaveNode(Node $node){
+		if($node instanceof Node\Stmt\ClassMethod){
+			echo 'startline' . $node->getAttribute('startLine') ."<br/>";
+			echo 'startline' . $node->getAttribute('endLine') ."<br/>";
+			var_dump($node) ;
+			var_dump($node->getType()) ;
+		}
+		
+		var_dump($node->getType()) ;
+		
+		
+	}
+	
+	public function afterTraverse(array $nodes){}
+	
+}
 
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 $traverser = new PhpParser\NodeTraverser ;
@@ -61,20 +86,38 @@ $stmts = $parser->parse($code) ;
 echo "<pre>" ;
 print_r($stmts) ;
 
+$traverser->addVisitor(new MyVisitor) ;
+$traverser->traverse($stmts) ;
 
-use PhpParser\Node ;
-class MyVisitor extends PhpParser\NodeVisitorAbstract{
-	public function beforeTraverse(array $nodes){}
-	
-	public function enterNode(PhpParser\Node $node){}
-	
-	public function leaveNode(PhpParser\Node $node){
-		
-	}
-	
-	public function afterTraverse(array $nodes){}
-	
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ?>

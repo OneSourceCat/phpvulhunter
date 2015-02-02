@@ -1,7 +1,11 @@
 <?php
 
-$name = $_GET['name'] ;
-$sql = "select * from User where name='{$name}'" ;
-mysql_query($sql) ;
+if(3<1 || 3<5 || 4 == 3){
+	
+}elseif(3<5 && 4==6){
+	
+}else{
+	
+}
 
 ?>
