@@ -1,6 +1,7 @@
 <?php
 require './vendor/autoload.php' ;
 ini_set('xdebug.max_nesting_level', 2000);
+echo "<pre>" ;
 // //获得一个解析类
 // $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative);
 // //要解析的代码
@@ -52,6 +53,7 @@ $pvf = array(
 
 use PhpParser\Node ;
 class MyVisitor extends PhpParser\NodeVisitorAbstract{
+	private $res = array();
 	public function beforeTraverse(array $nodes){
 		//print_r($nodes) ;
 	}
@@ -59,16 +61,20 @@ class MyVisitor extends PhpParser\NodeVisitorAbstract{
 	public function enterNode(PhpParser\Node $node){}
 	
 	public function leaveNode(Node $node){
-		if($node instanceof Node\Stmt\ClassMethod){
-			echo 'startline' . $node->getAttribute('startLine') ."<br/>";
-			echo 'startline' . $node->getAttribute('endLine') ."<br/>";
-			var_dump($node) ;
-			var_dump($node->getType()) ;
+		if($node instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr){
+			if(!($node->left instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr) && !($node->right instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
+				print_r($node->left) ;
+				print_r($node->right) ;
+			}else{
+				if(!($node->left instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
+					print_r($node->left) ;
+				}elseif(!($node->right instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
+					print_r($node->right) ;
+				}
+			}
 		}
 		
-		var_dump($node->getType()) ;
-		
-		
+		//var_dump($node->getType()) ;
 	}
 	
 	public function afterTraverse(array $nodes){}
@@ -84,7 +90,7 @@ $code = file_get_contents('./test/simple_demo.php') ;
 
 $stmts = $parser->parse($code) ;
 echo "<pre>" ;
-print_r($stmts) ;
+//print_r($stmts) ;
 
 $traverser->addVisitor(new MyVisitor) ;
 $traverser->traverse($stmts) ;

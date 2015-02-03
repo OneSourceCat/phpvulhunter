@@ -1,11 +1,4 @@
 <?php
 
-if(3<1 || 3<5 || 4 == 3){
-	
-}elseif(3<5 && 4==6){
-	
-}else{
-	
-}
-
+in_array($a,'1') or is_array($a) or die('xx') or is_bool($a) ;
 ?>
