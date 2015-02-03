@@ -1,2 +1,2 @@
 # phpvulhunter
-大三下学期专业实训项目
+A tool that can scan php vulnerabilities automatically using static analysis methods
