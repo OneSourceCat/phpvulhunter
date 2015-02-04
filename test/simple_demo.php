@@ -1,4 +1,8 @@
 <?php
 
-in_array($a,'1') or is_array($a) or die('xx') or is_bool($a) ;
+$a = 2;
+while($a){
+	$b = 4 ;
+}
+echo 3 ;
 ?>

@@ -1,5 +1,4 @@
 <?php
-require "./CFGNode.php" ;
 
 class CFGEdge{
 	private $source ; //边的来源

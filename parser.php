@@ -90,7 +90,7 @@ $code = file_get_contents('./test/simple_demo.php') ;
 
 $stmts = $parser->parse($code) ;
 echo "<pre>" ;
-//print_r($stmts) ;
+print_r($stmts) ;
 
 $traverser->addVisitor(new MyVisitor) ;
 $traverser->traverse($stmts) ;

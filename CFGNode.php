@@ -1,10 +1,15 @@
 <?php 
 
+require_once './CFGEdge.php';
+
 class CFGNode{
+	public $is_entry = false ;
+	public $is_exit = false ;
+	public  $loop_var = NULL;
 	//CFG节点的进入边
 	private $inEdges = array() ;
 	//CFG节点的出边
-	private $outEdges ;
+	private $outEdges = array() ;
 
 	
 	/**

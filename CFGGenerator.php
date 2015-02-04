@@ -2,11 +2,13 @@
 
 require_once './vendor/autoload.php' ;
 ini_set('xdebug.max_nesting_level', 2000);
+require_once './BasicBlock.php';
 
-@define("JUMP_STATEMENT", array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','Expr_BinaryOp_LogicalOr')) ;
-@define("LOOP_STATEMENT",array('Stmt_For','Stmt_While','Stmt_Foreach','Stmt_Do')) ;
-@define("STOP_STATEMENT",array('Stmt_Throw','Stmt_Break','Stmt_Continue')) ;
-@define("RETURN_STATEMENT",array('Stmt_Return')) ;
+
+$JUMP_STATEMENT = array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','Expr_BinaryOp_LogicalOr') ;
+$LOOP_STATEMENT = array('Stmt_For','Stmt_While','Stmt_Foreach','Stmt_Do') ;
+$STOP_STATEMENT = array('Stmt_Throw','Stmt_Break','Stmt_Continue') ;
+$RETURN_STATEMENT = array('Stmt_Return') ;
 
 use PhpParser\Node ;
 
@@ -35,15 +37,18 @@ class CFGGenerator{
 				
 				//处理elseifs,elseifs为索引数组,由cond和stmts构成
 				$elseifs = $node->elseifs ;
-				foreach($elseifs as $if){
-					$if_branch = new Branch($if->cond, $if->stmts) ;
-					array_push($branches,$if_branch) ;
+				if($elseifs){
+					foreach($elseifs as $if){
+						$if_branch = new Branch($if->cond, $if->stmts) ;
+						array_push($branches,$if_branch) ;
+					}	
 				}
 				
 				//处理else分支，由stmts组成，没有cond，这里的cond填为"else"
-				$if_branch = new Branch('else', $node->stmts) ;
-				array_push($branches,$if_branch) ;
-				
+				if($node->else){
+					$if_branch = new Branch('else', $node->else) ;
+					array_push($branches,$if_branch) ;
+				}
 				break ;
 				
 			case 'Stmt_Switch':
@@ -95,35 +100,115 @@ class CFGGenerator{
 		return $branches ;
 	}
 	
+	/**
+	 * 处理循环结构，将循环变量添加到基本块
+	 * @param unknown $node  AST Node
+	 * @param unknown $block  BasicBlock
+	 */
+	public function addLoopVariable($node,$block){
+		switch ($node->getType()){
+			case 'Stmt_For':  //for(i=0;i<3;i++) ===> extract var i
+				$block->loop_var = $node->init[0] ;
+				break ;
+			case 'Stmt_While':  //while(cond) ====> extract cond
+				$block->loop_var = $node->cond ;
+				break ;
+			case 'Stmt_Foreach':  //foreach($nodes as $node) ======> extract $nodes
+				$block->loop_var = $node->expr ;
+				break ;
+			case 'Stmt_Do':   //do{}while(cond); =====> extract cond
+				$block->loop_var = $node->cond ;
+				break ;
+		}
+	}
+	
+	/**
+	 * 给定AST Nodes集合，返回结束的行号
+	 * @param unknown $nodes
+	 */
+	public function getEndLine($nodes){
+		return end($nodes)->getAttribute('endLine') ;
+	}
+	
+	
 	
 	/**
 	 * 由AST节点创建相应的CFG，用于后续分析
 	 * 
-	 * @param unknown $nodes  传入的PHP file的所有nodes
-	 * @param unknown $condition   构建CFGNode时的跳转信息
-	 * @param unknown $pEntryBlock   入口基本块
-	 * @param unknown $pNextBlock   下一个基本块
+	 * @param $nodes  传入的PHP file的所有nodes
+	 * @param $condition   构建CFGNode时的跳转信息
+	 * @param $pEntryBlock   入口基本块
+	 * @param $pNextBlock   下一个基本块
 	 */
-	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
+	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock,$endLine=0){
+		echo "<pre>" ;
+		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
 		$currBlock = new BasicBlock() ;
 		
 		//创建一个CFG节点的边
 		if($pEntryBlock){
-			$block_edge = new CFGEdge($pEntryBlock, $pNextBlock,$condition) ;
+			$block_edge = new CFGEdge($pEntryBlock, $currBlock,$condition) ;
+			$pEntryBlock->addOutEdge($block_edge) ;
+			$currBlock->addInEdge($block_edge) ;
 		}
-		
+
 		//迭代每个AST node
 		foreach($nodes as $node){
-			if(in_array($node->getType(), JUMP_STATEMENT)){
+			if(!is_object($node))continue ;
+			//判断node是否是结束node
+			if($node->getAttribute('endLine') == 9){
+				$currBlock->is_exit = true ;
+			}
+			
+			//如果节点是跳转类型的语句
+			if(in_array($node->getType(), $JUMP_STATEMENT)){
+				//生成基本块的摘要
+				//simulate(currBlock) ;
 				$nextBlock = new BasicBlock() ;
 				//对每个分支，建立相应的基本块
+				$branches = $this->getBranches($node) ;
+				foreach ($branches as $b){
+					$this->CFGBuilder($b->nodes, $b->condition, $currBlock, $nextBlock)	;				
+				}
+				//var_dump($nextBlock) ;
+				$currBlock = $nextBlock ;
 				
+			}elseif(in_array($node->getType(), $LOOP_STATEMENT)){  //如果节点是循环语句
+				$this->addLoopVariable($node, $currBlock) ; //加入循环条件
+				//simulate($currBlock) ;
+				$currBlock->nodes = $node->stmts ;
+				$nextBlock = new BasicBlock() ;
+				$this->CFGBuilder($node->stmts, NULL, $currBlock, $nextBlock) ;
+				$currBlock = $nextBlock ;
+				
+			}elseif(in_array($node->getType(), $STOP_STATEMENT)){
+				$currBlock->is_exit = true ;
+				break ;
+			}elseif(in_array($node->getType(),$RETURN_STATEMENT)){
+				$currBlock->addNode($node) ;
+				//simulate($currBlock) ;
+				return ;
+			}else{
+				$currBlock->addNode($node);
 			}
 		}
+		
+		
+		
+		//simulate(currBlock) ;
+		print_r($currBlock) ;
+		if($pNextBlock && !$currBlock->is_exit){
+			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
+			$currBlock->addOutEdge($block_edge) ;
+			$pNextBlock->addInEdge($block_edge) ;
+		}
+		
+		//print_r($currBlock) ;
 		
 	}
 	
 }
+
 
 
 /**
@@ -132,8 +217,8 @@ class CFGGenerator{
  *
  */
 class Branch{
-	private $condition ;
-	private $nodes = array() ;
+	public $condition ;
+	public $nodes ;
 	
 	/**
 	 * 构造函数
@@ -141,8 +226,13 @@ class Branch{
 	 * @param $nodes 分支中携带的所有nodes
 	 */
 	public function __construct($cond,$nodes){
-		$this->condition = $cond ;
-		$this->nodes = $nodes ;
+		$this->condition = array($cond) ;
+		if(is_array($nodes)){
+			$this->nodes = $nodes ;
+		}else{
+			$this->nodes = array($nodes) ;
+		}
+		
 		
 		//将跳转的条件也加入至nodes中
 		if(is_array($this->condition)){
@@ -154,34 +244,18 @@ class Branch{
 		}
 	}
 	
-	/**
-	 * getter for $condition
-	 */
-	public function getCondition(){
-		return $this->condition	 ;
-	}	
-	
-	/**
-	 * getter for $nodes
-	 * @return multitype:
-	 */
-	public function getNodes(){
-		return $this->nodes ;	
-	}
-	
-	
 }
 
-
+/**
+ * 获取PHP File中所有的AST节点的访问者
+ * @author Administrator
+ *
+ */
 class MyVisitor extends PhpParser\NodeVisitorAbstract{
 	private $nodes = array();
 	
-	public function leaveNode(Node $node) {
-		$this->addNode($node) ;
-	}
-
-	public function addNode($node){
-		array_push($this->nodes, $node) ;
+	public function beforeTraverse(array $nodes){
+		$this->nodes = $nodes ;
 	}
 	
 	public function getNodes(){
@@ -229,19 +303,25 @@ $stmts = $parser->parse($code) ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 $nodes = $visitor->getNodes() ;
-$branches = NULL ;
-foreach ($nodes as $node){
-	if($node instanceof PhpParser\Node\Stmt\If_ ){
-		$branches = $cfg->getBranches($node) ;
-	}elseif($node instanceof PhpParser\Node\Stmt\Switch_ ){
-		$branches = $cfg->getBranches($node) ;
-	}else{
-		$branches = $cfg->getBranches($node) ;
-	}
-}
-echo "<pre>" ;
-print_r($branches) ;
+// $branches = NULL ;
+// foreach ($nodes as $node){
+// 	if($node instanceof PhpParser\Node\Stmt\If_ ){
+// 		$branches = $cfg->getBranches($node) ;
+// 	}elseif($node instanceof PhpParser\Node\Stmt\Switch_ ){
+// 		$branches = $cfg->getBranches($node) ;
+// 	}else{
+// 		$branches = $cfg->getBranches($node) ;
+// 	}
+// }
+// echo "<pre>" ;
+// print_r($branches) ;
 
+$pEntryBlock = new BasicBlock() ;
+$pEntryBlock->is_entry = true ;
+$endLine = $cfg->getEndLine($nodes);
+$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
+echo "<pre>" ;
+//print_r($pEntryBlock) ;
 ?>
 
 

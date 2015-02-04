@@ -1,5 +1,9 @@
 <?php
 
-is_array() ;
+function test($a=3){
+	echo $a ;
+}
+
+test(5) ;
 
 ?>
