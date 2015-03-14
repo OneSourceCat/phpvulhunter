@@ -53,31 +53,13 @@ $pvf = array(
 
 use PhpParser\Node ;
 class MyVisitor extends PhpParser\NodeVisitorAbstract{
-	private $res = array();
-	public function beforeTraverse(array $nodes){
-		//print_r($nodes) ;
-	}
-	
-	public function enterNode(PhpParser\Node $node){}
 	
 	public function leaveNode(Node $node){
-		if($node instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr){
-			if(!($node->left instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr) && !($node->right instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
-				print_r($node->left) ;
-				print_r($node->right) ;
-			}else{
-				if(!($node->left instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
-					print_r($node->left) ;
-				}elseif(!($node->right instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
-					print_r($node->right) ;
-				}
-			}
-		}
-		
-		//var_dump($node->getType()) ;
+		echo $node->getType() ;
+		echo "<br/>" ; 
+		print_r($node) ;
 	}
 	
-	public function afterTraverse(array $nodes){}
 	
 }
 
@@ -90,7 +72,7 @@ $code = file_get_contents('./test/simple_demo.php') ;
 
 $stmts = $parser->parse($code) ;
 echo "<pre>" ;
-print_r($stmts) ;
+//print_r($stmts) ;
 
 $traverser->addVisitor(new MyVisitor) ;
 $traverser->traverse($stmts) ;

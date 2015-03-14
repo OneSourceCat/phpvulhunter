@@ -27,7 +27,9 @@ class BasicBlock extends CFGNode{
 		}
 	}
 	
-	
+	/**
+	 * 获取基本块中所有的AST节点
+	 */
 	public function getContainedNodes(){
 		return $this->containedNodes ;
 	}

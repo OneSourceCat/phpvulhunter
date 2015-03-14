@@ -119,7 +119,9 @@ class Context{
 	'Class_methods'=>array(
 						0=>array('name'=>'test','params'=>array('a','b'),'startLine'=>1,'endLine'=>5),
 						1=>array('name'=>'hello','params'=>NULL,'startLine'=>1,'endLine'=>5)
-                     )
+                     ),
+    'path'=>"c:/1.php"
+                    
 */
 class Record{
 	public $class_name ;   //类名称
@@ -307,7 +309,7 @@ class ClassFinder{
 	*/
 	public function getContext(){
 		//判断本地序列化文件中是否存在Context
-		if(($serial_str = file_get_contents("./data/serialdata"))){
+		if(($serial_str = file_get_contents("./data/serialdata"))!=''){
 			$records = unserialize($serial_str) ;
 			$context = Context::getInstance() ;
 			$context->records = $records ;

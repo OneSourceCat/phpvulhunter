@@ -1,22 +1,26 @@
 <?php
 
 require_once './vendor/autoload.php' ;
-ini_set('xdebug.max_nesting_level', 2000);
 require_once './BasicBlock.php';
+ini_set('xdebug.max_nesting_level', 2000);
 
 
-$JUMP_STATEMENT = array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','Expr_BinaryOp_LogicalOr') ;
-$LOOP_STATEMENT = array('Stmt_For','Stmt_While','Stmt_Foreach','Stmt_Do') ;
-$STOP_STATEMENT = array('Stmt_Throw','Stmt_Break','Stmt_Continue') ;
+//定义PHP语句类别
 $RETURN_STATEMENT = array('Stmt_Return') ;
+$STOP_STATEMENT = array('Stmt_Throw','Stmt_Break','Stmt_Continue') ;
+$LOOP_STATEMENT = array('Stmt_For','Stmt_While','Stmt_Foreach','Stmt_Do') ;
+$JUMP_STATEMENT = array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','Expr_BinaryOp_LogicalOr') ;
+
+
 
 use PhpParser\Node ;
 
 class CFGGenerator{
 	
-	private $parser ;
-	private $traverser ;
+	private $parser ;  //AST解析类
+	private $traverser ;  //AST遍历类
 	
+	//构造器
 	public function __construct(){
 		$this->parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 		$this->traverser = new PhpParser\NodeTraverser ;
@@ -24,11 +28,12 @@ class CFGGenerator{
 	
 	/**
 	 * 给定一个JUMP类型的Statement，获取分支node
-	 * @param unknown $node
+	 * @param $node为AST节点（如 If,While等）
 	 */
 	public function getBranches($node){
-		$type = $node->getType();
-		$branches = array() ;
+		$type = $node->getType();   //获取AST节点的语句类型
+		$branches = array() ;   //分支数组
+		
 		switch ($type){
 			case 'Stmt_If':
 				//处理if-else结构中的if语句，包括条件和语句
@@ -131,6 +136,13 @@ class CFGGenerator{
 	}
 	
 	
+	/**
+	 * 生成基本块摘要，为数据流分析做准备
+	 * @param unknown $block
+	 */
+	public function simulate($block){
+		
+	}
 	
 	/**
 	 * 由AST节点创建相应的CFG，用于后续分析
@@ -140,7 +152,7 @@ class CFGGenerator{
 	 * @param $pEntryBlock   入口基本块
 	 * @param $pNextBlock   下一个基本块
 	 */
-	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock,$endLine=0){
+	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
 		echo "<pre>" ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
 		$currBlock = new BasicBlock() ;
@@ -155,6 +167,7 @@ class CFGGenerator{
 		//迭代每个AST node
 		foreach($nodes as $node){
 			if(!is_object($node))continue ;
+			
 			//判断node是否是结束node
 			if($node->getAttribute('endLine') == 9){
 				$currBlock->is_exit = true ;
@@ -164,6 +177,7 @@ class CFGGenerator{
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
 				//生成基本块的摘要
 				//simulate(currBlock) ;
+				
 				$nextBlock = new BasicBlock() ;
 				//对每个分支，建立相应的基本块
 				$branches = $this->getBranches($node) ;
@@ -172,18 +186,24 @@ class CFGGenerator{
 				}
 				//var_dump($nextBlock) ;
 				$currBlock = $nextBlock ;
-				
-			}elseif(in_array($node->getType(), $LOOP_STATEMENT)){  //如果节点是循环语句
-				$this->addLoopVariable($node, $currBlock) ; //加入循环条件
+			
+			//如果节点是循环语句
+			}elseif(in_array($node->getType(), $LOOP_STATEMENT)){  
+				//加入循环条件
+				$this->addLoopVariable($node, $currBlock) ; 
 				//simulate($currBlock) ;
+				
 				$currBlock->nodes = $node->stmts ;
 				$nextBlock = new BasicBlock() ;
 				$this->CFGBuilder($node->stmts, NULL, $currBlock, $nextBlock) ;
 				$currBlock = $nextBlock ;
-				
+			
+			//如果节点是结束语句 throw break continue
 			}elseif(in_array($node->getType(), $STOP_STATEMENT)){
 				$currBlock->is_exit = true ;
 				break ;
+			
+			//如果节点是return
 			}elseif(in_array($node->getType(),$RETURN_STATEMENT)){
 				$currBlock->addNode($node) ;
 				//simulate($currBlock) ;
@@ -196,6 +216,7 @@ class CFGGenerator{
 		
 		
 		//simulate(currBlock) ;
+		
 		print_r($currBlock) ;
 		if($pNextBlock && !$currBlock->is_exit){
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
@@ -217,8 +238,8 @@ class CFGGenerator{
  *
  */
 class Branch{
-	public $condition ;
-	public $nodes ;
+	public $condition ;   //跳转条件
+	public $nodes ;       //包含的节点
 	
 	/**
 	 * 构造函数
@@ -258,6 +279,7 @@ class MyVisitor extends PhpParser\NodeVisitorAbstract{
 		$this->nodes = $nodes ;
 	}
 	
+	//getter
 	public function getNodes(){
 		return $this->nodes ;
 	}
@@ -321,7 +343,7 @@ $pEntryBlock->is_entry = true ;
 $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
-//print_r($pEntryBlock) ;
+print_r($pEntryBlock) ;
 ?>
 
 

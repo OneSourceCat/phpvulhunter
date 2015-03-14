@@ -1,9 +1,20 @@
 <?php
+/**
+ * 单元测试类
+ * @author Administrator
+ *
+ */
 
-function test($a=3){
-	echo $a ;
+class TestClass extends PHPUnit_Framework_TestCase{
+	function add($a,$b){
+		return $a + $b ;
+	}
+
+	function testAdd(){
+		echo $this->add(1, 2) ;
+	}
+
 }
 
-test(5) ;
 
 ?>
