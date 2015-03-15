@@ -1,18 +1,17 @@
 <?php
-require './Symbol.class.php';
+require './Symbol.class.php' ;
 
-class ValueSymbol extends Symbol{
-	
+class ConstantSymbol extends Symbol{
 	private $value ; //Value对应的值
 	
 	/**
-	 * 通过AST node来设置Value符号的值
-	 * @param AST $node
+	 * 通过AST node分离出concat的各个值
+	 * @param unknown $node
 	 */
 	public function setValueByNode($node){
-		$type = $node->getType() ;
-		$this->value = $node->value ;
+		$this->value = $node->name ;
 	}
+	
 	
 	/**
 	 * @return the $value
@@ -20,15 +19,13 @@ class ValueSymbol extends Symbol{
 	public function getValue() {
 		return $this->value;
 	}
-
+	
 	/**
 	 * @param field_type $value
 	 */
 	public function setValue($value) {
 		$this->value = $value;
 	}
-
-	
 }
 
 ?>

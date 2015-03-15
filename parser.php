@@ -53,13 +53,23 @@ $pvf = array(
 
 use PhpParser\Node ;
 class MyVisitor extends PhpParser\NodeVisitorAbstract{
-	
+	public $concat = array();
+// 	public function leaveNode(Node $node){
+// 		$type = $node->getType() ;
+// 		if($type == "Expr_BinaryOp_Concat"){
+// 			$this->concat = $node ;
+// 			return ;
+// 		}
+// 		//print_r($node) ;
+// 	}
+
 	public function leaveNode(Node $node){
-		echo $node->getType() ;
-		echo "<br/>" ; 
-		print_r($node) ;
+		$type = $node->getType() ;
+		if($type == "Expr_AssignOp_Concat"){
+			array_push($this->concat, $node) ;
+		}
+		//$this->concat = $node ;
 	}
-	
 	
 }
 
@@ -73,9 +83,23 @@ $code = file_get_contents('./test/simple_demo.php') ;
 $stmts = $parser->parse($code) ;
 echo "<pre>" ;
 //print_r($stmts) ;
-
-$traverser->addVisitor(new MyVisitor) ;
+$visitor = new MyVisitor() ;
+$traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
+
+//print_r($visitor->concat) ;
+
+require './symbols/ConcatSymbol.class.php';
+$symbol = new ConcatSymbol() ;
+
+foreach ($visitor->concat as $con){
+	//print_r($con) ;
+	$symbol->setItemByNode($con) ;
+}
+
+echo count($symbol->getItems()) ;
+print_r($symbol->getItems()) ;
+
 
 
 

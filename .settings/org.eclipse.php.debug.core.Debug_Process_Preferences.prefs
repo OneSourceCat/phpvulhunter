@@ -1,0 +1,9 @@
+DefaultProjectBasePath=/phpvulhunter
+eclipse.preferences.version=1
+org.eclipse.php.debug.core.use-project-settings=true
+org.eclipse.php.debug.coredefaultPHP=
+org.eclipse.php.debug.coreenable_cli_debug=false
+org.eclipse.php.debug.coreoutput_encoding=UTF-8
+org.eclipse.php.debug.corephp_debugger_id=org.eclipse.php.debug.core.xdebugDebugger
+org.eclipse.php.debug.corestop_at_first_line_string=true
+org.eclipse.php.debug.coretransfer_encoding=UTF-8
