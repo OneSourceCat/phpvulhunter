@@ -1,3 +1,8 @@
 eclipse.preferences.version=1
+<<<<<<< HEAD
 include_path=0;/phpvulhunter
+=======
+include_path=5;com.zend.php.phpunit.CONTAINER
+phpVersion=php5.3
+>>>>>>> upstream/master
 use_asp_tags_as_php=false
