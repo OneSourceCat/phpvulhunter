@@ -1,34 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-<<<<<<< HEAD
 	<name>phpvulhunter</name>
-=======
-	<name>ZendTest</name>
->>>>>>> upstream/master
 	<comment></comment>
 	<projects>
 	</projects>
 	<buildSpec>
-		<buildCommand>
-			<name>org.eclipse.wst.validation.validationbuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
-			<name>org.eclipse.dltk.core.scriptbuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-<<<<<<< HEAD
-		<buildCommand>
-			<name>com.zend.php.composer.core.ComposerJsonBuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-=======
->>>>>>> upstream/master
 	</buildSpec>
 	<natures>
-		<nature>org.eclipse.php.core.PHPNature</nature>
 	</natures>
 </projectDescription>
