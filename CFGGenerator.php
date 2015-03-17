@@ -151,8 +151,9 @@ class CFGGenerator{
 	 * @param $condition   构建CFGNode时的跳转信息
 	 * @param $pEntryBlock   入口基本块
 	 * @param $pNextBlock   下一个基本块
+	 * @param $endLine 结束行，退出CFGBuilder
 	 */
-	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
+	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock,$endLine){
 		echo "<pre>" ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
 		$currBlock = new BasicBlock() ;
@@ -160,7 +161,7 @@ class CFGGenerator{
 		//创建一个CFG节点的边
 		if($pEntryBlock){
 			$block_edge = new CFGEdge($pEntryBlock, $currBlock,$condition) ;
-			$pEntryBlock->addOutEdge($block_edge) ;
+			//$pEntryBlock->addOutEdge($block_edge) ;
 			$currBlock->addInEdge($block_edge) ;
 		}
 
@@ -169,7 +170,10 @@ class CFGGenerator{
 			if(!is_object($node))continue ;
 			
 			//判断node是否是结束node
-			if($node->getAttribute('endLine') == 9){
+			if($node->getAttribute('endLine') == $endLine){
+			    //？？？？？？？？？？？？
+			    echo "***********************************************";
+			    print_r($endLine);
 				$currBlock->is_exit = true ;
 			}
 			
@@ -182,7 +186,7 @@ class CFGGenerator{
 				//对每个分支，建立相应的基本块
 				$branches = $this->getBranches($node) ;
 				foreach ($branches as $b){
-					$this->CFGBuilder($b->nodes, $b->condition, $currBlock, $nextBlock)	;				
+					$this->CFGBuilder($b->nodes, $b->condition, $currBlock, $nextBlock,$endLine)	;				
 				}
 				//var_dump($nextBlock) ;
 				$currBlock = $nextBlock ;
@@ -195,7 +199,7 @@ class CFGGenerator{
 				
 				$currBlock->nodes = $node->stmts ;
 				$nextBlock = new BasicBlock() ;
-				$this->CFGBuilder($node->stmts, NULL, $currBlock, $nextBlock) ;
+				$this->CFGBuilder($node->stmts, NULL, $currBlock, $nextBlock,$endLine) ;
 				$currBlock = $nextBlock ;
 			
 			//如果节点是结束语句 throw break continue
@@ -217,14 +221,15 @@ class CFGGenerator{
 		
 		//simulate(currBlock) ;
 		
-		print_r($currBlock) ;
-		if($pNextBlock && !$currBlock->is_exit){
+		//print_r($currBlock) ;
+		/* if($pNextBlock && !$currBlock->is_exit){ ？？？？？？？？？？*/
+		if($pNextBlock ){
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
-			$currBlock->addOutEdge($block_edge) ;
+			//$currBlock->addOutEdge($block_edge) ;
 			$pNextBlock->addInEdge($block_edge) ;
 		}
 		
-		//print_r($currBlock) ;
+		print_r($currBlock) ;
 		
 	}
 	
@@ -325,6 +330,8 @@ $stmts = $parser->parse($code) ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 $nodes = $visitor->getNodes() ;
+/* echo "<pre>" ;
+print_r($nodes); */
 // $branches = NULL ;
 // foreach ($nodes as $node){
 // 	if($node instanceof PhpParser\Node\Stmt\If_ ){
@@ -343,7 +350,7 @@ $pEntryBlock->is_entry = true ;
 $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
-print_r($pEntryBlock) ;
+//print_r($pEntryBlock) ;
 ?>
 
 
