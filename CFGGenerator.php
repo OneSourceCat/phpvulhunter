@@ -325,18 +325,6 @@ $stmts = $parser->parse($code) ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 $nodes = $visitor->getNodes() ;
-// $branches = NULL ;
-// foreach ($nodes as $node){
-// 	if($node instanceof PhpParser\Node\Stmt\If_ ){
-// 		$branches = $cfg->getBranches($node) ;
-// 	}elseif($node instanceof PhpParser\Node\Stmt\Switch_ ){
-// 		$branches = $cfg->getBranches($node) ;
-// 	}else{
-// 		$branches = $cfg->getBranches($node) ;
-// 	}
-// }
-// echo "<pre>" ;
-// print_r($branches) ;
 
 $pEntryBlock = new BasicBlock() ;
 $pEntryBlock->is_entry = true ;
@@ -344,6 +332,9 @@ $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
 print_r($pEntryBlock) ;
+
+//获取
+
 ?>
 
 

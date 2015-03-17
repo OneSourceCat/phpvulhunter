@@ -64,11 +64,6 @@ class MyVisitor extends PhpParser\NodeVisitorAbstract{
 // 	}
 
 	public function leaveNode(Node $node){
-		$type = $node->getType() ;
-		if($type == "Expr_AssignOp_Concat"){
-			array_push($this->concat, $node) ;
-		}
-		//$this->concat = $node ;
 	}
 	
 }
@@ -87,18 +82,20 @@ $visitor = new MyVisitor() ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 
+print_r($stmts) ;
+
 //print_r($visitor->concat) ;
 
-require './symbols/ConcatSymbol.class.php';
-$symbol = new ConcatSymbol() ;
+// require './symbols/ConcatSymbol.class.php';
+// $symbol = new ConcatSymbol() ;
 
-foreach ($visitor->concat as $con){
-	//print_r($con) ;
-	$symbol->setItemByNode($con) ;
-}
+// foreach ($visitor->concat as $con){
+// 	//print_r($con) ;
+// 	$symbol->setItemByNode($con) ;
+// }
 
-echo count($symbol->getItems()) ;
-print_r($symbol->getItems()) ;
+// echo count($symbol->getItems()) ;
+// print_r($symbol->getItems()) ;
 
 
 
