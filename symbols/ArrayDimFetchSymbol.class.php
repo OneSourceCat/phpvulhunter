@@ -3,8 +3,6 @@ require './Symbol.class.php' ;
 
 class ArrayDimFetchSymbol extends Symbol{
 	private $value ; //Value对应的值
-	private $node ;  //对应的node
-	
 	
 	/**
 	 * @return the $value

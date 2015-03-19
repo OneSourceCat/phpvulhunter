@@ -60,6 +60,8 @@ class SymbolUtils {
 	 */
 	public static function isConcat($node){
 		$type = $node->getType() ;
+		//Expr_BinaryOp_Concat======> "he" . "llo"
+		//Expr_AssignOp_Concat======> $sql .= "xx" ;
 		if($type == "Expr_BinaryOp_Concat" or $type == "Expr_AssignOp_Concat"){
 			return true ;
 		}else{
@@ -75,7 +77,7 @@ class SymbolUtils {
 	 */
 	public static function isArrayDimFetch($node){
 		$type = $node->getType() ;
-		if($type == "Expr_ArrayDimFetch"){
+		if($type == "Expr_ArrayDimFetch" && $type == "Expr_Array"){
 			return true ;
 		}else{
 			return false ;

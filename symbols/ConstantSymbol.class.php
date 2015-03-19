@@ -3,7 +3,9 @@ require './Symbol.class.php' ;
 
 class ConstantSymbol extends Symbol{
 	private $value ; //Value对应的值
-	
+	private $name ; //对应的字符串
+
+
 	/**
 	 * 通过AST node分离出concat的各个值
 	 * @param unknown $node
@@ -12,19 +14,21 @@ class ConstantSymbol extends Symbol{
 		$this->value = $node->name ;
 	}
 	
-	
-	/**
-	 * @return the $value
-	 */
+	//-------------------------getter && setter-------------------------------
 	public function getValue() {
 		return $this->value;
 	}
-	
-	/**
-	 * @param field_type $value
-	 */
+
 	public function setValue($value) {
 		$this->value = $value;
+	}
+
+	public function getName() {
+		return $this->name;
+	}
+
+	public function setName($name) {
+		$this->name = $name;
 	}
 }
 

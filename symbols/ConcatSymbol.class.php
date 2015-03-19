@@ -54,6 +54,7 @@ class ConcatSymbol extends Symbol{
  * 辅助类
  * 用于收集concat的各个组成部分
  * 需要遍历的node集合是最外层的concat节点
+ * Notice:ConcatSymbol只收集变量，不收集常量
  * 
  * public function leaveNode(Node $node){
  *		$type = $node->getType() ;

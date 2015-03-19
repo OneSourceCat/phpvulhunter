@@ -1,5 +1,7 @@
 <?php
+define('C_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 require './vendor/autoload.php' ;
+require C_PATH . '/symbols/ConcatSymbol.class.php';
 ini_set('xdebug.max_nesting_level', 2000);
 echo "<pre>" ;
 // //获得一个解析类
@@ -52,16 +54,13 @@ $pvf = array(
 
 
 use PhpParser\Node ;
-class MyVisitor extends PhpParser\NodeVisitorAbstract{
-	public $concat = array();
-
+class MyVisitor extends PhpParser\NodeVisitorAbstract{	
 	public function leaveNode(Node $node){
-		if($node->getType() == "Expr_Assign"){
-			print_r($node->var) ;
+		if($node->getType() == "Expr_ArrayDimFetch"){
+			print_r($node);
 		}
-
+		
 	}
-	
 }
 
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
@@ -78,7 +77,7 @@ $visitor = new MyVisitor() ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 
-print_r($stmts) ;
+//print_r($stmts) ;
 
 //print_r($visitor->concat) ;
 

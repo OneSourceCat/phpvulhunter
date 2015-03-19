@@ -5,6 +5,7 @@ class DataFlow {
 	private $name ;   //变量的名字string
 
 	
+	
 	//--------------------------getter && setter--------------------------------------
 	public function getLocation() {
 		return $this->location;
