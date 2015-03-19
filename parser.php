@@ -54,16 +54,12 @@ $pvf = array(
 use PhpParser\Node ;
 class MyVisitor extends PhpParser\NodeVisitorAbstract{
 	public $concat = array();
-// 	public function leaveNode(Node $node){
-// 		$type = $node->getType() ;
-// 		if($type == "Expr_BinaryOp_Concat"){
-// 			$this->concat = $node ;
-// 			return ;
-// 		}
-// 		//print_r($node) ;
-// 	}
 
 	public function leaveNode(Node $node){
+		if($node->getType() == "Expr_Assign"){
+			print_r($node->var) ;
+		}
+
 	}
 	
 }

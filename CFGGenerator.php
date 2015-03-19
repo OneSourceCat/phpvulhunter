@@ -1,7 +1,16 @@
 <?php
+define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 
 require_once './vendor/autoload.php' ;
 require_once './BasicBlock.php';
+require_once CURR_PATH . '/utils/SymbolUtils.php';
+require_once CURR_PATH . '/symbols/ValueSymbol.class.php';
+require_once CURR_PATH . '/symbols/VariableSymbol.class.php';
+require_once CURR_PATH . '/symbols/MutilpleSymbol.class.php';
+require_once CURR_PATH . '/symbols/ArrayDimFetch.class.php';
+require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
+require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
+
 ini_set('xdebug.max_nesting_level', 2000);
 
 
@@ -138,9 +147,31 @@ class CFGGenerator{
 	
 	/**
 	 * 生成基本块摘要，为数据流分析做准备
-	 * @param unknown $block
+	 * @param BasicBlock $block
 	 */
 	public function simulate($block){
+		//获取基本块中所有的节点
+		$nodes = $block->getContainedNodes() ;
+		//循环nodes集合，找出赋值语句加入到blocksummary中
+		foreach ($nodes as $node){
+			switch ($node->getType()){
+				case 'Expr_Assign':
+					//处理赋值语句，存放在DataFlow
+					//处理左边
+					if(SymbolUtils::isValue($node->var)){
+						$dataFlow = new DataFlow() ;
+						$vs = new ValueSymbol() ;
+						$vs->setValueByNode($node->var) ;
+						$dataFlow->setLocation($vs) ;
+						$dataFlow->setName($node->var->name) ;
+						$block->getBlockSummary();
+						
+					}
+					break ;
+				case '': 
+					break ;
+			}
+		}
 		
 	}
 	
