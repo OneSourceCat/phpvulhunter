@@ -163,25 +163,24 @@ class CFGGenerator{
 			return ;
 		}
 		
-		
 		//处理赋值语句，存放在DataFlow
 		//处理赋值语句的左边
 		if($part && SymbolUtils::isValue($part)){
+			//在DataFlow加入Location以及name
 			$vs = new ValueSymbol() ;
 			$vs->setValueByNode($part) ;
-		
-			//在DataFlow加入Location以及name
 			if($type == "left"){
 				$dataFlow->setLocation($vs) ;
 				$dataFlow->setName($part->name) ;
 			}else if($type == "right"){
-				$dataFlow->setValue($part) ;
+				$dataFlow->setValue($vs) ;
 			}
 
 		}elseif ($part && SymbolUtils::isVariable($part)){
+			
+			//加入dataFlow
 			$vars = new VariableSymbol() ;
 			$vars->setValue($part);
-			//加入dataFlow
 			if($type == "left"){
 				$dataFlow->setLocation($vars) ;
 				$dataFlow->setName($part->name) ;
@@ -190,26 +189,26 @@ class CFGGenerator{
 			}
 			
 		}elseif ($part && SymbolUtils::isConstant($part)){
+			
+			//加入dataFlow
 			$con = new ConstantSymbol() ;
 			$con->setValueByNode($part) ;
 			$con->setName($part->name->parts[0]) ;
-		
-			//加入dataFlow
 			if($type == "left"){
 				$dataFlow->setLocation($con) ;
 				$dataFlow->setName($part->name) ;
 			}else if($type == "right"){
-				$dataFlow->setValue($part) ;
+				$dataFlow->setValue($con) ;
 			}
 		}elseif ($part && SymbolUtils::isArrayDimFetch($part)){
+			//加入dataFlow
 			$arr = new ArrayDimFetchSymbol() ;
 			$arr->setValue($part) ;
-			//加入dataFlow
 			if($type == "left"){
 				$dataFlow->setLocation($arr) ;
 				$dataFlow->setName($part->name) ;
 			}else if($type == "right"){
-				$dataFlow->setValue($part) ;
+				$dataFlow->setValue($arr) ;
 			}
 		}elseif ($part && SymbolUtils::isConcat($part)){
 			$concat = new ConcatSymbol() ;
@@ -218,7 +217,7 @@ class CFGGenerator{
 				$dataFlow->setLocation($concat) ;
 				$dataFlow->setName($part->name) ;
 			}else if($type == "right"){
-				$dataFlow->setValue($part) ;
+				$dataFlow->setValue($concat) ;
 			}
 		}
 			
@@ -235,8 +234,8 @@ class CFGGenerator{
 	 * @param BasicBlock $block
 	 * @param string $type
 	 */
-	private function assignConcatHandler($node,$block,$type){
-		$this->assignHandler($node, $block, $type) ;	
+	private function assignConcatHandler($node,$block,$dataFlow,$type){
+		$this->assignHandler($node, $block,$dataFlow,$type) ;	
 	}
 	
 	/**
@@ -343,9 +342,10 @@ class CFGGenerator{
 				
 				//处理字符串连接赋值
 				//$sql .= "from users where"生成sql => "from users where"
-				case 'Expr_AssignOp_Concat':  
-					$this->assignConcatHandler($node, $block, "left") ;
-					$this->assignConcatHandler($node, $block, "right") ;
+				case 'Expr_AssignOp_Concat': 
+					$dataFlow = new DataFlow() ;
+					$this->assignConcatHandler($node, $block,$dataFlow,"left") ;
+					$this->assignConcatHandler($node, $block,$dataFlow,"right") ;
 					break ;
 				
 				//处理常量，加入至summary中
