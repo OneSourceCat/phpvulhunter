@@ -1,6 +1,5 @@
 <?php
 define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
-
 require_once CURR_PATH . '/vendor/autoload.php' ;
 require_once CURR_PATH . '/BasicBlock.php';
 require_once CURR_PATH . '/symbols/Symbol.class.php' ;
@@ -12,20 +11,13 @@ require_once CURR_PATH . '/symbols/ArrayDimFetchSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
 require_once CURR_PATH . '/utils/NodeUtils.class.php';
-
 ini_set('xdebug.max_nesting_level', 2000);
-
-
 //定义PHP语句类别
 $RETURN_STATEMENT = array('Stmt_Return') ;
 $STOP_STATEMENT = array('Stmt_Throw','Stmt_Break','Stmt_Continue') ;
 $LOOP_STATEMENT = array('Stmt_For','Stmt_While','Stmt_Foreach','Stmt_Do') ;
 $JUMP_STATEMENT = array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','Expr_BinaryOp_LogicalOr') ;
-
-
-
 use PhpParser\Node ;
-
 class CFGGenerator{
 	
 	private $parser ;  //AST解析类
@@ -175,7 +167,6 @@ class CFGGenerator{
 			}else if($type == "right"){
 				$dataFlow->setValue($vs) ;
 			}
-
 		}elseif ($part && SymbolUtils::isVariable($part)){
 			
 			//加入dataFlow
@@ -379,9 +370,8 @@ class CFGGenerator{
 	 * @param $condition   构建CFGNode时的跳转信息
 	 * @param BasicBlock $pEntryBlock   入口基本块
 	 * @param $pNextBlock   下一个基本块
-	 * @param $endLine 结束行，退出CFGBuilder
 	 */
-	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock,$endLine){
+	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
 		echo "<pre>" ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
 		$currBlock = new BasicBlock() ;
@@ -389,19 +379,15 @@ class CFGGenerator{
 		//创建一个CFG节点的边
 		if($pEntryBlock){
 			$block_edge = new CFGEdge($pEntryBlock, $currBlock,$condition) ;
-			//$pEntryBlock->addOutEdge($block_edge) ;
+			$pEntryBlock->addOutEdge($block_edge) ;
 			$currBlock->addInEdge($block_edge) ;
 		}
-
 		//迭代每个AST node
 		foreach($nodes as $node){
 			if(!is_object($node))continue ;
 			
 			//判断node是否是结束node
-			if($node->getAttribute('endLine') == $endLine){
-			    //？？？？？？？？？？？？
-			    echo "***********************************************";
-			    print_r($endLine);
+			if($node->getAttribute('endLine') == 9){
 				$currBlock->is_exit = true ;
 			}
 			
@@ -415,7 +401,7 @@ class CFGGenerator{
 				//对每个分支，建立相应的基本块
 				$branches = $this->getBranches($node) ;
 				foreach ($branches as $b){
-					$this->CFGBuilder($b->nodes, $b->condition, $currBlock, $nextBlock,$endLine)	;				
+					$this->CFGBuilder($b->nodes, $b->condition, $currBlock, $nextBlock)	;				
 				}
 				//var_dump($nextBlock) ;
 				$currBlock = $nextBlock ;
@@ -429,7 +415,7 @@ class CFGGenerator{
 				
 				$currBlock->nodes = $node->stmts ;
 				$nextBlock = new BasicBlock() ;
-				$this->CFGBuilder($node->stmts, NULL, $currBlock, $nextBlock,$endLine) ;
+				$this->CFGBuilder($node->stmts, NULL, $currBlock, $nextBlock) ;
 				$currBlock = $nextBlock ;
 			
 			//如果节点是结束语句 throw break continue
@@ -455,25 +441,17 @@ class CFGGenerator{
 		print_r($currBlock->getBlockSummary()) ;
 		
 		//print_r($currBlock) ;
-<<<<<<< HEAD
-		/* if($pNextBlock && !$currBlock->is_exit){ ？？？？？？？？？？*/
-		if($pNextBlock ){
-=======
 		if($pNextBlock && !$currBlock->is_exit){
->>>>>>> 68bc304d4a879cb7943ed6ad194e730a794344ce
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
-			//$currBlock->addOutEdge($block_edge) ;
+			$currBlock->addOutEdge($block_edge) ;
 			$pNextBlock->addInEdge($block_edge) ;
 		}
 		
-		print_r($currBlock) ;
+		//print_r($currBlock) ;
 		
 	}
 	
 }
-
-
-
 /**
  * 跳转语句的分支结构类
  * @author Administrator
@@ -508,7 +486,6 @@ class Branch{
 	}
 	
 }
-
 /**
  * 获取PHP File中所有的AST节点的访问者
  * @author Administrator
@@ -527,7 +504,6 @@ class MyVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 	
 }
-
 /**
  * 用来遍历LogicalOr节点，并将所有的分支分离出来
  * @author Administrator
@@ -556,8 +532,6 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 	
 }
-
-
 $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
@@ -567,77 +541,11 @@ $stmts = $parser->parse($code) ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 $nodes = $visitor->getNodes() ;
-<<<<<<< HEAD
-/* echo "<pre>" ;
-print_r($nodes); */
-// $branches = NULL ;
-// foreach ($nodes as $node){
-// 	if($node instanceof PhpParser\Node\Stmt\If_ ){
-// 		$branches = $cfg->getBranches($node) ;
-// 	}elseif($node instanceof PhpParser\Node\Stmt\Switch_ ){
-// 		$branches = $cfg->getBranches($node) ;
-// 	}else{
-// 		$branches = $cfg->getBranches($node) ;
-// 	}
-// }
-// echo "<pre>" ;
-// print_r($branches) ;
-=======
->>>>>>> 68bc304d4a879cb7943ed6ad194e730a794344ce
-
 $pEntryBlock = new BasicBlock() ;
 $pEntryBlock->is_entry = true ;
 $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
 //print_r($pEntryBlock) ;
-<<<<<<< HEAD
-?>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=======
->>>>>>> 68bc304d4a879cb7943ed6ad194e730a794344ce
-
 //获取
-
 ?>
-
