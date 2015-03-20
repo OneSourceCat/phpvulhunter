@@ -245,8 +245,8 @@ class CFGGenerator{
 	 */
 	private function constantHandler($node,$block){
 		$cons = new Constants() ;
-		$cons->setName($node->name) ;
-		$cons->setValue($node) ;
+		$cons->setName($node->args[0]->value->value) ;
+		$cons->setValue($node->args[1]->value->value) ;
 		$block->getBlockSummary()->addConstantItem($cons);
 	}
 	
@@ -349,8 +349,11 @@ class CFGGenerator{
 					break ;
 				
 				//处理常量，加入至summary中
-				case 'Expr_ConstFetch':
-					$this->constantHandler($node, $block) ;
+				//这里有问题，应该使用define判断
+				case 'Expr_FuncCall':
+					if($node->name->parts[0] == "define"){
+						$this->constantHandler($node, $block) ;
+					}
 					break ;
 				
 				//处理全局变量的定义，global $a
@@ -404,7 +407,7 @@ class CFGGenerator{
 			//如果节点是跳转类型的语句
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
 				//生成基本块的摘要
-				$this->simulate(currBlock) ;
+				$this->simulate($currBlock) ;
 				print_r($currBlock->getBlockSummary()) ;
 				
 				$nextBlock = new BasicBlock() ;
@@ -415,7 +418,7 @@ class CFGGenerator{
 				}
 				//var_dump($nextBlock) ;
 				$currBlock = $nextBlock ;
-			
+				
 			//如果节点是循环语句
 			}elseif(in_array($node->getType(), $LOOP_STATEMENT)){  
 				//加入循环条件

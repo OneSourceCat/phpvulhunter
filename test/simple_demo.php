@@ -1,6 +1,8 @@
 <?php
-$sql = "INSERT INTO " . THEMES_TABLE . " (";
-$sql .= ") VALUES (";
-$sql .= ")";
+
+define('DF', 'cdd') ;
+
+$sql = DF ;
+
 ?>
 
