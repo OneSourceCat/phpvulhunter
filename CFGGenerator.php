@@ -1,7 +1,18 @@
 <?php
+define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 
-require_once './vendor/autoload.php' ;
-require_once './BasicBlock.php';
+require_once CURR_PATH . '/vendor/autoload.php' ;
+require_once CURR_PATH . '/BasicBlock.php';
+require_once CURR_PATH . '/symbols/Symbol.class.php' ;
+require_once CURR_PATH . '/utils/SymbolUtils.class.php';
+require_once CURR_PATH . '/symbols/ValueSymbol.class.php';
+require_once CURR_PATH . '/symbols/VariableSymbol.class.php';
+require_once CURR_PATH . '/symbols/MutipleSymbol.class.php';
+require_once CURR_PATH . '/symbols/ArrayDimFetchSymbol.class.php';
+require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
+require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
+require_once CURR_PATH . '/utils/NodeUtils.class.php';
+
 ini_set('xdebug.max_nesting_level', 2000);
 
 
@@ -107,8 +118,8 @@ class CFGGenerator{
 	
 	/**
 	 * 处理循环结构，将循环变量添加到基本块
-	 * @param unknown $node  AST Node
-	 * @param unknown $block  BasicBlock
+	 * @param $node  AST Node
+	 * @param $block  BasicBlock
 	 */
 	public function addLoopVariable($node,$block){
 		switch ($node->getType()){
@@ -135,21 +146,238 @@ class CFGGenerator{
 		return end($nodes)->getAttribute('endLine') ;
 	}
 	
+	/**
+	 * 分析传入node赋值语句，以及当前block,
+	 * 生成block summary中的一条记录
+	 * @param ASTNode $node 赋值语句
+	 * @param BasicBlock $block
+	 * @param string $type 处理赋值语句的var和expr类型（left or right）
+	 */
+	private function assignHandler($node,$block,$dataFlow,$type){
+		$part = null ;
+		if($type == "left"){
+			$part = $node->var ;
+		}else if($type == "right"){
+			$part = $node->expr ;
+		}else{
+			return ;
+		}
+		
+		//处理赋值语句，存放在DataFlow
+		//处理赋值语句的左边
+		if($part && SymbolUtils::isValue($part)){
+			//在DataFlow加入Location以及name
+			$vs = new ValueSymbol() ;
+			$vs->setValueByNode($part) ;
+			if($type == "left"){
+				$dataFlow->setLocation($vs) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($vs) ;
+			}
+
+		}elseif ($part && SymbolUtils::isVariable($part)){
+			
+			//加入dataFlow
+			$vars = new VariableSymbol() ;
+			$vars->setValue($part);
+			if($type == "left"){
+				$dataFlow->setLocation($vars) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($part) ;
+			}
+			
+		}elseif ($part && SymbolUtils::isConstant($part)){
+			
+			//加入dataFlow
+			$con = new ConstantSymbol() ;
+			$con->setValueByNode($part) ;
+			$con->setName($part->name->parts[0]) ;
+			if($type == "left"){
+				$dataFlow->setLocation($con) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($con) ;
+			}
+		}elseif ($part && SymbolUtils::isArrayDimFetch($part)){
+			//加入dataFlow
+			$arr = new ArrayDimFetchSymbol() ;
+			$arr->setValue($part) ;
+			if($type == "left"){
+				$dataFlow->setLocation($arr) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($arr) ;
+			}
+		}elseif ($part && SymbolUtils::isConcat($part)){
+			$concat = new ConcatSymbol() ;
+			$concat->setItemByNode($part) ;
+			if($type == "left"){
+				$dataFlow->setLocation($concat) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($concat) ;
+			}
+		}
+			
+		//处理完一条赋值语句，加入DataFlowMap
+		if($type == "right"){
+			$block->getBlockSummary()->addDataFlowItem($dataFlow);
+		}
+	}
+	
+	
+	/**
+	 * 处理赋值的concat语句，添加至基本块摘要中
+	 * @param AST $node
+	 * @param BasicBlock $block
+	 * @param string $type
+	 */
+	private function assignConcatHandler($node,$block,$dataFlow,$type){
+		$this->assignHandler($node, $block,$dataFlow,$type) ;	
+	}
+	
+	/**
+	 * 处理常量，将常量添加至基本块摘要中
+	 * @param AST $node
+	 * @param BasicBlock $block
+	 */
+	private function constantHandler($node,$block){
+		$cons = new Constants() ;
+		$cons->setName($node->name) ;
+		$cons->setValue($node) ;
+		$block->getBlockSummary()->addConstantItem($cons);
+	}
+	
+	/**
+	 * 处理全局变量的声明，加入至摘要中
+	 * @param Node $node
+	 * @param BasicBlock $block
+	 */
+	private function globalDefinesHandler($node,$block){
+		$globalDefine = new GlobalDefines() ;
+		$globalDefine->setName(NodeUtils::getNodeStringName($node->value)) ;
+		$block->getBlockSummary()->addGlobalDefineItem($globalDefine) ;
+	}
+	
+	/**
+	 * 将基本块中的return提取出来
+	 * @param Node $node
+	 * @param BasicBlock $block
+	 */
+	private function returnValueHandler($node,$block){
+		$returnValue = new ReturnValue() ;
+		$returnValue->setValue($node->expr) ;
+		$block->getBlockSummary()->addReturnValueItem($returnValue) ;
+	}
+	
+	/**
+	 * 获取全局变量的注册信息
+	 * @param Node $node
+	 * @param BasicBlock $block
+	 */
+	private function registerGlobalHandler($node,$block){
+		$funcName = $node->name->parts[0] ;  //获取方法调用时的方法名
+		if($funcName != 'extract' or $funcName != "parse_str" or $funcName != "import_request_variables"){
+			return ;
+		}
+		
+		switch ($funcName){
+			case 'extract':
+				$registerItem = new RegisterGlobal() ;
+				//extract只有在EXTR_OVERWRITE时才能在URL覆盖
+				if(count($node->args) > 1 && $node->args[1]->value->name->parts == "EXTR_OVERWRITE"){
+					$registerItem->setIsUrlOverWrite(true) ;
+				}else{
+					$registerItem->setIsUrlOverWrite(false) ;
+				}
+				$varName = NodeUtils::getNodeStringName($node->args[0]->value);
+				$registerItem->setName($varName) ;
+				$block->getBlockSummary()->addRegisterGlobalItem($registerItem) ;
+				break ;
+				
+			case 'parse_str':
+				$registerItem = new RegisterGlobal() ;
+				$varName = NodeUtils::getNodeStringName($node->args[0]->value);
+				$registerItem->setName($varName) ;
+				$block->getBlockSummary()->addRegisterGlobalItem($registerItem) ;
+				break ;
+				
+			case 'import_request_variables':
+				$registerItem = new RegisterGlobal() ;
+				$varName = NodeUtils::getNodeStringName($node->args[0]->value);
+				$registerItem->setName($varName) ;
+				$block->getBlockSummary()->addRegisterGlobalItem($registerItem) ;
+				break ;
+				
+		}
+		
+		
+	}
+	
+	
 	
 	/**
 	 * 生成基本块摘要，为数据流分析做准备
-	 * @param unknown $block
+	 * 1、处理赋值语句
+	 * 2、记录全局变量定义
+	 * 3、记录全局变量注册
+	 * 4、记录返回值
+	 * 5、记录常量定义
+	 * @param BasicBlock $block
 	 */
 	public function simulate($block){
+		//获取基本块中所有的节点
+		$nodes = $block->getContainedNodes() ;
+		//循环nodes集合，找出赋值语句加入到blocksummary中
+		foreach ($nodes as $node){
+			switch ($node->getType()){
+				//处理赋值语句
+				case 'Expr_Assign':  
+					$dataFlow = new DataFlow() ;
+					$this->assignHandler($node, $block,$dataFlow,"left") ;
+					$this->assignHandler($node, $block,$dataFlow,"right") ;
+					break ;
+				
+				//处理字符串连接赋值
+				//$sql .= "from users where"生成sql => "from users where"
+				case 'Expr_AssignOp_Concat': 
+					$dataFlow = new DataFlow() ;
+					$this->assignConcatHandler($node, $block,$dataFlow,"left") ;
+					$this->assignConcatHandler($node, $block,$dataFlow,"right") ;
+					break ;
+				
+				//处理常量，加入至summary中
+				case 'Expr_ConstFetch':
+					$this->constantHandler($node, $block) ;
+					break ;
+				
+				//处理全局变量的定义，global $a
+				case 'Expr_VariableStmt_GlobalArray':
+					$this->globalDefinesHandler($node, $block) ;
+					break ;
+				
+				//过程内分析时记录
+				case 'Stmt_Return':
+					$this->returnValueHandler($node, $block) ;
+					break ;
+				
+				//全局变量的注册extract,parse_str,mb_parse_str,import_request_variables
+				case 'Expr_FuncCall' :
+					
+					break ;
+			}
+		}
 		
 	}
 	
 	/**
 	 * 由AST节点创建相应的CFG，用于后续分析
 	 * 
-	 * @param $nodes  传入的PHP file的所有nodes
+	 * @param Node $nodes  传入的PHP file的所有nodes
 	 * @param $condition   构建CFGNode时的跳转信息
-	 * @param $pEntryBlock   入口基本块
+	 * @param BasicBlock $pEntryBlock   入口基本块
 	 * @param $pNextBlock   下一个基本块
 	 * @param $endLine 结束行，退出CFGBuilder
 	 */
@@ -180,7 +408,8 @@ class CFGGenerator{
 			//如果节点是跳转类型的语句
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
 				//生成基本块的摘要
-				//simulate(currBlock) ;
+				$this->simulate(currBlock) ;
+				print_r($currBlock->getBlockSummary()) ;
 				
 				$nextBlock = new BasicBlock() ;
 				//对每个分支，建立相应的基本块
@@ -195,7 +424,8 @@ class CFGGenerator{
 			}elseif(in_array($node->getType(), $LOOP_STATEMENT)){  
 				//加入循环条件
 				$this->addLoopVariable($node, $currBlock) ; 
-				//simulate($currBlock) ;
+				$this->simulate($currBlock) ;
+				print_r($currBlock->getBlockSummary()) ;
 				
 				$currBlock->nodes = $node->stmts ;
 				$nextBlock = new BasicBlock() ;
@@ -210,7 +440,9 @@ class CFGGenerator{
 			//如果节点是return
 			}elseif(in_array($node->getType(),$RETURN_STATEMENT)){
 				$currBlock->addNode($node) ;
-				//simulate($currBlock) ;
+				$this->simulate($currBlock) ;
+				print_r($currBlock->getBlockSummary()) ;
+				
 				return ;
 			}else{
 				$currBlock->addNode($node);
@@ -219,11 +451,16 @@ class CFGGenerator{
 		
 		
 		
-		//simulate(currBlock) ;
+		$this->simulate($currBlock) ;
+		print_r($currBlock->getBlockSummary()) ;
 		
 		//print_r($currBlock) ;
+<<<<<<< HEAD
 		/* if($pNextBlock && !$currBlock->is_exit){ ？？？？？？？？？？*/
 		if($pNextBlock ){
+=======
+		if($pNextBlock && !$currBlock->is_exit){
+>>>>>>> 68bc304d4a879cb7943ed6ad194e730a794344ce
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
 			//$currBlock->addOutEdge($block_edge) ;
 			$pNextBlock->addInEdge($block_edge) ;
@@ -330,6 +567,7 @@ $stmts = $parser->parse($code) ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 $nodes = $visitor->getNodes() ;
+<<<<<<< HEAD
 /* echo "<pre>" ;
 print_r($nodes); */
 // $branches = NULL ;
@@ -344,6 +582,8 @@ print_r($nodes); */
 // }
 // echo "<pre>" ;
 // print_r($branches) ;
+=======
+>>>>>>> 68bc304d4a879cb7943ed6ad194e730a794344ce
 
 $pEntryBlock = new BasicBlock() ;
 $pEntryBlock->is_entry = true ;
@@ -351,6 +591,7 @@ $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
 //print_r($pEntryBlock) ;
+<<<<<<< HEAD
 ?>
 
 
@@ -393,6 +634,10 @@ echo "<pre>" ;
 
 
 
+=======
+>>>>>>> 68bc304d4a879cb7943ed6ad194e730a794344ce
 
+//获取
 
+?>
 

@@ -1,5 +1,7 @@
 <?php
+define('C_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 require './vendor/autoload.php' ;
+require C_PATH . '/symbols/ConcatSymbol.class.php';
 ini_set('xdebug.max_nesting_level', 2000);
 echo "<pre>" ;
 // //获得一个解析类
@@ -52,25 +54,13 @@ $pvf = array(
 
 
 use PhpParser\Node ;
-class MyVisitor extends PhpParser\NodeVisitorAbstract{
-	public $concat = array();
-// 	public function leaveNode(Node $node){
-// 		$type = $node->getType() ;
-// 		if($type == "Expr_BinaryOp_Concat"){
-// 			$this->concat = $node ;
-// 			return ;
-// 		}
-// 		//print_r($node) ;
-// 	}
-
+class MyVisitor extends PhpParser\NodeVisitorAbstract{	
 	public function leaveNode(Node $node){
-		$type = $node->getType() ;
-		if($type == "Expr_AssignOp_Concat"){
-			array_push($this->concat, $node) ;
+		if($node->getType() == "Expr_ArrayDimFetch"){
+			print_r($node);
 		}
-		//$this->concat = $node ;
+		
 	}
-	
 }
 
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
@@ -87,18 +77,20 @@ $visitor = new MyVisitor() ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 
+//print_r($stmts) ;
+
 //print_r($visitor->concat) ;
 
-require './symbols/ConcatSymbol.class.php';
-$symbol = new ConcatSymbol() ;
+// require './symbols/ConcatSymbol.class.php';
+// $symbol = new ConcatSymbol() ;
 
-foreach ($visitor->concat as $con){
-	//print_r($con) ;
-	$symbol->setItemByNode($con) ;
-}
+// foreach ($visitor->concat as $con){
+// 	//print_r($con) ;
+// 	$symbol->setItemByNode($con) ;
+// }
 
-echo count($symbol->getItems()) ;
-print_r($symbol->getItems()) ;
+// echo count($symbol->getItems()) ;
+// print_r($symbol->getItems()) ;
 
 
 

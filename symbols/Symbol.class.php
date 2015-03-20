@@ -1,4 +1,5 @@
 <?php
+
 class Symbol {
 	
 	private $type ;   //类型，默认为string
@@ -82,19 +83,3 @@ class Symbol {
 }
 
 ?>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

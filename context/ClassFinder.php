@@ -1,5 +1,10 @@
 <?php
-require './vendor/autoload.php' ;
+
+define('CURR_PATH', str_repeat("\\","/", dirname(__FILE__))) ;
+
+require CURR_PATH . '/../utils/FileUtils.class.php';
+require CURR_PATH . '/../vendor/autoload.php' ;
+
 ini_set('xdebug.max_nesting_level', 2000);
 
 /*
@@ -142,48 +147,7 @@ class Record{
 }
 
 
-/*
-	文件操作类
-*/
-class FileUtil{
 
-	public function __construct(){
-
-	}
-
-	/*
-		获取文件
-		@param @path 文件夹路径
-		@return 文件夹下的所有文件的数组（递归）
-	*/
-	public function getDir($path){
-		static $ret = array() ;
-		if(!is_dir($path)){
-			array_push($ret, $path) ;
-			return $ret ;
-		}
-		if(($handle = opendir($path)) == false){
-			return $ret ;
-		}
-		while(($file = readdir($handle))!=false){
-			if($file == "." || $file == ".."){
-				continue ;
-			}
-			if(is_dir($path . "/" . $file)){
-				$this->getDir($path ."/".$file) ;
-			}else{
-				//只返回php后缀的文件
-				if(strchr($path ."/" .$file,".php") == ".php"){
-					array_push($ret,$path ."/".$file) ;	
-				}
-				
-			}
-		}	
-		closedir($handle) ;
-		return $ret ;
-	}
-
-}
 
 use PhpParser\Node ;
 class MyVisitor extends PhpParser\NodeVisitorAbstract{

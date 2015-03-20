@@ -1,6 +1,4 @@
 <?php
-require "./Symbol.class.php" ;
-
 class VariableSymbol extends Symbol{
 	private $value ; //Value对应的值
 	private $name ;  //变量名

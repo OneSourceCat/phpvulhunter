@@ -1,17 +1,19 @@
 <?php
-require_once './CFGNode.php';
-
+require CURR_PATH . '/CFGNode.php';
+require CURR_PATH . '/summary/BlockSummary.class.php';
 /**
  * 定义基本块信息
- * @author Administrator
+ * @author exploit
  *
  */
 class BasicBlock extends CFGNode{
 	//基本块中包含的AST node，放入list中
 	private $containedNodes ;
-	
+	private $blockSummary;
+
 	public function __construct(){
 		$this->containedNodes = array() ;
+		$this->blockSummary =  new BlockSummary() ;
 	}
 	
 	
@@ -34,35 +36,18 @@ class BasicBlock extends CFGNode{
 		return $this->containedNodes ;
 	}
 	
+	public function getBlockSummary() {
+		return $this->blockSummary;
+	}
+	
+	public function setBlockSummary($blockSummary) {
+		$this->blockSummary = $blockSummary;
+	}
+	
 	
 }
 
 
 
 
-
-
-
 ?>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
