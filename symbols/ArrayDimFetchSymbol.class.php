@@ -1,5 +1,4 @@
 <?php
-require './Symbol.class.php' ;
 
 class ArrayDimFetchSymbol extends Symbol{
 	private $value ; //Value对应的值

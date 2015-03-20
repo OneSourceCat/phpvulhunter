@@ -1,5 +1,4 @@
 <?php
-$a['name'] ;
-
+$sql = "xxxx" ;
 ?>
 

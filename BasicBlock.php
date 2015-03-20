@@ -1,6 +1,5 @@
 <?php
-define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
-require './CFGNode.php';
+require CURR_PATH . '/CFGNode.php';
 require CURR_PATH . '/summary/BlockSummary.class.php';
 /**
  * 定义基本块信息

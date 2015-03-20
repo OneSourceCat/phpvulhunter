@@ -48,16 +48,6 @@ class Symbol {
 		array_push($this->sanitization, $sanitization) ;
 	}
 	
-	/**
-	 * 通过AST 节点来判断symbol的类型
-	 * 注意：默认的所有symbol的类型为string
-	 * @param AST $node
-	 */
-	public function setValueByNode($node){
-		
-	}
-	
-	
 	
 	//----------------------getter && setter--------------------------------------
 	public function getType() {

@@ -1,16 +1,17 @@
 <?php
 define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 
-require_once './vendor/autoload.php' ;
-require_once './BasicBlock.php';
-require_once CURR_PATH . '/utils/SymbolUtils.php';
+require_once CURR_PATH . '/vendor/autoload.php' ;
+require_once CURR_PATH . '/BasicBlock.php';
+require_once CURR_PATH . '/symbols/Symbol.class.php' ;
+require_once CURR_PATH . '/utils/SymbolUtils.class.php';
 require_once CURR_PATH . '/symbols/ValueSymbol.class.php';
 require_once CURR_PATH . '/symbols/VariableSymbol.class.php';
-require_once CURR_PATH . '/symbols/MutilpleSymbol.class.php';
-require_once CURR_PATH . '/symbols/ArrayDimFetch.class.php';
+require_once CURR_PATH . '/symbols/MutipleSymbol.class.php';
+require_once CURR_PATH . '/symbols/ArrayDimFetchSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
-require_once CURR_POST . '/utils/NodeUtils.class.php';
+require_once CURR_PATH . '/utils/NodeUtils.class.php';
 
 ini_set('xdebug.max_nesting_level', 2000);
 
@@ -152,7 +153,7 @@ class CFGGenerator{
 	 * @param BasicBlock $block
 	 * @param string $type 处理赋值语句的var和expr类型（left or right）
 	 */
-	private function assignHandler($node,$block,$type){
+	private function assignHandler($node,$block,$dataFlow,$type){
 		$part = null ;
 		if($type == "left"){
 			$part = $node->var ;
@@ -162,7 +163,7 @@ class CFGGenerator{
 			return ;
 		}
 		
-		$dataFlow = new DataFlow() ;
+		
 		//处理赋值语句，存放在DataFlow
 		//处理赋值语句的左边
 		if($part && SymbolUtils::isValue($part)){
@@ -170,40 +171,61 @@ class CFGGenerator{
 			$vs->setValueByNode($part) ;
 		
 			//在DataFlow加入Location以及name
-			$dataFlow->setLocation($vs) ;
-			$dataFlow->setName($part->name) ;
-		
+			if($type == "left"){
+				$dataFlow->setLocation($vs) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($part) ;
+			}
+
 		}elseif ($part && SymbolUtils::isVariable($part)){
 			$vars = new VariableSymbol() ;
-			$vars->setValueByNode($part) ;
-		
+			$vars->setValue($part);
 			//加入dataFlow
-			$dataFlow->setLocation($part) ;
-			$dataFlow->setName($part->value) ;
-		
+			if($type == "left"){
+				$dataFlow->setLocation($vars) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($part) ;
+			}
+			
 		}elseif ($part && SymbolUtils::isConstant($part)){
 			$con = new ConstantSymbol() ;
 			$con->setValueByNode($part) ;
 			$con->setName($part->name->parts[0]) ;
 		
 			//加入dataFlow
-			$dataFlow->setLocation($part) ;
-			$dataFlow->setName($part->value) ;
-		
+			if($type == "left"){
+				$dataFlow->setLocation($con) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($part) ;
+			}
 		}elseif ($part && SymbolUtils::isArrayDimFetch($part)){
 			$arr = new ArrayDimFetchSymbol() ;
 			$arr->setValue($part) ;
 			//加入dataFlow
-			$dataFlow->setLocation($part) ;
-			$dataFlow->setName("array") ;
-				
+			if($type == "left"){
+				$dataFlow->setLocation($arr) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($part) ;
+			}
 		}elseif ($part && SymbolUtils::isConcat($part)){
 			$concat = new ConcatSymbol() ;
 			$concat->setItemByNode($part) ;
+			if($type == "left"){
+				$dataFlow->setLocation($concat) ;
+				$dataFlow->setName($part->name) ;
+			}else if($type == "right"){
+				$dataFlow->setValue($part) ;
+			}
 		}
 			
 		//处理完一条赋值语句，加入DataFlowMap
-		$block->getBlockSummary()->addDataFlowItem($dataFlow);
+		if($type == "right"){
+			$block->getBlockSummary()->addDataFlowItem($dataFlow);
+		}
 	}
 	
 	
@@ -314,8 +336,9 @@ class CFGGenerator{
 			switch ($node->getType()){
 				//处理赋值语句
 				case 'Expr_Assign':  
-					$this->assignHandler($node, $block,"left") ;
-					$this->assignHandler($node, $block, "right") ;
+					$dataFlow = new DataFlow() ;
+					$this->assignHandler($node, $block,$dataFlow,"left") ;
+					$this->assignHandler($node, $block,$dataFlow,"right") ;
 					break ;
 				
 				//处理字符串连接赋值
@@ -352,9 +375,9 @@ class CFGGenerator{
 	/**
 	 * 由AST节点创建相应的CFG，用于后续分析
 	 * 
-	 * @param $nodes  传入的PHP file的所有nodes
+	 * @param Node $nodes  传入的PHP file的所有nodes
 	 * @param $condition   构建CFGNode时的跳转信息
-	 * @param $pEntryBlock   入口基本块
+	 * @param BasicBlock $pEntryBlock   入口基本块
 	 * @param $pNextBlock   下一个基本块
 	 */
 	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
@@ -382,6 +405,7 @@ class CFGGenerator{
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
 				//生成基本块的摘要
 				$this->simulate(currBlock) ;
+				print_r($currBlock->getBlockSummary()) ;
 				
 				$nextBlock = new BasicBlock() ;
 				//对每个分支，建立相应的基本块
@@ -397,6 +421,7 @@ class CFGGenerator{
 				//加入循环条件
 				$this->addLoopVariable($node, $currBlock) ; 
 				$this->simulate($currBlock) ;
+				print_r($currBlock->getBlockSummary()) ;
 				
 				$currBlock->nodes = $node->stmts ;
 				$nextBlock = new BasicBlock() ;
@@ -412,6 +437,8 @@ class CFGGenerator{
 			}elseif(in_array($node->getType(),$RETURN_STATEMENT)){
 				$currBlock->addNode($node) ;
 				$this->simulate($currBlock) ;
+				print_r($currBlock->getBlockSummary()) ;
+				
 				return ;
 			}else{
 				$currBlock->addNode($node);
@@ -420,9 +447,10 @@ class CFGGenerator{
 		
 		
 		
-		$this->simulate(currBlock) ;
+		$this->simulate($currBlock) ;
+		print_r($currBlock->getBlockSummary()) ;
 		
-		print_r($currBlock) ;
+		//print_r($currBlock) ;
 		if($pNextBlock && !$currBlock->is_exit){
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
 			$currBlock->addOutEdge($block_edge) ;
@@ -536,7 +564,7 @@ $pEntryBlock->is_entry = true ;
 $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
-print_r($pEntryBlock) ;
+//print_r($pEntryBlock) ;
 
 //获取
 

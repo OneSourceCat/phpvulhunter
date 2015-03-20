@@ -1,9 +1,5 @@
 <?php
-define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
-require "Symbol.class.php" ;
-require_once CURR_PATH . "/../vendor/autoload.php" ;
-require CURR_PATH . '/../utils/SymbolUtils.class.php';
-ini_set('xdebug.max_nesting_level', 2000);
+
 
 class ConcatSymbol extends Symbol{
 	private $value ; //Value对应的值

@@ -1,5 +1,5 @@
 <?php
-require './Symbol.class.php';
+
 /**
  * 针对静态的string和integer以及float来生成symbol
  * Notice：这里没有继承Symbol基类是因为静态string和数值没有相关的三元组信息

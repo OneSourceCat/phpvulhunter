@@ -1,5 +1,5 @@
 <?php
-require './Symbol.class.php' ;
+
 
 class ConstantSymbol extends Symbol{
 	private $value ; //Value对应的值
