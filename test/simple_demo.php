@@ -1,8 +1,5 @@
 <?php
 
-define('DF', 'cdd') ;
-
-$sql = DF ;
+extract($_FILES,EXTR_OVERWRITE);
 
 ?>
-

@@ -163,6 +163,10 @@ class CFGGenerator{
 			return ;
 		}
 		
+		//处理$GLOBALS的赋值
+		//$GLOBAL['name'] = "chongrui" ;
+		
+		
 		//处理赋值语句，存放在DataFlow
 		//处理赋值语句的左边
 		if($part && SymbolUtils::isValue($part)){
@@ -349,18 +353,20 @@ class CFGGenerator{
 					break ;
 				
 				//处理常量，加入至summary中
-				//这里有问题，应该使用define判断
-				case 'Expr_FuncCall':
-					if($node->name->parts[0] == "define"){
-						$this->constantHandler($node, $block) ;
-					}
+				//应该使用define判断
+				case 'Expr_FuncCall' && ($node->name->parts[0] == "define"):
+					$this->constantHandler($node, $block) ;
 					break ;
 				
 				//处理全局变量的定义，global $a
-				case 'Expr_VariableStmt_GlobalArray':
+				case 'Stmt_Global':
 					$this->globalDefinesHandler($node, $block) ;
 					break ;
 				
+				//$GLOBALS['name'] = 'xxxx' ;
+				case '':
+					break ;
+					
 				//过程内分析时记录
 				case 'Stmt_Return':
 					$this->returnValueHandler($node, $block) ;
@@ -368,7 +374,8 @@ class CFGGenerator{
 				
 				//全局变量的注册extract,parse_str,mb_parse_str,import_request_variables
 				case 'Expr_FuncCall' :
-					
+					echo '-------------------';
+					$this->registerGlobalHandler($node, $block) ;
 					break ;
 			}
 		}
