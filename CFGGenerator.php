@@ -155,6 +155,10 @@ class CFGGenerator{
 			return ;
 		}
 		
+		//处理$GLOBALS的赋值
+		//$GLOBAL['name'] = "chongrui" ;
+		
+		
 		//处理赋值语句，存放在DataFlow
 		//处理赋值语句的左边
 		if($part && SymbolUtils::isValue($part)){
@@ -236,8 +240,8 @@ class CFGGenerator{
 	 */
 	private function constantHandler($node,$block){
 		$cons = new Constants() ;
-		$cons->setName($node->name) ;
-		$cons->setValue($node) ;
+		$cons->setName($node->args[0]->value->value) ;
+		$cons->setValue($node->args[1]->value->value) ;
 		$block->getBlockSummary()->addConstantItem($cons);
 	}
 	
@@ -340,15 +344,20 @@ class CFGGenerator{
 					break ;
 				
 				//处理常量，加入至summary中
-				case 'Expr_ConstFetch':
+				//应该使用define判断
+				case 'Expr_FuncCall' && ($node->name->parts[0] == "define"):
 					$this->constantHandler($node, $block) ;
 					break ;
 				
 				//处理全局变量的定义，global $a
-				case 'Expr_VariableStmt_GlobalArray':
+				case 'Stmt_Global':
 					$this->globalDefinesHandler($node, $block) ;
 					break ;
 				
+				//$GLOBALS['name'] = 'xxxx' ;
+				case '':
+					break ;
+					
 				//过程内分析时记录
 				case 'Stmt_Return':
 					$this->returnValueHandler($node, $block) ;
@@ -356,7 +365,8 @@ class CFGGenerator{
 				
 				//全局变量的注册extract,parse_str,mb_parse_str,import_request_variables
 				case 'Expr_FuncCall' :
-					
+					echo '-------------------';
+					$this->registerGlobalHandler($node, $block) ;
 					break ;
 			}
 		}
@@ -394,7 +404,7 @@ class CFGGenerator{
 			//如果节点是跳转类型的语句
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
 				//生成基本块的摘要
-				$this->simulate(currBlock) ;
+				$this->simulate($currBlock) ;
 				print_r($currBlock->getBlockSummary()) ;
 				
 				$nextBlock = new BasicBlock() ;
@@ -405,7 +415,7 @@ class CFGGenerator{
 				}
 				//var_dump($nextBlock) ;
 				$currBlock = $nextBlock ;
-			
+				
 			//如果节点是循环语句
 			}elseif(in_array($node->getType(), $LOOP_STATEMENT)){  
 				//加入循环条件
