@@ -1,5 +1,8 @@
 <?php
 
-extract($_FILES,EXTR_OVERWRITE);
 
+$sql = "INSERT INTO " . THEMES_TABLE . " (";
+$sql .= ") VALUES (";
+$sql .= ")";
 ?>
+

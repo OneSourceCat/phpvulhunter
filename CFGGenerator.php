@@ -1,6 +1,5 @@
 <?php
 define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
-
 require_once CURR_PATH . '/vendor/autoload.php' ;
 require_once CURR_PATH . '/BasicBlock.php';
 require_once CURR_PATH . '/symbols/Symbol.class.php' ;
@@ -12,20 +11,13 @@ require_once CURR_PATH . '/symbols/ArrayDimFetchSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
 require_once CURR_PATH . '/utils/NodeUtils.class.php';
-
 ini_set('xdebug.max_nesting_level', 2000);
-
-
 //定义PHP语句类别
 $RETURN_STATEMENT = array('Stmt_Return') ;
 $STOP_STATEMENT = array('Stmt_Throw','Stmt_Break','Stmt_Continue') ;
 $LOOP_STATEMENT = array('Stmt_For','Stmt_While','Stmt_Foreach','Stmt_Do') ;
 $JUMP_STATEMENT = array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','Expr_BinaryOp_LogicalOr') ;
-
-
-
 use PhpParser\Node ;
-
 class CFGGenerator{
 	
 	private $parser ;  //AST解析类
@@ -179,7 +171,6 @@ class CFGGenerator{
 			}else if($type == "right"){
 				$dataFlow->setValue($vs) ;
 			}
-
 		}elseif ($part && SymbolUtils::isVariable($part)){
 			
 			//加入dataFlow
@@ -401,7 +392,6 @@ class CFGGenerator{
 			$pEntryBlock->addOutEdge($block_edge) ;
 			$currBlock->addInEdge($block_edge) ;
 		}
-
 		//迭代每个AST node
 		foreach($nodes as $node){
 			if(!is_object($node))continue ;
@@ -472,9 +462,6 @@ class CFGGenerator{
 	}
 	
 }
-
-
-
 /**
  * 跳转语句的分支结构类
  * @author Administrator
@@ -509,7 +496,6 @@ class Branch{
 	}
 	
 }
-
 /**
  * 获取PHP File中所有的AST节点的访问者
  * @author Administrator
@@ -528,7 +514,6 @@ class MyVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 	
 }
-
 /**
  * 用来遍历LogicalOr节点，并将所有的分支分离出来
  * @author Administrator
@@ -557,8 +542,6 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 	
 }
-
-
 $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
@@ -568,15 +551,11 @@ $stmts = $parser->parse($code) ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 $nodes = $visitor->getNodes() ;
-
 $pEntryBlock = new BasicBlock() ;
 $pEntryBlock->is_entry = true ;
 $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
 //print_r($pEntryBlock) ;
-
 //获取
-
 ?>
-
