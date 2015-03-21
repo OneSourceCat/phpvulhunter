@@ -9,12 +9,9 @@ class NodeUtils{
     /**
      * 给定一个节点，返回该节点对应string name
      * @param Node $node
-     * @return base node name string
+     * @return string
      */
-    public static function getNodeStringName($node) {
-        if (!$node instanceof Node){
-            return null;
-        }      
+    public static function getNodeStringName(Node $node) {
         //print_r($node);
         $type = $node->getType();
         //print_r($type);
@@ -74,77 +71,6 @@ class NodeUtils{
             break;
         }
         return "";
-    }
-    
-    /**
-     * 给定一个节点，返回该节点对应function name,如果是类方法调用，返回类名:方法名
-     * @param Node $node
-     * @return function name
-     */
-    public static function getNodeFunctionName($node){
-        if (!$node instanceof Node){
-            return null;
-        }
-        $type = $node->getType();
-        print_r($type);
-        switch ($type) {
-            //function a(){},
-            case "Stmt_Function":
-                return $node->name;
-            break;
-            //a()
-            case "Expr_FuncCall":
-                return NodeUtils::getNodeStringName($node->name);
-            break;
-            //function define in class
-            case "Stmt_ClassMethod":
-                return $node->name;
-                break;
-            //class->function()
-            case "Expr_MethodCall":           
-                $objectName = NodeUtils::getNodeStringName($node->var);
-                $methodName = $node->name;
-                return "$objectName:$methodName";
-                break;
-            //class::static function()
-            case "Expr_StaticCall":
-                $objectName = NodeUtils::getNodeStringName($node->class);
-                $methodName = $node->name;
-                return "$objectName:$methodName";
-                break;
-            //匿名函数
-            case "Expr_Closure":
-                return "";
-                break;
-            default:
-                return "";
-                break;
-        }
-    }
-    /**
-     * 给定一个节点，返回该节点对应class name,
-     * @param Node $node
-     * @return class name
-     */
-    public static function getNodeClassName($node){
-        if (!$node instanceof Node){
-            return null;
-        }
-        $type = $node->getType();
-        switch ($type) {
-            //class define
-            case "Stmt_Class":
-                return $node->name;
-                break;
-            //new class
-            case "Expr_New":
-                return NodeUtils::getNodeStringName($node->class);
-                break; 
-            //
-            default:
-                return "";
-                break;
-        }
     }
     
 }
