@@ -11,6 +11,8 @@ require_once CURR_PATH . '/symbols/MutipleSymbol.class.php';
 require_once CURR_PATH . '/symbols/ArrayDimFetchSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
+require_once CURR_PATH . '/symbols/SantinizationHandler.class.php';
+require_once CURR_PATH . '/symbols/EncodingHandler.class.php';
 require_once CURR_PATH . '/utils/NodeUtils.class.php';
 
 ini_set('xdebug.max_nesting_level', 2000);
@@ -225,8 +227,16 @@ class CFGGenerator{
 			}else if($type == "right"){
 				$dataFlow->setValue($concat) ;
 			}
-		}
+		}else{
+			//不属于已有的任何一个symbol类型,如函数调用
+			if($part->getType() == "Expr_FuncCall" && $type == "right"){
+				//处理净化信息和编码信息
+				SantinizationHandler::setSantiInfo($part,$dataFlow) ;
+			}
 			
+		}
+		
+		
 		//处理完一条赋值语句，加入DataFlowMap
 		if($type == "right"){
 			$block->getBlockSummary()->addDataFlowItem($dataFlow);
@@ -331,7 +341,7 @@ class CFGGenerator{
 	public function simulate($block){
 		//获取基本块中所有的节点
 		$nodes = $block->getContainedNodes() ;
-		//循环nodes集合，找出赋值语句加入到blocksummary中
+		//循环nodes集合，搜集信息加入到blocksummary中
 		foreach ($nodes as $node){
 			switch ($node->getType()){
 				//处理赋值语句
@@ -360,11 +370,6 @@ class CFGGenerator{
 				case 'Stmt_Global':
 					$this->globalDefinesHandler($node, $block) ;
 					break ;
-				
-				//$GLOBALS['name'] = 'xxxx' ;
-				case '':
-					
-					break ;
 					
 				//过程内分析时记录
 				case 'Stmt_Return':
@@ -372,11 +377,19 @@ class CFGGenerator{
 					break ;
 				
 				//全局变量的注册extract,parse_str,mb_parse_str,import_request_variables
+				//识别净化值
 				case 'Expr_FuncCall' :
 					$this->registerGlobalHandler($node, $block) ;
 					break ;
 			}
 		}
+		
+		
+		//采集Symbol的type，encoding，santinization信息
+		foreach ($nodes as $node){
+			
+		}
+		
 		
 	}
 	

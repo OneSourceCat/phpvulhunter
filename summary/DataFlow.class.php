@@ -1,7 +1,9 @@
 <?php
+
 class DataFlow {
-	private $location ; //被赋值的变量
-	private $value ;   //赋值语句的值
+
+	private $location ; //被赋值的变量  Symbols
+	private $value ;   //赋值语句的值   Node
 	private $name ;   //变量的名字string
 
 	
