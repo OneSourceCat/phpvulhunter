@@ -77,7 +77,7 @@ class SymbolUtils {
 	 */
 	public static function isArrayDimFetch($node){
 		$type = $node->getType() ;
-		if($type == "Expr_ArrayDimFetch" && $type == "Expr_Array"){
+		if($type == "Expr_ArrayDimFetch" or $type == "Expr_Array"){
 			return true ;
 		}else{
 			return false ;

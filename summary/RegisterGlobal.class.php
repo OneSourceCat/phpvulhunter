@@ -4,11 +4,11 @@ class RegisterGlobal {
 	private $isUrlOverWrite = true ;
 	
 	public function getIsUrlOverWrite() {
-		return $this->isOverWrite;
+		return $this->isUrlOverWrite;
 	}
 
-	public function setIsUrlOverWrite($isOverWrite) {
-		$this->isOverWrite = $isOverWrite;
+	public function setIsUrlOverWrite($isUrlOverWrite) {
+		$this->isUrlOverWrite = $isUrlOverWrite;
 	}
 
 	public function getName() {

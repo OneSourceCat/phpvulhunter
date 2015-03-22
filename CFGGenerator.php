@@ -62,7 +62,7 @@ class CFGGenerator{
 				
 				//处理else分支，由stmts组成，没有cond，这里的cond填为"else"
 				if($node->else){
-					$if_branch = new Branch('else', $node->else) ;
+					$if_branch = new Branch('else', $node->else->stmts) ;
 					array_push($branches,$if_branch) ;
 				}
 				break ;
@@ -164,7 +164,9 @@ class CFGGenerator{
 		}
 		
 		//处理$GLOBALS的赋值
-		//$GLOBAL['name'] = "chongrui" ;
+		//$GLOBAL['name'] = "chongrui" ; 数据流信息为 $name = "chongrui" ;
+		//todo:
+		
 		
 		
 		//处理赋值语句，存放在DataFlow
@@ -282,8 +284,9 @@ class CFGGenerator{
 	 * @param BasicBlock $block
 	 */
 	private function registerGlobalHandler($node,$block){
-		$funcName = $node->name->parts[0] ;  //获取方法调用时的方法名
-		if($funcName != 'extract' or $funcName != "parse_str" or $funcName != "import_request_variables"){
+		$funcName = NodeUtils::getNodeFunctionName($node);  //获取方法调用时的方法名
+		
+		if($funcName != 'extract' and $funcName != "import_request_variables"){
 			return ;
 		}
 		
@@ -291,7 +294,7 @@ class CFGGenerator{
 			case 'extract':
 				$registerItem = new RegisterGlobal() ;
 				//extract只有在EXTR_OVERWRITE时才能在URL覆盖
-				if(count($node->args) > 1 && $node->args[1]->value->name->parts == "EXTR_OVERWRITE"){
+				if(count($node->args) > 1 && $node->args[1]->value->name->parts[0] == "EXTR_OVERWRITE"){
 					$registerItem->setIsUrlOverWrite(true) ;
 				}else{
 					$registerItem->setIsUrlOverWrite(false) ;
@@ -301,17 +304,11 @@ class CFGGenerator{
 				$block->getBlockSummary()->addRegisterGlobalItem($registerItem) ;
 				break ;
 				
-			case 'parse_str':
-				$registerItem = new RegisterGlobal() ;
-				$varName = NodeUtils::getNodeStringName($node->args[0]->value);
-				$registerItem->setName($varName) ;
-				$block->getBlockSummary()->addRegisterGlobalItem($registerItem) ;
-				break ;
-				
 			case 'import_request_variables':
 				$registerItem = new RegisterGlobal() ;
 				$varName = NodeUtils::getNodeStringName($node->args[0]->value);
 				$registerItem->setName($varName) ;
+				$registerItem->setIsUrlOverWrite(true) ;
 				$block->getBlockSummary()->addRegisterGlobalItem($registerItem) ;
 				break ;
 				
@@ -338,6 +335,7 @@ class CFGGenerator{
 		foreach ($nodes as $node){
 			switch ($node->getType()){
 				//处理赋值语句
+				//如果$GLOBALS['name'] = 'xxxx' ;  则并入registerGlobal中
 				case 'Expr_Assign':  
 					$dataFlow = new DataFlow() ;
 					$this->assignHandler($node, $block,$dataFlow,"left") ;
@@ -354,7 +352,7 @@ class CFGGenerator{
 				
 				//处理常量，加入至summary中
 				//应该使用define判断
-				case 'Expr_FuncCall' && ($node->name->parts[0] == "define"):
+				case 'Expr_FuncCall' && (NodeUtils::getNodeFunctionName($node) == "define"):
 					$this->constantHandler($node, $block) ;
 					break ;
 				
@@ -365,6 +363,7 @@ class CFGGenerator{
 				
 				//$GLOBALS['name'] = 'xxxx' ;
 				case '':
+					
 					break ;
 					
 				//过程内分析时记录
@@ -374,7 +373,6 @@ class CFGGenerator{
 				
 				//全局变量的注册extract,parse_str,mb_parse_str,import_request_variables
 				case 'Expr_FuncCall' :
-					echo '-------------------';
 					$this->registerGlobalHandler($node, $block) ;
 					break ;
 			}
