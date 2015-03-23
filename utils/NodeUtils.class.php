@@ -47,19 +47,19 @@ class NodeUtils{
             //$a[],$[a]$a[]][]    
             case "Expr_ArrayDimFetch":
                 $names = $node->getSubNodeNames();
-                $a = "";
+                $temp = "";
                 foreach ($names as $name)
                 {
                     if ($name == "dim"){
                         if ($node->$name)
-                            $a =$a. "[".NodeUtils::getNodeStringName($node->$name)."]";
+                            $temp .= "[".NodeUtils::getNodeStringName($node->$name)."]";
                         else 
-                            $a =$a. "[]";
+                            $temp .= "[]";
                     }
                     else
-                        $a =$a. NodeUtils::getNodeStringName($node->$name);
+                        $temp .= NodeUtils::getNodeStringName($node->$name);
                 }
-                return $a;
+                return $temp;
                 break;
             //数组dim
             case "Expr_ConstFetch":
@@ -76,6 +76,22 @@ class NodeUtils{
         return "";
     }
     
+    /**
+     * $GLOBALS["first"]["second"]["third"] =>first[second][third]
+     * @param Node $node
+     * @return GLOBALS注册的变量名
+     */
+    public static function getNodeGLOBALSNodeName($node){
+        if (!$node instanceof Node){
+            return null;
+        }
+        if($node->var->var){
+            $ret = NodeUtils::getNodeStringName($node->dim);
+            return NodeUtils::getNodeGLOBALSNodeName($node->var)."[".$ret."]";
+        }
+        return NodeUtils::getNodeStringName($node->dim);
+       
+    }
     /**
      * 给定一个节点，返回该节点对应function name,如果是类方法调用，返回类名:方法名
      * @param Node $node
