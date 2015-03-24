@@ -27,13 +27,8 @@ class SantinizationHandler {
 	
 	/**
 	 * 查看净化栈中是否有可以抵消的元素
-	  	'rawurldecode',
-		'urldecode',
-		'base64_decode',
-		[+]'html_entity_decode',
-		[+]'stripslashes',
-		'str_rot13',
-		'chr'
+	 *	[+]'html_entity_decode',
+	 *	[+]'stripslashes',
 	 * @param string $funcName
 	 * @param Node $node
 	 * @param DataFlow $dataFlow
@@ -52,10 +47,18 @@ class SantinizationHandler {
 					$position = array_search('addslashes',$map) ;
 					array_splice($map,$position,1) ;
 					break ;
+					
 				case 'html_entity_decode':
 					//去除htmlentities净化
 					$map = $dataFlow->getLocation()->getSanitization() ;
 					$position = array_search('htmlentities',$map) ;
+					array_splice($map,$position,1) ;
+					break ;
+				
+				case 'htmlspecialchars_decode':
+					//去除htmlspecialchars净化
+					$map = $dataFlow->getLocation()->getSanitization() ;
+					$position = array_search('htmlspecialchars',$map) ;
 					array_splice($map,$position,1) ;
 					break ;
 

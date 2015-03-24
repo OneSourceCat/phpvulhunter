@@ -61,12 +61,18 @@ $F_SECURING_STRING = array(
 
 //PHP中的编码函数
 $F_ENCODING_STRING = array(
-		
+	'rawurlencode',
+	'urlencode',
+	'base64_encode',
+	'html_entity_encode'
 ) ;
 
 //PHP中的解码函数
 $F_DECODING_STRING = array(
-	
+	'rawurldecode',
+	'urldecode',
+	'base64_decode',
+	'html_entity_decode'
 ) ;
 
 
@@ -78,7 +84,8 @@ $F_INSECURING_STRING = array(
 	'html_entity_decode',
 	'stripslashes',
 	'str_rot13',
-	'chr'
+	'chr',
+	'htmlspecialchars_decode'
 );
 
 //XSS的安全标签

@@ -246,6 +246,7 @@ class CFGGenerator{
 			if($part->getType() == "Expr_FuncCall" && $type == "right"){
 				//处理净化信息和编码信息
 				SantinizationHandler::setSantiInfo($part,$dataFlow) ;
+				EncodingHandler::setEncodeInfo($part, $dataFlow) ;
 			}
 			
 		}
