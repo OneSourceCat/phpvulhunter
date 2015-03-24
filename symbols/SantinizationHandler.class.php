@@ -1,7 +1,6 @@
 <?php
-
-define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
-require CURR_PATH . '/conf/securing.php';
+//define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
+require CURR_PATH . "/conf/securing.php" ;
 
 class SantinizationHandler {
 	/**
@@ -11,16 +10,18 @@ class SantinizationHandler {
 	 * @param DataFlow $dataFlow
 	 */
 	public function setSantiInfo($node,$dataFlow){
+		global $F_SECURES_ALL ;
 		$funcName = NodeUtils::getNodeFunctionName($node) ;
+
 		//查看sqli的净化信息
-		foreach ($F_SECURES_ALL as $securingArr){
-			if(in_array($funcName, $securingArr)){
-				//设置净化函数
-				$dataFlow->getLocation()->addSanitization($funcName) ;
-				//清除反作用的函数
-				$this->clearSantiInfo($funcName, $node, $dataFlow) ;
-			}
+		if(in_array($funcName, $F_SECURES_ALL)){
+			//设置净化函数
+			$dataFlow->getLocation()->addSanitization($funcName) ;
+			
 		}
+		
+		//清除反作用的函数
+		SantinizationHandler::clearSantiInfo($funcName, $node, $dataFlow) ;
 		
 	}	
 	
@@ -38,6 +39,9 @@ class SantinizationHandler {
 	 * @param DataFlow $dataFlow
 	 */
 	public function clearSantiInfo($funcName, $node,$dataFlow){
+		global $F_INSECURING_STRING ;
+		//echo "<br/>" . $funcName ."<br/>";
+		//print_r($dataFlow) ;
 		//判断$funcName相反的函数是否在净化Map中
 		//比如调用stripslashes($funcName=stripslashes)
 		if(in_array($funcName,$F_INSECURING_STRING)){
@@ -45,13 +49,13 @@ class SantinizationHandler {
 				case 'stripslashes':
 					//去除净化Map中最近的addslashes净化
 					$map = $dataFlow->getLocation()->getSanitization() ;
-					$position = array_search($map, 'addslashes') ;
+					$position = array_search('addslashes',$map) ;
 					array_splice($map,$position,1) ;
 					break ;
 				case 'html_entity_decode':
 					//去除htmlentities净化
 					$map = $dataFlow->getLocation()->getSanitization() ;
-					$position = array_search($map, 'htmlentities') ;
+					$position = array_search('htmlentities',$map) ;
 					array_splice($map,$position,1) ;
 					break ;
 
@@ -61,7 +65,6 @@ class SantinizationHandler {
 	}
 	
 }
-
 
 
 ?>

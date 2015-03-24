@@ -3,8 +3,9 @@ define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 
 require_once CURR_PATH . '/vendor/autoload.php' ;
 require_once CURR_PATH . '/BasicBlock.php';
-require_once CURR_PATH . '/symbols/Symbol.class.php' ;
 require_once CURR_PATH . '/utils/SymbolUtils.class.php';
+require_once CURR_PATH . '/utils/NodeUtils.class.php';
+require_once CURR_PATH . '/symbols/Symbol.class.php' ;
 require_once CURR_PATH . '/symbols/ValueSymbol.class.php';
 require_once CURR_PATH . '/symbols/VariableSymbol.class.php';
 require_once CURR_PATH . '/symbols/MutipleSymbol.class.php';
@@ -13,7 +14,7 @@ require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
 require_once CURR_PATH . '/symbols/SantinizationHandler.class.php';
 require_once CURR_PATH . '/symbols/EncodingHandler.class.php';
-require_once CURR_PATH . '/utils/NodeUtils.class.php';
+
 
 ini_set('xdebug.max_nesting_level', 2000);
 
@@ -165,6 +166,7 @@ class CFGGenerator{
 			return ;
 		}
 		
+
 		//处理$GLOBALS的赋值
 		//$GLOBAL['name'] = "chongrui" ; 数据流信息为 $name = "chongrui" ;
 		//todo:
@@ -382,12 +384,6 @@ class CFGGenerator{
 					$this->registerGlobalHandler($node, $block) ;
 					break ;
 			}
-		}
-		
-		
-		//采集Symbol的type，encoding，santinization信息
-		foreach ($nodes as $node){
-			
 		}
 		
 		
