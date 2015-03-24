@@ -433,6 +433,9 @@ class CFGGenerator{
 		foreach($nodes as $node){
 			if(!is_object($node))continue ;
 			
+			//不分析函数定义
+			if($node->getType() == "Stmt_Function") continue ;
+			
 			//判断node是否是结束node
 			if($node->getAttribute('endLine') == 9){
 				$currBlock->is_exit = true ;

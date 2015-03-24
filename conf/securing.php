@@ -59,6 +59,17 @@ $F_SECURING_STRING = array(
 	'min'
 );
 
+//PHP中的编码函数
+$F_ENCODING_STRING = array(
+		
+) ;
+
+//PHP中的解码函数
+$F_DECODING_STRING = array(
+	
+) ;
+
+
 //消除净化标签的函数
 $F_INSECURING_STRING = array(
 	'rawurldecode',
