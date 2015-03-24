@@ -169,8 +169,20 @@ class CFGGenerator{
 
 		//处理$GLOBALS的赋值
 		//$GLOBAL['name'] = "chongrui" ; 数据流信息为 $name = "chongrui" ;
-		//todo:
-		
+		if ($part && SymbolUtils::isArrayDimFetch($part) && (substr(NodeUtils::getNodeStringName($part),0,7)=="GLOBALS")){
+		    //加入dataFlow
+		    $arr = new ArrayDimFetchSymbol() ;
+		    $arr->setValue($part) ;
+		    if($type == "left"){
+		        $dataFlow->setLocation($arr) ;
+		        $dataFlow->setName(NodeUtils::getNodeGLOBALSNodeName($part)) ;
+		        //加入registerglobal
+		        $this->registerGLOBALSHandler($part, $block);
+		    }else if($type == "right"){
+		        $dataFlow->setValue($arr) ;
+		    }
+		    return ;
+		}
 		
 		
 		//处理赋值语句，存放在DataFlow
@@ -216,7 +228,7 @@ class CFGGenerator{
 			$arr->setValue($part) ;
 			if($type == "left"){
 				$dataFlow->setLocation($arr) ;
-				$dataFlow->setName($part->name) ;
+				$dataFlow->setName(NodeUtils::getNodeStringName($part)) ;
 			}else if($type == "right"){
 				$dataFlow->setValue($arr) ;
 			}
@@ -296,8 +308,7 @@ class CFGGenerator{
 	 * @param BasicBlock $block
 	 */
 	private function registerGlobalHandler($node,$block){
-		$funcName = NodeUtils::getNodeFunctionName($node);  //获取方法调用时的方法名
-		
+		$funcName = NodeUtils::getNodeFunctionName($node);  //获取方法调用时的方法名		
 		if($funcName != 'extract' and $funcName != "import_request_variables"){
 			return ;
 		}
@@ -329,7 +340,13 @@ class CFGGenerator{
 		
 	}
 	
-	
+	private function registerGLOBALSHandler($node,$block){
+	    $registerItem = new RegisterGlobal() ;
+	    $varName = NodeUtils::getNodeGLOBALSNodeName($node);
+	    $registerItem->setName($varName) ;
+	    $registerItem->setIsUrlOverWrite(false) ;
+	    $block->getBlockSummary()->addRegisterGlobalItem($registerItem) ;
+	}
 	
 	/**
 	 * 生成基本块摘要，为数据流分析做准备
@@ -346,8 +363,7 @@ class CFGGenerator{
 		//循环nodes集合，搜集信息加入到blocksummary中
 		foreach ($nodes as $node){
 			switch ($node->getType()){
-				//处理赋值语句
-				//如果$GLOBALS['name'] = 'xxxx' ;  则并入registerGlobal中
+				//处理赋值语句			
 				case 'Expr_Assign':  
 					$dataFlow = new DataFlow() ;
 					$this->assignHandler($node, $block,$dataFlow,"left") ;
@@ -383,6 +399,10 @@ class CFGGenerator{
 				case 'Expr_FuncCall' :
 					$this->registerGlobalHandler($node, $block) ;
 					break ;
+				//如果$GLOBALS['name'] = 'xxxx' ;  则并入registerGlobal中
+				case 'Expr_ArrayDimFetch' && (substr(NodeUtils::getNodeStringName($node),0,7)=="GLOBALS"):
+				    $this->registerGLOBALSHandler($node, $block);
+				    break;
 			}
 		}
 		
