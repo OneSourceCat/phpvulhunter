@@ -1,6 +1,6 @@
 <?php
 
-define('CURR_PATH', str_repeat("\\","/", dirname(__FILE__))) ;
+define('CURR_PATH', str_replace("\\","/", dirname(__FILE__))) ;
 
 require CURR_PATH . '/../utils/FileUtils.class.php';
 require CURR_PATH . '/../vendor/autoload.php' ;
@@ -56,25 +56,36 @@ class Context{
 
 	/*
 		获取类中的一个函数的AST节点
-		@param $funcname  给定一个方法的名称
-		@param $path  方法所在的PHP文件路径
+		@param $funcname  给定一个方法的名称，没法知道调用的函数在那个php文件，当类名：：函数名都相同概率低，不影响得到函数歧义
 		@return 返回相应的AST上的方法节点
 	*/
-	public function getFunctionBody($funcname,$path){
+	public function getFunctionBody($funcname){
 		$method = NULL ;
+		$path = '';
 		$code = '' ;
 		$records = $this->records ;
+		$funcinfo = explode(":", $funcname);
+		if(count($funcinfo)>1){
+		    $classname = $funcinfo[0];
+		    $funcname = $funcinfo[1];
+		}else{
+		    $funcname = $funcinfo[0];
+		}
+		//echo "$classname";
 		//print_r($records);
 		//寻找相应的method
 		for($i=0;$i<count($records);$i++) {
 			foreach($this->records[$i]->class_methods as $k => $item){
-				if($item['name'] ==  $funcname && $this->records[$i]->path == $path){
+				if($item['name'] ==  $funcname ){
 					$method = $item ;
+					$path = $this->records[$i]->path;
 				}
 			}
 		}
 
 		//设置code
+		if (!$path)
+		    return null;
 		$code = file_get_contents($path) ;
 		
 		//找到了相应的方法名称
@@ -211,6 +222,41 @@ class MyVisitor extends PhpParser\NodeVisitorAbstract{
 			$context = Context::getInstance() ;
 			$context->setRecord($record) ;
 		}
+		elseif ($node instanceof Node\Stmt\Function_){
+		    $record = new Record ;
+		    $record->path = $this->class_path ;
+		    //设置类的名字
+		    $record->class_name = '' ;
+		    $record->class_properties = '' ;
+		    //设置类的方法
+		    //初始化类方法的描述
+		    $method = array('name'=>'','params'=>array(),'startLine'=>0,'endLine'=>0);
+		
+		    //设置方法名称
+		    echo "[methods_name]:" .$node->name ."<br/>";
+		    $method['name'] = $node->name ;
+		
+		    //设置方法的参数
+		    echo "[methods_params]:";
+		    for($i=0;$i<count($node->params);$i++){
+		        echo $node->params[$i]->name ."\t";
+		        array_push($method['params'],$node->params[$i]->name) ;
+		    }
+		    echo "<br>" ;
+		
+		    //设置方法的起始行号和终止行号
+		    echo "[method_Lineinfo]:" ;
+		    $method['startLine'] = $node->getAttribute("startLine") ;
+		    $method['endLine'] = $node->getAttribute("endLine") ;
+		    //echo "startLine:$method['startLine'],endLine:$method['endLine']" ;
+		    echo "<br>" ;
+		     
+		    array_push($record->class_methods,$method);
+		
+		
+		    $context = Context::getInstance() ;
+		    $context->setRecord($record) ;
+		}
 	}
 }
 
@@ -242,7 +288,7 @@ class FunctionBodyVisitor extends PhpParser\NodeVisitorAbstract{
 */
 class ClassFinder{
 	private $parser = NULL ;   //代码解析器
-	private $fileUtil = NULL ;  //文件工具类
+	//private $fileUtil = NULL ;  //文件工具类
 	private $visitor = NULL ;   //访问者
 	private $traverser  = NULL;  //遍历AST对象
 	private $path = '' ;   //工程入口路径
@@ -253,7 +299,7 @@ class ClassFinder{
 	public function __construct($path){
 		$this->path = $path ;
 		$this->parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-		$this->fileUtil = new FileUtil ;
+		//$this->fileUtil = new FileUtils ;
 		$this->visitor = new MyVisitor ;
 		$this->traverser = new PhpParser\NodeTraverser ;
 		$this->traverser->addVisitor($this->visitor) ;
@@ -263,7 +309,8 @@ class ClassFinder{
 		获取所有的源文件的路径
 	*/
 	private function getAllSourceFiles(){
-		return $this->fileUtil->getDir($this->path) ;
+		//return $this->fileUtil->getPHPfile($this->path) ;
+		return FileUtils::getPHPfile($this->path);
 	}
 
 	/*
@@ -273,7 +320,7 @@ class ClassFinder{
 	*/
 	public function getContext(){
 		//判断本地序列化文件中是否存在Context
-		if(($serial_str = file_get_contents("./data/serialdata"))!=''){
+		if(($serial_str = file_get_contents("../data/serialdata"))!=''){
 			$records = unserialize($serial_str) ;
 			$context = Context::getInstance() ;
 			$context->records = $records ;
@@ -305,7 +352,7 @@ class ClassFinder{
 	}
 
 	public function serializeContext($context){
-		file_put_contents("./data/serialdata",serialize($context->records)) ;
+		file_put_contents("../data/serialdata",serialize($context->records)) ;
 	}
 
 	/*
@@ -337,17 +384,17 @@ class ClassFinder{
 
 
 //具体使用方法
-$path = "E:/School_of_software/information_security/PHPVulScanner_project/CMS/chengshiCMS/Cscmsv3.5.6/upload" ;
+//$path = "E:/School_of_software/information_security/PHPVulScanner_project/CMS/chengshiCMS/Cscmsv3.5.6/upload" ;
 //$path = "source.class.php" ;
 //$path = "./test" ;
+$path = 'F:\wamp\www\phpvulhunter\test\simple_demo.php';
 $finder = new  ClassFinder($path) ;
 $finder->getContext() ;
 $context = Context::getInstance() ;
 echo "<pre>" ;
-//print_r($context->records) ;
+// print_r($context->records) ;
 
-
-$node = $context->getFunctionBody("down","E:/School_of_software/information_security/PHPVulScanner_project/CMS/chengshiCMS/Cscmsv3.5.6/upload/app/controllers/admin/packs.php") ;
-print_r($node) ;
+//$node = $context->getFunctionBody("ClassBase:c");
+// print_r($node);
 
 ?>

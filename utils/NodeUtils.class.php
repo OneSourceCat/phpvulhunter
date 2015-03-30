@@ -36,6 +36,14 @@ class NodeUtils{
                 foreach ($names as $name)
                     return ("-".NodeUtils::getNodeStringName($node->$name));
                 break;
+            //arg name
+            case "Arg":
+                return NodeUtils::getNodeStringName($node->value);
+                break;
+            //param name
+            case "Param":
+                return $node->name;
+                break;
             case "Name":
                 $names = $node->getSubNodeNames();
                 //print_r($node->getSubNodeNames());
@@ -102,7 +110,7 @@ class NodeUtils{
             return null;
         }
         $type = $node->getType();
-        print_r($type);
+        //print_r($type);
         switch ($type) {
             //function a(){},
             case "Stmt_Function":
