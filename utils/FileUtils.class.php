@@ -17,9 +17,11 @@ class FileUtils
      * @param php项目文件夹路径 $dirpath            
      * @return array of phpfiles 
      */
-    public static  function getPHPfile($dirpath)
+    public static function getPHPfile($dirpath)
     {
         $ret = array();
+        if (substr($dirpath, - 4) == ".php")
+            array_push($ret, $dirpath);
         if (! is_dir($dirpath))
             return $ret;
         $dh = opendir($dirpath);
@@ -138,8 +140,8 @@ class VisitorForLine extends PhpParser\NodeVisitorAbstract
         $this->count = $count;
     }
 }
-echo "<pre>";
+/* echo "<pre>";
 $dirpath = "F:\wamp\www\discuz7.2\upload";
 $should2parser = FileUtils::mainFileFinder($dirpath);
-print_r($should2parser);
+print_r($should2parser); */
 ?>

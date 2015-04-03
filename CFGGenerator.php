@@ -367,6 +367,7 @@ class CFGGenerator{
 	 * @param BasicBlock $block
 	 */
 	public function simulate($block){
+		global $fileSummary ;
 		//获取基本块中所有的节点
 		$nodes = $block->getContainedNodes() ;
 		//循环nodes集合，搜集信息加入到blocksummary中
@@ -432,9 +433,10 @@ class CFGGenerator{
 	 * @param $pNextBlock   下一个基本块
 	 */
 	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
+		echo "<pre>" ;
+		
 		//此文件的fileSummary
 		global $fileSummary ;
-		echo "<pre>" ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
 		$currBlock = new BasicBlock() ;
 		
@@ -447,7 +449,9 @@ class CFGGenerator{
 
 		//迭代每个AST node
 		foreach($nodes as $node){
-			//require 
+			//搜集节点中的require include require_once include_once的PHP文件名称
+			$fileSummary->addIncludeToMap(NodeUtils::getNodeIncludeInfo($node)) ;
+			
 			
 			if(!is_object($node))continue ;
 			
