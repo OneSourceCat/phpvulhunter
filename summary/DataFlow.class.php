@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * 重要的数据流信息
+ * 主要针对赋值语句
+ * @author exploit
+ */
 class DataFlow {
 
 	private $location ; //被赋值的变量  Symbols

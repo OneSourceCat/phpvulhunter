@@ -1,7 +1,7 @@
 <?php
 /**
  * 保存基本块中的常量信息
- * @author Administrator
+ * @author exploit
  *
  */
 class Constants {

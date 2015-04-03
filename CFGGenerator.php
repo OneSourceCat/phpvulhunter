@@ -14,7 +14,7 @@ require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
 require_once CURR_PATH . '/symbols/SantinizationHandler.class.php';
 require_once CURR_PATH . '/symbols/EncodingHandler.class.php';
-
+require_once CURR_PATH . '/summary/FileSummary.class.php';
 
 ini_set('xdebug.max_nesting_level', 2000);
 
@@ -25,6 +25,8 @@ $STOP_STATEMENT = array('Stmt_Throw','Stmt_Break','Stmt_Continue') ;
 $LOOP_STATEMENT = array('Stmt_For','Stmt_While','Stmt_Foreach','Stmt_Do') ;
 $JUMP_STATEMENT = array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','Expr_BinaryOp_LogicalOr') ;
 
+//全局的filesummary对象
+$fileSummary = new FileSummary() ;
 
 
 use PhpParser\Node ;
@@ -341,6 +343,12 @@ class CFGGenerator{
 		
 	}
 	
+	
+	/**
+	 * 检测GLOBALS的定义
+	 * @param Node $node
+	 * @param BasicBlock $block
+	 */
 	private function registerGLOBALSHandler($node,$block){
 	    $registerItem = new RegisterGlobal() ;
 	    $varName = NodeUtils::getNodeGLOBALSNodeName($node);
@@ -385,6 +393,11 @@ class CFGGenerator{
 					$this->constantHandler($node, $block) ;
 					break ;
 				
+				//处理const关键定义的常量
+				case 'Stmt_Const':
+					
+					break ;
+				
 				//处理全局变量的定义，global $a
 				case 'Stmt_Global':
 					$this->globalDefinesHandler($node, $block) ;
@@ -419,6 +432,8 @@ class CFGGenerator{
 	 * @param $pNextBlock   下一个基本块
 	 */
 	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
+		//此文件的fileSummary
+		global $fileSummary ;
 		echo "<pre>" ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
 		$currBlock = new BasicBlock() ;
@@ -432,6 +447,8 @@ class CFGGenerator{
 
 		//迭代每个AST node
 		foreach($nodes as $node){
+			//require 
+			
 			if(!is_object($node))continue ;
 			
 			//不分析函数定义

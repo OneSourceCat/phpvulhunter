@@ -1,6 +1,12 @@
 <?php
 
-
+/**
+ * 收集常量信息的symbol
+ * define('ROOT','root') ;
+ * 保存ROOT至summary中
+ * @author exploit
+ *
+ */
 class ConstantSymbol extends Symbol{
 	private $value ; //Value对应的值
 	private $name ; //对应的字符串

@@ -7,17 +7,22 @@ require CURR_PATH . '/../vendor/autoload.php' ;
 
 ini_set('xdebug.max_nesting_level', 2000);
 
-/*
-  上下文对象
-  存储全局信息（类信息）
-  要做成单例模式
-*/
+/**
+ *  上下文对象
+ *  存储全局信息（类信息）
+ *  要做成单例模式
+ * @author Exploit
+ *
+ */
 
-class Context{
+class Context extends AbstractContext{
 	public $records ;    //上下文中全部类的记录
-	private static $instance ;   //单例
-
+	
+	/**
+	 * 构造方法私有化
+	 */
 	private function __construct(){
+		parent::__construct() ;
 		$this->records = array() ;
 	}
 
@@ -99,20 +104,6 @@ class Context{
 		}
 	}
 
-	/*
-		获取单例Context的方法
-	*/
-	public static function getInstance(){
-		if(!(self::$instance instanceof self)){
-			self::$instance = new self ;
-		}
-		return self::$instance ;
-	}
-
-	private function __clone(){
-
-	}
-
 }
 
 /*
@@ -145,8 +136,6 @@ class Record{
 	}
 
 }
-
-
 
 
 use PhpParser\Node ;
@@ -253,7 +242,7 @@ class ClassFinder{
 	public function __construct($path){
 		$this->path = $path ;
 		$this->parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-		$this->fileUtil = new FileUtil ;
+		$this->fileUtil = new FileUtils ;
 		$this->visitor = new MyVisitor ;
 		$this->traverser = new PhpParser\NodeTraverser ;
 		$this->traverser->addVisitor($this->visitor) ;

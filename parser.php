@@ -66,7 +66,7 @@ use PhpParser\Node ;
 class MyVisitor extends PhpParser\NodeVisitorAbstract{	
 	public function leaveNode(Node $node){
 		echo $node->getType() ."<br/>";
-		
+		echo NodeUtils::getNodeStringName($node) ;
 	}
 }
 
@@ -98,32 +98,6 @@ print_r($stmts) ;
 
 // echo count($symbol->getItems()) ;
 // print_r($symbol->getItems()) ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

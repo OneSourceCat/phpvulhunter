@@ -1,4 +1,13 @@
 <?php
+
+/**
+ * 该类用于对数据流分析中采取的编码操作进行处理
+ * 如：
+ * $sql = base64_encode($sql) ;
+ * 则$sql进行了base64编码，对此信息进行记录
+ * Symbol对象的encoding栈
+ * @author exploit
+ */
 class EncodingHandler {
 	
 	/**

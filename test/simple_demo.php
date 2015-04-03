@@ -1,8 +1,13 @@
 <?php
 
-$sql = "select * from user where id=" .$_GET['id'] ;
-$sql = base64_encode($sql) ;
-$sql = base64_decode($sql) ;
-$clearsql = addslashes($sql) ;
+
+
+
+// $h = new Hello() ;
+// $h->hello() ;
+
+// classfinder->getfucpath(node,require '';) ;
+
+// require 'source.php';
 
 ?>
