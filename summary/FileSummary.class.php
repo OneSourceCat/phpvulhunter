@@ -6,11 +6,19 @@ class FileSummary{
 	 * @var Array
 	 */
 	private $summaryMap = array() ;
+	
 	/**
 	 * 用于记录该文件摘要对应的文件路径
 	 * @var string
 	*/
 	private $path = '' ;
+	
+	/**
+	 * 用于存放require信息
+	 * @var Array
+	 */
+	private $includeMap = array() ;
+	
 	
 	/**
 	 * 将一个summary添加至map中
@@ -22,37 +30,32 @@ class FileSummary{
 		}
 	}
 	
+	
+	/**
+	 * 将一个include信息添加至map中
+	 * @param string $summary
+	 */
+	public function addIncludeToMap($include){
+		if($include){
+			array_push($this->$includeMap,$include) ;
+		}
+	}
+	
 	//--------------------------------getter && setter-------------------------------------------
-	/**
-	 * @return the $sstack
-	 */
+
 	public function getSstack() {
-		return $this->sstack;
+		return $this->summaryMap ;
 	}
 
-	/**
-	 * @return the $path
-	 */
 	public function getPath() {
-		return $this->path;
+		return $this->path ;
 	}
-
-	/**
-	 * @param multitype: $sstack
-	 */
-	public function setSstack($sstack) {
-		$this->sstack = $sstack;
-	}
-
-	/**
-	 * @param string $path
-	 */
-	public function setPath($path) {
-		$this->path = $path;
-	}
-
 	
+	public function getIncludeMap(){
+		return $this->includeMap ;
+	}
 	
+
 	
 }
 
