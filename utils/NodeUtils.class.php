@@ -171,6 +171,19 @@ class NodeUtils{
         }
     }
     
+    
+    public static function getNodeFuncParams($node){
+    	if (!$node instanceof Node){
+    		return null;
+    	}
+    	$argsArr = array();
+    	foreach ($node->args as $arg){
+    		array_push($argsArr, NodeUtils::getNodeStringName($arg));
+    	}
+    	return $argsArr;
+    }
+    
+    
 	/**
 	 * 从传入节点中提取出包含的PHP文件名称
 	 * @param Node $node

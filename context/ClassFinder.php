@@ -1,9 +1,9 @@
 <?php
 
-define('CURR_PATH', str_replace("\\","/", dirname(__FILE__))) ;
 
-require CURR_PATH . '/../utils/FileUtils.class.php';
-require CURR_PATH . '/../vendor/autoload.php' ;
+require CURR_PATH . '/utils/FileUtils.class.php';
+require_once 'AbstractContext.class.php';
+require CURR_PATH . '/vendor/autoload.php' ;
 
 ini_set('xdebug.max_nesting_level', 2000);
 
@@ -15,14 +15,14 @@ ini_set('xdebug.max_nesting_level', 2000);
  *
  */
 
-class Context extends AbstractContext{
+class Context {
+	private static $instance ;   //单例
 	public $records ;    //上下文中全部类的记录
 	
 	/**
 	 * 构造方法私有化
 	 */
 	private function __construct(){
-		parent::__construct() ;
 		$this->records = array() ;
 	}
 
@@ -114,6 +114,17 @@ class Context extends AbstractContext{
 			return NULL ;
 		}
 	}
+	
+	public static function getInstance(){
+		if(!(self::$instance instanceof self)){
+			self::$instance = new self ;
+		}
+		return self::$instance ;
+	}
+	
+	private function __clone(){
+	
+	}
 
 }
 
@@ -150,7 +161,7 @@ class Record{
 
 
 use PhpParser\Node ;
-class MyVisitor extends PhpParser\NodeVisitorAbstract{
+class ClassVisitor extends PhpParser\NodeVisitorAbstract{
 
 	public $class_path = '' ;   //当前正在扫描的文件名
 
@@ -288,7 +299,7 @@ class ClassFinder{
 	public function __construct($path){
 		$this->path = $path ;
 		$this->parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-		$this->visitor = new MyVisitor ;
+		$this->visitor = new ClassVisitor ;
 		$this->traverser = new PhpParser\NodeTraverser ;
 		$this->traverser->addVisitor($this->visitor) ;
 	}
@@ -308,7 +319,7 @@ class ClassFinder{
 	*/
 	public function getContext(){
 		//判断本地序列化文件中是否存在Context
-		if(($serial_str = file_get_contents("../data/serialdata"))!=''){
+		if(($serial_str = file_get_contents(CURR_PATH . "/data/serialdata"))!=''){
 			$records = unserialize($serial_str) ;
 			$context = Context::getInstance() ;
 			$context->records = $records ;
@@ -340,7 +351,7 @@ class ClassFinder{
 	}
 
 	public function serializeContext($context){
-		file_put_contents("../data/serialdata",serialize($context->records)) ;
+		file_put_contents(CURR_PATH . "/data/serialdata",serialize($context->records)) ;
 	}
 
 	/*
@@ -375,7 +386,7 @@ class ClassFinder{
 //$path = "E:/School_of_software/information_security/PHPVulScanner_project/CMS/chengshiCMS/Cscmsv3.5.6/upload" ;
 //$path = "source.class.php" ;
 //$path = "./test" ;
-$path = 'F:\wamp\www\phpvulhunter\test\simple_demo.php';
+$path = CURR_PATH . '/test/simple_demo.php';
 $finder = new  ClassFinder($path) ;
 $finder->getContext() ;
 $context = Context::getInstance() ;

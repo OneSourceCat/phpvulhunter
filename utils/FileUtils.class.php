@@ -1,5 +1,5 @@
 <?php
-require_once '../vendor/autoload.php';
+require_once CURR_PATH . '/vendor/autoload.php';
 ini_set('xdebug.max_nesting_level', 2000);
 
 use PhpParser\Node;

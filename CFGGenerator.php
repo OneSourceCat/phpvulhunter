@@ -15,7 +15,7 @@ require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
 require_once CURR_PATH . '/symbols/SantinizationHandler.class.php';
 require_once CURR_PATH . '/symbols/EncodingHandler.class.php';
 require_once CURR_PATH . '/summary/FileSummary.class.php';
-
+require_once CURR_PATH . '/context/ClassFinder.php';
 ini_set('xdebug.max_nesting_level', 2000);
 
 
@@ -369,6 +369,76 @@ class CFGGenerator{
 	}
 	
 	/**
+	 * 
+	 * @param Node $node
+	 * @param BasicBlock $block
+	 * @return Ambigous <multitype:, multitype:string >
+	 */
+	public function senstivePostion($node,$block)
+	{
+		$ret = array();
+		//得到sink函数的参数位置(1)
+		$args = array(1) ;  //1  => mysql_query
+		foreach($args as $arg){
+			$argNameStr = NodeUtils::getNodeStringName($arg) ;   //sql
+			$ret = $this->traceback($argNameStr ,$block);  //array(where,id)
+		}
+		print_r($ret);
+		return $ret ;
+	}
+	
+	/**
+	 * 
+	 * @param string $argName
+	 * @param BasicBlock $block
+	 * @return array
+	 */
+	public function traceback($argName,$block){
+		$flows = $block->getBlockSummary()->getDataFlowMap();
+		foreach($flows as $flow){
+			//trace back
+			if($flow->getName() == $argName){
+				//得到flow.getValue()的变量node
+				if($flow->getValue() instanceof ConcatSymbol){
+					$vars = $flow->getValue()->getItems();
+				}else{
+					$vars = array($flow->getValue()) ;
+				}
+				
+				$retarr = array();
+				foreach($vars as $var){
+					$ret = $this->traceback($var,$block);
+					$retarr = array_merge($ret,$retarr) ;
+				}
+				return $retarr;
+			}
+		}
+		return array($argName);
+	}
+	
+	
+	
+	private function functionHandler($nodes,$block){
+		//print_r($nodes[0]->stmts) ;
+		foreach($nodes[0]->stmts as $node){
+			if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
+				echo "***********";
+				//找到了mysql_query
+				$pos = $this->senstivePostion($node,$block) ;  //array(where,id)
+				$del_arg_pos = NodeUtils::getNodeFuncParams($node) ;  //array(id,where)
+				$posArr = array();  //返回
+				foreach($del_arg_pos as $k => $v){
+					if(in_array($v,$pos)){
+						array_push($posArr, $k) ;
+					}
+				}
+				return $posArr ;
+			}
+		}
+	}
+	
+	
+	/**
 	 * 生成基本块摘要，为数据流分析做准备
 	 * 1、处理赋值语句
 	 * 2、记录全局变量定义
@@ -431,8 +501,20 @@ class CFGGenerator{
 				    break;
 				    
 				//处理用户自定义函数
+				//过程间分析
 				case 'Expr_FuncCall':
-					
+					print_r("<pre>");
+					$context = Context::getInstance() ;
+					$funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));
+					$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+					$traverser = new PhpParser\NodeTraverser;
+					$visitor = new FVisitor() ;
+					$traverser->addVisitor($visitor) ;
+					$traverser->traverse(array($funcBody)) ;
+
+					$this->CFGBuilder($visitor->strings, null, null, null) ;
+					//处理方法调用的语句   进行过程间分析
+					print_r($this->functionHandler($visitor->strings, $block));
 					break ;
 			}
 		}
@@ -450,7 +532,7 @@ class CFGGenerator{
 	 */
 	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
 		echo "<pre>" ;
-		
+		print_r($nodes) ;
 		//此文件的fileSummary
 		global $fileSummary ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
@@ -483,7 +565,7 @@ class CFGGenerator{
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
 				//生成基本块的摘要
 				$this->simulate($currBlock) ;
-				print_r($currBlock->getBlockSummary()) ;
+				//print_r($currBlock->getBlockSummary()) ;
 				
 				$nextBlock = new BasicBlock() ;
 				//对每个分支，建立相应的基本块
@@ -499,7 +581,7 @@ class CFGGenerator{
 				//加入循环条件
 				$this->addLoopVariable($node, $currBlock) ; 
 				$this->simulate($currBlock) ;
-				print_r($currBlock->getBlockSummary()) ;
+				//print_r($currBlock->getBlockSummary()) ;
 				
 				$currBlock->nodes = $node->stmts ;
 				$nextBlock = new BasicBlock() ;
@@ -515,18 +597,19 @@ class CFGGenerator{
 			}elseif(in_array($node->getType(),$RETURN_STATEMENT)){
 				$currBlock->addNode($node) ;
 				$this->simulate($currBlock) ;
-				print_r($currBlock->getBlockSummary()) ;
+				//print_r($currBlock->getBlockSummary()) ;
 				
 				return ;
 			}else{
 				$currBlock->addNode($node);
+				//print_r($currBlock->getBlockSummary()) ;
 			}
 		}
 		
 		
 		
 		$this->simulate($currBlock) ;
-		print_r($currBlock->getBlockSummary()) ;
+		//print_r($currBlock->getBlockSummary()) ;
 		
 		//print_r($currBlock) ;
 		if($pNextBlock && !$currBlock->is_exit){
@@ -625,6 +708,17 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 	
 }
+
+class FVisitor extends  PhpParser\NodeVisitorAbstract{
+	public $strings  ;
+	public function beforeTraverse(array $nodes){
+		$this->strings = $nodes ;
+	}
+}
+
+
+
+
 
 
 $cfg = new CFGGenerator() ;
