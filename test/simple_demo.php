@@ -1,5 +1,5 @@
 <?php
 
-require("global.php");
+const TBL = "table" ;
 
 ?>

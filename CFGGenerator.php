@@ -275,12 +275,23 @@ class CFGGenerator{
 	 * 处理常量，将常量添加至基本块摘要中
 	 * @param AST $node
 	 * @param BasicBlock $block
+	 * @param string $mode 常量的模式：define const
 	 */
-	private function constantHandler($node,$block){
-		$cons = new Constants() ;
-		$cons->setName($node->args[0]->value->value) ;
-		$cons->setValue($node->args[1]->value->value) ;
-		$block->getBlockSummary()->addConstantItem($cons);
+	private function constantHandler($node,$block,$mode){
+		if($mode == "define"){
+			$cons = new Constants() ;
+			$cons->setName($node->args[0]->value->value) ;
+			$cons->setValue($node->args[1]->value->value) ;
+			$block->getBlockSummary()->addConstantItem($cons);
+		}
+		
+		if($mode == "const"){
+			$cons = new Constants() ;
+			$cons->setName($node->consts[0]->name) ;
+			$cons->setValue($node->consts[0]->value) ;
+			$block->getBlockSummary()->addConstantItem($cons) ;
+		}
+	
 	}
 	
 	/**
@@ -391,12 +402,12 @@ class CFGGenerator{
 				//处理常量，加入至summary中
 				//应该使用define判断
 				case 'Expr_FuncCall' && (NodeUtils::getNodeFunctionName($node) == "define"):
-					$this->constantHandler($node, $block) ;
+					$this->constantHandler($node, $block,"define") ;
 					break ;
 				
 				//处理const关键定义的常量
 				case 'Stmt_Const':
-					
+					$this->constantHandler($node, $block,"const") ;
 					break ;
 				
 				//处理全局变量的定义，global $a
@@ -409,15 +420,20 @@ class CFGGenerator{
 					$this->returnValueHandler($node, $block) ;
 					break ;
 				
-				//全局变量的注册extract,parse_str,mb_parse_str,import_request_variables
+				//全局变量的注册extract,import_request_variables
 				//识别净化值
-				case 'Expr_FuncCall' :
+				case 'Expr_FuncCall' && (NodeUtils::getNodeFunctionName($node) == "import_request_variables" || NodeUtils::getNodeFunctionName($node) == "extract") :
 					$this->registerGlobalHandler($node, $block) ;
 					break ;
 				//如果$GLOBALS['name'] = 'xxxx' ;  则并入registerGlobal中
 				case 'Expr_ArrayDimFetch' && (substr(NodeUtils::getNodeStringName($node),0,7)=="GLOBALS"):
 				    $this->registerGLOBALSHandler($node, $block);
 				    break;
+				    
+				//处理用户自定义函数
+				case 'Expr_FuncCall':
+					
+					break ;
 			}
 		}
 		
