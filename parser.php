@@ -61,10 +61,11 @@ echo "<pre>" ;
 
 use PhpParser\Node ;
 class MyVisitor extends PhpParser\NodeVisitorAbstract{	
+	public $strings = array(); 
 	public function leaveNode(Node $node){
-		echo $node->getType() . "<br/>";
-		echo NodeUtils::getNodeStringName($node) ;
+		array_push($this->strings, $node) ;
 	}
+
 }
 
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
@@ -81,21 +82,8 @@ $visitor = new MyVisitor() ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 
-print_r($stmts) ;
-
-//print_r($visitor->concat) ;
-
-// require './symbols/ConcatSymbol.class.php';
-// $symbol = new ConcatSymbol() ;
-
-// foreach ($visitor->concat as $con){
-// 	//print_r($con) ;
-// 	$symbol->setItemByNode($con) ;
-// }
-
-// echo count($symbol->getItems()) ;
-// print_r($symbol->getItems()) ;
-
+//print_r($stmts) ;
+print_r($visitor->strings) ;
 
 
 ?>

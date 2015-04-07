@@ -369,7 +369,9 @@ class CFGGenerator{
 	}
 	
 	/**
-	 * 
+	 * 获取敏感sink的参数对应的危险参数
+	 * 如 :mysql_query($sql)
+	 * 返回sql
 	 * @param Node $node
 	 * @param BasicBlock $block
 	 * @return Ambigous <multitype:, multitype:string >
@@ -378,22 +380,24 @@ class CFGGenerator{
 	{
 		$ret = array();
 		//得到sink函数的参数位置(1)
-		$args = array(1) ;  //1  => mysql_query
+		$args = array(0) ;  //1  => mysql_query
 		foreach($args as $arg){
-			$argNameStr = NodeUtils::getNodeStringName($arg) ;   //sql
+			$argNameStr = NodeUtils::getNodeStringName($node->args[$arg]) ;   //sql
 			$ret = $this->traceback($argNameStr ,$block);  //array(where,id)
 		}
-		print_r($ret);
+		var_dump($ret) ;
 		return $ret ;
 	}
 	
 	/**
-	 * 
+	 * 进行回溯
 	 * @param string $argName
 	 * @param BasicBlock $block
 	 * @return array
 	 */
 	public function traceback($argName,$block){
+		echo "--------------------------------------------traceback-----------------------------------<br/>" ;
+		print_r($block) ;
 		$flows = $block->getBlockSummary()->getDataFlowMap();
 		foreach($flows as $flow){
 			//trace back
@@ -417,24 +421,21 @@ class CFGGenerator{
 	}
 	
 	
-	
-	private function functionHandler($nodes,$block){
-		//print_r($nodes[0]->stmts) ;
-		foreach($nodes[0]->stmts as $node){
-			if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
-				echo "***********";
-				//找到了mysql_query
-				$pos = $this->senstivePostion($node,$block) ;  //array(where,id)
-				$del_arg_pos = NodeUtils::getNodeFuncParams($node) ;  //array(id,where)
-				$posArr = array();  //返回
-				foreach($del_arg_pos as $k => $v){
-					if(in_array($v,$pos)){
-						array_push($posArr, $k) ;
-					}
-				}
-				return $posArr ;
-			}
-		}
+	/**
+	 * 处理用户自定义函数
+	 * @param unknown $nodes
+	 * @param unknown $block
+	 * @return multitype:
+	 */
+	private function functionHandler($node,$block){
+		echo "functionHandler<br/>" ;
+		//print_r($block) ;
+		$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+		$traverser = new PhpParser\NodeTraverser;
+		$visitor = new FunctionVisitor() ;
+		$visitor->block = $block ;
+		$traverser->addVisitor($visitor) ;
+		$traverser->traverse(array($node)) ;
 	}
 	
 	
@@ -503,18 +504,12 @@ class CFGGenerator{
 				//处理用户自定义函数
 				//过程间分析
 				case 'Expr_FuncCall':
-					print_r("<pre>");
+					echo "<pre>";
 					$context = Context::getInstance() ;
-					$funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));
-					$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-					$traverser = new PhpParser\NodeTraverser;
-					$visitor = new FVisitor() ;
-					$traverser->addVisitor($visitor) ;
-					$traverser->traverse(array($funcBody)) ;
-
-					$this->CFGBuilder($visitor->strings, null, null, null) ;
-					//处理方法调用的语句   进行过程间分析
-					print_r($this->functionHandler($visitor->strings, $block));
+					$funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));;
+					if(!$funcBody) break ;
+					$this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
+					$this->functionHandler($funcBody, $block);
 					break ;
 			}
 		}
@@ -532,7 +527,8 @@ class CFGGenerator{
 	 */
 	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
 		echo "<pre>" ;
-		print_r($nodes) ;
+		echo "-----------------------------------------------------------<br/>" ;
+		//print_r($nodes) ;
 		//此文件的fileSummary
 		global $fileSummary ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
@@ -547,19 +543,18 @@ class CFGGenerator{
 
 		//迭代每个AST node
 		foreach($nodes as $node){
+			//print_r($node) ;
 			//搜集节点中的require include require_once include_once的PHP文件名称
 			$fileSummary->addIncludeToMap(NodeUtils::getNodeIncludeInfo($node)) ;
 			
 			
-			if(!is_object($node))continue ;
+			if(!is_object($node)) continue ;
 			
 			//不分析函数定义
-			if($node->getType() == "Stmt_Function") continue ;
-			
-			//判断node是否是结束node
-			if($node->getAttribute('endLine') == 9){
-				$currBlock->is_exit = true ;
+			if($node->getType() == "Stmt_Function"){
+				continue ;
 			}
+	
 			
 			//如果节点是跳转类型的语句
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
@@ -598,7 +593,6 @@ class CFGGenerator{
 				$currBlock->addNode($node) ;
 				$this->simulate($currBlock) ;
 				//print_r($currBlock->getBlockSummary()) ;
-				
 				return ;
 			}else{
 				$currBlock->addNode($node);
@@ -610,8 +604,7 @@ class CFGGenerator{
 		
 		$this->simulate($currBlock) ;
 		//print_r($currBlock->getBlockSummary()) ;
-		
-		//print_r($currBlock) ;
+		print_r($currBlock) ;
 		if($pNextBlock && !$currBlock->is_exit){
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
 			$currBlock->addOutEdge($block_edge) ;
@@ -619,7 +612,7 @@ class CFGGenerator{
 		}
 		
 		//print_r($currBlock) ;
-		
+		//return $currBlock ;
 	}
 	
 }
@@ -709,11 +702,42 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
 	
 }
 
-class FVisitor extends  PhpParser\NodeVisitorAbstract{
-	public $strings  ;
-	public function beforeTraverse(array $nodes){
-		$this->strings = $nodes ;
+
+/**
+ * 处理方法调用
+ * @author Exploit
+ *
+ */
+class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
+	public $posArr ;
+	public $block ;
+	public function leaveNode(Node $node){
+		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
+			echo "******************************************<br/>";
+			echo NodeUtils::getNodeFunctionName($node) ."<br/>";
+			if(NodeUtils::getNodeFunctionName($node) == "mysql_query"){
+				echo NodeUtils::getNodeFunctionName($node) ."<br/>";
+				//找到了mysql_query
+				$cfg = new CFGGenerator() ;
+				$pos = $cfg->senstivePostion($node,$this->block) ;  //array(where,id)
+				print_r($pos) ;
+				// 			$del_arg_pos = NodeUtils::getNodeFuncParams($node) ;  //array(id,where)
+				// 			$posArr = array();  //返回
+				// 			foreach($del_arg_pos as $k => $v){
+				// 				if(in_array($v,$pos)){
+				// 					array_push($posArr, $k) ;
+				// 				}
+				// 			}
+				// 			$this->posArr = $posArr ;
+			}
+
+		}
 	}
+
+	public function beforeTraverse(array $nodes) {
+		$this->all = $nodes ;
+	}
+
 }
 
 
