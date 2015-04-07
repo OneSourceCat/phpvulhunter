@@ -397,7 +397,7 @@ class CFGGenerator{
 	 */
 	public function traceback($argName,$block){
 		echo "--------------------------------------------traceback-----------------------------------<br/>" ;
-		print_r($block) ;
+		//print_r($block) ;
 		$flows = $block->getBlockSummary()->getDataFlowMap();
 		foreach($flows as $flow){
 			//trace back
@@ -593,7 +593,8 @@ class CFGGenerator{
 				$currBlock->addNode($node) ;
 				$this->simulate($currBlock) ;
 				//print_r($currBlock->getBlockSummary()) ;
-				return ;
+				return $currBlock ;
+				//return ;
 			}else{
 				$currBlock->addNode($node);
 				//print_r($currBlock->getBlockSummary()) ;
@@ -604,7 +605,7 @@ class CFGGenerator{
 		
 		$this->simulate($currBlock) ;
 		//print_r($currBlock->getBlockSummary()) ;
-		print_r($currBlock) ;
+		//print_r($currBlock) ;
 		if($pNextBlock && !$currBlock->is_exit){
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
 			$currBlock->addOutEdge($block_edge) ;
@@ -612,7 +613,7 @@ class CFGGenerator{
 		}
 		
 		//print_r($currBlock) ;
-		//return $currBlock ;
+		return $currBlock ;
 	}
 	
 }
