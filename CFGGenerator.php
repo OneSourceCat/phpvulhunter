@@ -385,7 +385,7 @@ class CFGGenerator{
 			$argNameStr = NodeUtils::getNodeStringName($node->args[$arg]) ;   //sql
 			$ret = $this->traceback($argNameStr ,$block);  //array(where,id)
 		}
-		var_dump($ret) ;
+		//var_dump($ret) ;	
 		return $ret ;
 	}
 	
@@ -396,7 +396,11 @@ class CFGGenerator{
 	 * @return array
 	 */
 	public function traceback($argName,$block){
+<<<<<<< HEAD
 		echo "--------------------------------------------traceback-----------------------------------<br/>" ;
+=======
+		//echo "---------------traceback-----------------------------------<br/>" ;
+>>>>>>> 39a24148a3ff57c6da27d668f6ba0e92471204b7
 		//print_r($block) ;
 		$flows = $block->getBlockSummary()->getDataFlowMap();
 		foreach($flows as $flow){
@@ -411,12 +415,15 @@ class CFGGenerator{
 				
 				$retarr = array();
 				foreach($vars as $var){
+				    //$var = NodeUtils::getNodeStringName($var);
 					$ret = $this->traceback($var,$block);
 					$retarr = array_merge($ret,$retarr) ;
 				}
 				return $retarr;
 			}
 		}
+		if ($argName instanceof Node)
+		    $argName = NodeUtils::getNodeStringName($argName);
 		return array($argName);
 	}
 	
@@ -427,15 +434,29 @@ class CFGGenerator{
 	 * @param unknown $block
 	 * @return multitype:
 	 */
-	private function functionHandler($node,$block){
-		echo "functionHandler<br/>" ;
-		//print_r($block) ;
+	private function functionHandler($node,$block,$parentBlock){
+		//echo "functionHandler<br/>" ;
+		//print_r($node) ;
 		$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 		$traverser = new PhpParser\NodeTraverser;
 		$visitor = new FunctionVisitor() ;
 		$visitor->block = $block ;
+		$visitor->parentBlock = $parentBlock;
 		$traverser->addVisitor($visitor) ;
 		$traverser->traverse(array($node)) ;
+		//print_r($visitor->vars);
+		//print_r($node);
+		$del_arg_pos = NodeUtils::getNodeFuncParams($node) ;  //array(id,where)
+		//print_r($del_arg_pos);
+		$posArr = array();  //返回
+		if(!$visitor->vars)
+		    return null;
+		foreach($del_arg_pos as $k => $v){
+		    if(in_array($v,$visitor->vars)){
+		        array_push($posArr, $k) ;
+		    }
+		}
+		return $posArr;
 	}
 	
 	
@@ -505,11 +526,21 @@ class CFGGenerator{
 				//过程间分析
 				case 'Expr_FuncCall':
 					echo "<pre>";
+					print_r(NodeUtils::getNodeFunctionName($node));
 					$context = Context::getInstance() ;
-					$funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));;
+					$funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));
 					if(!$funcBody) break ;
-					$this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
-					$this->functionHandler($funcBody, $block);
+					//print_r($funcBody);
+					$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
+					//print_r($nextblock);
+				    $ret = $this->functionHandler($funcBody, $nextblock, $block);
+				    if(!$ret){
+				        print_r("func ending--------------<br/>");
+				        break;
+				    }
+				    $block->function[NodeUtils::getNodeFunctionName($node)] = $ret;
+				    print_r($block->function);
+				    print_r("func ending--------------<br/>");
 					break ;
 			}
 		}
@@ -527,7 +558,7 @@ class CFGGenerator{
 	 */
 	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
 		echo "<pre>" ;
-		echo "-----------------------------------------------------------<br/>" ;
+		//echo "-----------------------------------------------------------<br/>" ;
 		//print_r($nodes) ;
 		//此文件的fileSummary
 		global $fileSummary ;
@@ -594,14 +625,15 @@ class CFGGenerator{
 				$this->simulate($currBlock) ;
 				//print_r($currBlock->getBlockSummary()) ;
 				return $currBlock ;
+<<<<<<< HEAD
 				//return ;
+=======
+>>>>>>> 39a24148a3ff57c6da27d668f6ba0e92471204b7
 			}else{
 				$currBlock->addNode($node);
 				//print_r($currBlock->getBlockSummary()) ;
 			}
 		}
-		
-		
 		
 		$this->simulate($currBlock) ;
 		//print_r($currBlock->getBlockSummary()) ;
@@ -712,24 +744,34 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
 class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	public $posArr ;
 	public $block ;
+	public $vars;
+	public $parentBlock;
 	public function leaveNode(Node $node){
 		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
-			echo "******************************************<br/>";
-			echo NodeUtils::getNodeFunctionName($node) ."<br/>";
-			if(NodeUtils::getNodeFunctionName($node) == "mysql_query"){
-				echo NodeUtils::getNodeFunctionName($node) ."<br/>";
+			//echo "******************************************<br/>";
+			//echo NodeUtils::getNodeFunctionName($node) ."<br/>";
+			$nodeName = NodeUtils::getNodeFunctionName($node);
+			if($nodeName == "mysql_query"){
+				//echo NodeUtils::getNodeFunctionName($node) ."<br/>";
 				//找到了mysql_query
 				$cfg = new CFGGenerator() ;
-				$pos = $cfg->senstivePostion($node,$this->block) ;  //array(where,id)
-				print_r($pos) ;
-				// 			$del_arg_pos = NodeUtils::getNodeFuncParams($node) ;  //array(id,where)
-				// 			$posArr = array();  //返回
-				// 			foreach($del_arg_pos as $k => $v){
-				// 				if(in_array($v,$pos)){
-				// 					array_push($posArr, $k) ;
-				// 				}
-				// 			}
-				// 			$this->posArr = $posArr ;
+				$vars = $cfg->senstivePostion($node,$this->block) ;  //array(where,id)
+				//print_r($vars) ;
+				if($vars)
+				    $this->vars = $vars;
+                
+			}elseif(array_key_exists($nodeName, $this->block->function)){
+			    $context = Context::getInstance() ;
+			    $funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));
+			    if(!$funcBody) break ;
+			    $cfg = new CFGGenerator() ;
+			    foreach ($this->block->function[$nodeName] as $pos){
+			        //print_r($node->args[$pos]);
+			        $argName = NodeUtils::getNodeFuncParams($node)[$pos];
+			        
+			        $this->vars = $cfg->traceback($argName, $this->block);			        
+			    }
+			
 			}
 
 		}
