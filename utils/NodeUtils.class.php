@@ -177,9 +177,16 @@ class NodeUtils{
     		return null;
     	}
     	$argsArr = array();
-    	foreach ($node->args as $arg){
-    		array_push($argsArr, NodeUtils::getNodeStringName($arg));
+    	if ($node->args){
+    	    foreach ($node->args as $arg){
+    	        array_push($argsArr, NodeUtils::getNodeStringName($arg));
+    	    }
+    	}else{
+    	    foreach ($node->params as $arg){
+    	        array_push($argsArr, NodeUtils::getNodeStringName($arg));
+    	    }
     	}
+    	
     	return $argsArr;
     }
     
@@ -190,6 +197,9 @@ class NodeUtils{
 	 * @return string
 	 */
     public static function getNodeIncludeInfo($node){
+        if (!$node instanceof Node){
+            return null;
+        }
 		if($node->getType() == "Expr_Include"){
 			$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 			$traverser = new PhpParser\NodeTraverser;
