@@ -10,7 +10,8 @@ class BasicBlock extends CFGNode{
 	//基本块中包含的AST node，放入list中
 	private $containedNodes ;
 	private $blockSummary;
-    public $function = array();
+	//array('function_name'=>'xxx',array(0,1))
+    public $function = array(); 
 	public function __construct(){
 		$this->containedNodes = array() ;
 		$this->blockSummary =  new BlockSummary() ;

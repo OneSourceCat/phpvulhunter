@@ -316,61 +316,7 @@ $F_LDAP = array(
 	'ldap_search'					=> array(array(3), $F_SECURING_LDAP)
 );	
 		
-//通信连接处理函数
-$NAME_CONNECT = 'Header Injection';
-$F_CONNECT = array(
-	'curl_setopt'					=> array(array(2,3), array()),
-	'curl_setopt_array' 			=> array(array(2), array()),
-	'cyrus_query' 					=> array(array(2), array()),
-	'error_log'						=> array(array(3), array()),
-	'fsockopen'						=> array(array(1), array()), 
-	'ftp_chmod' 					=> array(array(2,3), array()),
-	'ftp_exec'						=> array(array(2), array()), 
-	'ftp_delete' 					=> array(array(2), array()), 
-	'ftp_fget' 						=> array(array(3), array()), 
-	'ftp_get'						=> array(array(2,3), array()), 
-	'ftp_nlist' 					=> array(array(2), array()), 
-	'ftp_nb_fget' 					=> array(array(3), array()), 
-	'ftp_nb_get' 					=> array(array(2,3), array()), 
-	'ftp_nb_put'					=> array(array(2), array()), 
-	'ftp_put'						=> array(array(2,3), array()), 
-	'get_headers'					=> array(array(1), array()),
-	'imap_open'						=> array(array(1), array()),  
-	'imap_mail'						=> array(array(1), array()),
-	'mail' 							=> array(array(1,4), array()), 
-	'mb_send_mail'					=> array(array(1,4), array()), 
-	'ldap_connect'					=> array(array(1), array()),
-	'msession_connect'				=> array(array(1), array()),
-	'pfsockopen'					=> array(array(1), array()),   
-	'session_register'				=> array(array(0), array()),  
-	'socket_bind'					=> array(array(2), array()),  
-	'socket_connect'				=> array(array(2), array()),  
-	'socket_send'					=> array(array(2), array()), 
-	'socket_write'					=> array(array(2), array()),  
-	'stream_socket_client'			=> array(array(1), array()),  
-	'stream_socket_server'			=> array(array(1), array())
-);
-	
-// other critical functions
-$NAME_OTHER = 'Possible Flow Control'; // :X
-$F_OTHER = array(
-	'dl' 							=> array(array(1), array()),	
-	'ereg'							=> array(array(2), array()), # nullbyte injection affected		
-	'eregi'							=> array(array(2), array()), # nullbyte injection affected			
-	'ini_set' 						=> array(array(1,2), array()),
-	'ini_restore'					=> array(array(1), array()),
-	'runkit_constant_redefine'		=> array(array(1,2), array()),
-	'runkit_method_rename'			=> array(array(1,2,3), array()),
-	'sleep'							=> array(array(1), array()),
-	'unserialize'					=> array(array(1), array()),
-	'extract'						=> array(array(1), array()),
-	'mb_parse_str'					=> array(array(1), array()),
-	'parse_str'						=> array(array(1), array()),
-	'putenv'						=> array(array(1), array()),
-	'set_include_path'				=> array(array(1), array()),
-	'apache_setenv'					=> array(array(1,2), array()),	
-	'define'						=> array(array(1), array())
-);
+
 	
 // property oriented programming with unserialize
 $NAME_POP = 'Unserialize';

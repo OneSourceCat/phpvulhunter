@@ -396,11 +396,6 @@ class CFGGenerator{
 	 * @return array
 	 */
 	public function traceback($argName,$block){
-<<<<<<< HEAD
-		echo "--------------------------------------------traceback-----------------------------------<br/>" ;
-=======
-		//echo "---------------traceback-----------------------------------<br/>" ;
->>>>>>> 39a24148a3ff57c6da27d668f6ba0e92471204b7
 		//print_r($block) ;
 		$flows = $block->getBlockSummary()->getDataFlowMap();
 		foreach($flows as $flow){
@@ -435,8 +430,6 @@ class CFGGenerator{
 	 * @return multitype:
 	 */
 	private function functionHandler($node,$block,$parentBlock){
-		//echo "functionHandler<br/>" ;
-		//print_r($node) ;
 		$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 		$traverser = new PhpParser\NodeTraverser;
 		$visitor = new FunctionVisitor() ;
@@ -444,13 +437,16 @@ class CFGGenerator{
 		$visitor->parentBlock = $parentBlock;
 		$traverser->addVisitor($visitor) ;
 		$traverser->traverse(array($node)) ;
-		//print_r($visitor->vars);
-		//print_r($node);
-		$del_arg_pos = NodeUtils::getNodeFuncParams($node) ;  //array(id,where)
-		//print_r($del_arg_pos);
-		$posArr = array();  //返回
-		if(!$visitor->vars)
-		    return null;
+		
+		//array(id,where)
+		$del_arg_pos = NodeUtils::getNodeFuncParams($node) ;  
+		
+		//返回
+		$posArr = array();  
+		if(!$visitor->vars){
+			return null;
+		}
+		   
 		foreach($del_arg_pos as $k => $v){
 		    if(in_array($v,$visitor->vars)){
 		        array_push($posArr, $k) ;
@@ -530,14 +526,13 @@ class CFGGenerator{
 					$context = Context::getInstance() ;
 					$funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));
 					if(!$funcBody) break ;
-					//print_r($funcBody);
 					$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
-					//print_r($nextblock);
-				    $ret = $this->functionHandler($funcBody, $nextblock, $block);
+				    $ret = $this->functionHandler($funcBody, $nextblock, $block); //危险参数的位置比如：array(0)
 				    if(!$ret){
 				        print_r("func ending--------------<br/>");
 				        break;
 				    }
+				    //找到了array('del',array(0)) ;
 				    $block->function[NodeUtils::getNodeFunctionName($node)] = $ret;
 				    print_r($block->function);
 				    print_r("func ending--------------<br/>");
@@ -625,10 +620,6 @@ class CFGGenerator{
 				$this->simulate($currBlock) ;
 				//print_r($currBlock->getBlockSummary()) ;
 				return $currBlock ;
-<<<<<<< HEAD
-				//return ;
-=======
->>>>>>> 39a24148a3ff57c6da27d668f6ba0e92471204b7
 			}else{
 				$currBlock->addNode($node);
 				//print_r($currBlock->getBlockSummary()) ;
@@ -742,33 +733,42 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
  *
  */
 class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
-	public $posArr ;
-	public $block ;
-	public $vars;
-	public $parentBlock;
+
+	public $posArr ;   //参数列表
+	public $block ;  //当前基本块
+	public $vars;    //返回的数据
+	public $parentBlock;   //前驱基本块
+	
 	public function leaveNode(Node $node){
+		//处理过程间代码，即调用的方法定义中的源码
 		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
-			//echo "******************************************<br/>";
-			//echo NodeUtils::getNodeFunctionName($node) ."<br/>";
+			//获取到方法的名称
 			$nodeName = NodeUtils::getNodeFunctionName($node);
+			
+			//进行危险参数的辨别
 			if($nodeName == "mysql_query"){
-				//echo NodeUtils::getNodeFunctionName($node) ."<br/>";
+				//处理系统内置的sink
 				//找到了mysql_query
 				$cfg = new CFGGenerator() ;
-				$vars = $cfg->senstivePostion($node,$this->block) ;  //array(where,id)
-				//print_r($vars) ;
-				if($vars)
-				    $this->vars = $vars;
-                
+				
+				//array(where)找到危险参数的位置
+				$vars = $cfg->senstivePostion($node,$this->block) ;  
+
+				if($vars){
+					//返回处理结果
+					$this->vars = $vars;
+				}
+			   
 			}elseif(array_key_exists($nodeName, $this->block->function)){
-			    $context = Context::getInstance() ;
+				//处理用户定义的sink
+				$context = Context::getInstance() ;
 			    $funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));
 			    if(!$funcBody) break ;
 			    $cfg = new CFGGenerator() ;
 			    foreach ($this->block->function[$nodeName] as $pos){
 			        //print_r($node->args[$pos]);
-			        $argName = NodeUtils::getNodeFuncParams($node)[$pos];
-			        
+			        $argName = NodeUtils::getNodeFuncParams($node);
+			        $argName = $argName[$pos] ;
 			        $this->vars = $cfg->traceback($argName, $this->block);			        
 			    }
 			
@@ -777,14 +777,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 		}
 	}
 
-	public function beforeTraverse(array $nodes) {
-		$this->all = $nodes ;
-	}
-
 }
-
-
-
 
 
 
@@ -808,4 +801,26 @@ echo "<pre>" ;
 //获取
 
 ?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

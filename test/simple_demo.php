@@ -4,7 +4,7 @@ function goods_del($s,$id)
 {
 	$a = $id;
 	del2($a);
-
+	
 }
 
 
