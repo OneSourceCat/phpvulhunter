@@ -16,6 +16,7 @@ require_once CURR_PATH . '/symbols/SantinizationHandler.class.php';
 require_once CURR_PATH . '/symbols/EncodingHandler.class.php';
 require_once CURR_PATH . '/summary/FileSummary.class.php';
 require_once CURR_PATH . '/context/ClassFinder.php';
+require_once CURR_PATH . '/context/UserDefinedSinkContext.class.php';
 ini_set('xdebug.max_nesting_level', 2000);
 
 
@@ -532,8 +533,11 @@ class CFGGenerator{
 				        print_r("func ending--------------<br/>");
 				        break;
 				    }
+				    
 				    //找到了array('del',array(0)) ;
+				    $userDefinedSink = UserSanitizeFuncConetxt::getInstance() ;
 				    $block->function[NodeUtils::getNodeFunctionName($node)] = $ret;
+				    
 				    print_r($block->function);
 				    print_r("func ending--------------<br/>");
 					break ;

@@ -8,15 +8,21 @@ function goods_del($s,$id)
 }
 
 
+
 function del2($where,$hi)
 {
+	
 	$where = ' WHERE '.$where;
 	$sql   = 'DELETE FROM '.$where;
 	return mysql_query($sql);
 }
 
+
+
 $d = 123;
 goods_del($id) ;
+
+
 
 ?>
 

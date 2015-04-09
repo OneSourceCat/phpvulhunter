@@ -3,10 +3,12 @@ define('CURR_PATH', str_replace('\\', '/',dirname(__FILE__))) ;
 
 require 'securing.php';
 
+
 //跨站脚本的危险函数
 //参数为0表示所有的参数都要进行分析
 $NAME_XSS = 'Cross-Site Scripting';
 $F_XSS = array(
+	'__NAME__'						=> 'XSS',
 	'echo'							=> array(array(0), $F_SECURING_XSS), 
 	'print'							=> array(array(1), $F_SECURING_XSS),
 	'print_r'						=> array(array(1), $F_SECURING_XSS),
@@ -19,6 +21,7 @@ $F_XSS = array(
 //HTTP头注入
 $NAME_HTTP_HEADER = 'HTTP Response Splitting';
 $F_HTTP_HEADER = array(
+	'__NAME__'						=> 'HTTP',
 	'header' 						=> array(array(1), array())
 );
 	
@@ -26,6 +29,7 @@ $F_HTTP_HEADER = array(
 // example parameter array(1,3) will trace only first and third parameter 
 $NAME_CODE = 'Code Execution';
 $F_CODE = array(
+	'__NAME__'						=> 'CODE',
 	'array_diff_uassoc'				=> array(array(3), array()),
 	'array_diff_ukey'				=> array(array(3), array()),
 	'array_filter'					=> array(array(2), array()),
@@ -100,6 +104,7 @@ $F_CODE = array(
 //文件包含函数  => (要扫描的参数, 安全函数)
 $NAME_FILE_INCLUDE = 'File Inclusion';
 $F_FILE_INCLUDE = array(
+	'__NAME__'						=> 'INCLUDE',
 	'include' 						=> array(array(1), $F_SECURING_FILE),
 	'include_once' 					=> array(array(1), $F_SECURING_FILE),
 	'parsekit_compile_file'			=> array(array(1), $F_SECURING_FILE),
@@ -116,6 +121,7 @@ $F_FILE_INCLUDE = array(
 // for functions that use them like fread() and fwrite()
 $NAME_FILE_READ = 'File Disclosure';
 $F_FILE_READ = array(
+	'__NAME__'						=> 'FILE_READ',
 	'bzread'						=> array(array(1), $F_SECURING_FILE), 
 	'bzflush'						=> array(array(1), $F_SECURING_FILE), 
 	'dio_read'						=> array(array(1), $F_SECURING_FILE),   
@@ -174,6 +180,7 @@ $F_FILE_READ = array(
 // file or file system affecting functions
 $NAME_FILE_AFFECT = 'File Manipulation';
 $F_FILE_AFFECT = array(
+	'__NAME__'						=> 'FILEAFFECT',
 	'bzwrite'						=> array(array(2), array()),
 	'chmod'							=> array(array(1), $F_SECURING_FILE),
 	'chgrp'							=> array(array(1), $F_SECURING_FILE),
@@ -222,6 +229,7 @@ $F_FILE_AFFECT = array(
 //系统命令执行函数  => (parameters to scan, securing functions)
 $NAME_EXEC = 'Command Execution';
 $F_EXEC = array(
+	'__NAME__'						=> 'EXEC',
 	'backticks'						=> array(array(1), $F_SECURING_SYSTEM), # transformed during parsing
 	'exec'							=> array(array(1), $F_SECURING_SYSTEM),
 	'expect_popen'					=> array(array(1), $F_SECURING_SYSTEM),
@@ -240,6 +248,7 @@ $F_EXEC = array(
 //SQL语句执行函数 => (parameters to scan, securing functions)
 $NAME_DATABASE = 'SQL Injection';
 $F_DATABASE = array(
+	'__NAME__'						=> 'SQLI',
 // Abstraction Layers
 	'dba_open'						=> array(array(1), array()),
 	'dba_popen'						=> array(array(1), array()), 
@@ -301,6 +310,7 @@ $F_DATABASE = array(
 //XPath注入函数
 $NAME_XPATH = 'XPath Injection';
 $F_XPATH = array(
+	'__NAME__'						=> 'XPATH',
 	'xpath_eval'					=> array(array(2), $F_SECURING_XPATH),	
 	'xpath_eval_expression'			=> array(array(2), $F_SECURING_XPATH),		
 	'xptr_eval'						=> array(array(2), $F_SECURING_XPATH)
@@ -309,6 +319,7 @@ $F_XPATH = array(
 //LDAP注入
 $NAME_LDAP = 'LDAP Injection';
 $F_LDAP = array(
+	'__NAME__'						=> 'LDAP',
 	'ldap_add'						=> array(array(2,3), $F_SECURING_LDAP),
 	'ldap_delete'					=> array(array(2), $F_SECURING_LDAP),
 	'ldap_list'						=> array(array(3), $F_SECURING_LDAP),
@@ -325,5 +336,32 @@ $F_POP = array(
 	'is_a'							=> array(array(1), array())	 // calls __autoload in php 5.3.7, 5.3.8
 );
 	
+$F_SINK_ALL = array_merge(
+		$F_XSS,
+		$F_LDAP,
+		$F_XPATH,
+		$F_DATABASE,
+		$F_EXEC,
+		$F_FILE_AFFECT,
+		$F_FILE_READ,
+		$F_FILE_INCLUDE,
+		$F_CODE,
+		$F_HTTP_HEADER
+) ;
+
+
+$F_SINK_ARRAY = array(
+		$F_XSS,
+		$F_LDAP,
+		$F_XPATH,
+		$F_DATABASE,
+		$F_EXEC,
+		$F_FILE_AFFECT,
+		$F_FILE_READ,
+		$F_FILE_INCLUDE,
+		$F_CODE,
+		$F_HTTP_HEADER
+);
+
 
 ?>	

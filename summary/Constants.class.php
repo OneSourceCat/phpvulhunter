@@ -5,8 +5,8 @@
  *
  */
 class Constants {
-	private $name ;
-	private $value ;
+	private $name ;  //存放常量名string
+	private $value ;  //存放常量的值->node
 
 	public function getName() {
 		return $this->name;
