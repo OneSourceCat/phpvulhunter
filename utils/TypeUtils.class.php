@@ -1,7 +1,13 @@
 <?php
 
-require_once CURR_PATH . '/conf/sink.php';
+require_once CURR_PATH . '/conf/sinks.php';
+require_once CURR_PATH . '/context/UserDefinedSinkContext.class.php' ;
 
+/**
+ * 用于获取sink所属的漏洞类型
+ * @author Exploit
+ *
+ */
 class TypeUtils {
 	
 	/**
@@ -16,17 +22,17 @@ class TypeUtils {
 		$userDefinedSink = UserDefinedSinkContext::getInstance() ;
 		$U_SINK_ALL = $userDefinedSink->getAllSinks() ;
 		//系统sink
-		if(in_array($funcName, $F_SINK_ALL)){
+		if(key_exists($funcName, $F_SINK_ALL)){
 			foreach ($F_SINK_ARRAY as $value){
-				if(in_array($funcName, $value)){
+				if(key_exists($funcName, $value)){
 					return $value['__NAME__'] ;
 				}
 			}
 		}
 		//用户sink
-		if(in_array($funcName, $U_SINK_ALL)){
+		if(key_exists($funcName, $U_SINK_ALL)){
 			foreach ($userDefinedSink->getAllSinkArray() as $value){
-				if(in_array($funcName, $value)){
+				if(key_exists($funcName, $value)){
 					return $value['__NAME__'] ;
 				}
 			}
@@ -35,6 +41,7 @@ class TypeUtils {
 		return NULL ;	
 	}
 }
+
 
 ?>
 

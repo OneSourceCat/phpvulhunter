@@ -5,6 +5,7 @@ require_once CURR_PATH . '/vendor/autoload.php' ;
 require_once CURR_PATH . '/BasicBlock.php';
 require_once CURR_PATH . '/utils/SymbolUtils.class.php';
 require_once CURR_PATH . '/utils/NodeUtils.class.php';
+require_once CURR_PATH . '/utils/TypeUtils.class.php';
 require_once CURR_PATH . '/symbols/Symbol.class.php' ;
 require_once CURR_PATH . '/symbols/ValueSymbol.class.php';
 require_once CURR_PATH . '/symbols/VariableSymbol.class.php';
@@ -435,7 +436,7 @@ class CFGGenerator{
 		$traverser = new PhpParser\NodeTraverser;
 		$visitor = new FunctionVisitor() ;
 		$visitor->block = $block ;
-		$visitor->parentBlock = $parentBlock;
+		$visitor->sinkContext = UserDefinedSinkContext::getInstance() ;
 		$traverser->addVisitor($visitor) ;
 		$traverser->traverse(array($node)) ;
 		
@@ -453,6 +454,10 @@ class CFGGenerator{
 		        array_push($posArr, $k) ;
 		    }
 		}
+		
+		//将sink的类型拿到
+		$posArr['type'] = $visitor->sinkType ;
+		
 		return $posArr;
 	}
 	
@@ -523,9 +528,10 @@ class CFGGenerator{
 				//过程间分析
 				case 'Expr_FuncCall':
 					echo "<pre>";
-					print_r(NodeUtils::getNodeFunctionName($node));
+					$funcName = NodeUtils::getNodeFunctionName($node);
+					//print_r($funcName) ;
 					$context = Context::getInstance() ;
-					$funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));
+					$funcBody = $context->getFunctionBody($funcName);
 					if(!$funcBody) break ;
 					$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
 				    $ret = $this->functionHandler($funcBody, $nextblock, $block); //危险参数的位置比如：array(0)
@@ -535,10 +541,20 @@ class CFGGenerator{
 				    }
 				    
 				    //找到了array('del',array(0)) ;
-				    $userDefinedSink = UserSanitizeFuncConetxt::getInstance() ;
-				    $block->function[NodeUtils::getNodeFunctionName($node)] = $ret;
+				    $userDefinedSink = UserDefinedSinkContext::getInstance() ;
+					
+					//$type应该从visitor中获取，使用$ret返回
+				    $type = $ret['type'] ;
+				    unset($ret['type']) ;
+					
+				    //$block->function[$funcName] = $ret ;
 				    
-				    print_r($block->function);
+				    //加入sink上下文
+				    $item = array($funcName,$ret) ;
+				    $userDefinedSink->addByTagName($item, $type) ;
+					//print_r($userDefinedSink->getAllSinks()) ;
+				    print_r(UserDefinedSinkContext::getInstance());
+				    echo "==========================" ;
 				    print_r("func ending--------------<br/>");
 					break ;
 			}
@@ -557,8 +573,6 @@ class CFGGenerator{
 	 */
 	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
 		echo "<pre>" ;
-		//echo "-----------------------------------------------------------<br/>" ;
-		//print_r($nodes) ;
 		//此文件的fileSummary
 		global $fileSummary ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
@@ -740,10 +754,12 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 
 	public $posArr ;   //参数列表
 	public $block ;  //当前基本块
-	public $vars;    //返回的数据
-	public $parentBlock;   //前驱基本块
+	public $vars;    //返回的数据array()
+	public $sinkType ;   //返回的sink类型
+	public $sinkContext ;   // 当前sink上下文
 	
 	public function leaveNode(Node $node){
+
 		//处理过程间代码，即调用的方法定义中的源码
 		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
 			//获取到方法的名称
@@ -751,31 +767,48 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 			
 			//进行危险参数的辨别
 			if($nodeName == "mysql_query"){
+				
 				//处理系统内置的sink
 				//找到了mysql_query
 				$cfg = new CFGGenerator() ;
 				
 				//array(where)找到危险参数的位置
 				$vars = $cfg->senstivePostion($node,$this->block) ;  
-
+				$type = TypeUtils::getTypeByFuncName($nodeName) ;
+				
 				if($vars){
 					//返回处理结果
 					$this->vars = $vars;
 				}
-			   
-			}elseif(array_key_exists($nodeName, $this->block->function)){
+				
+				if($type){
+					//返回sink类型
+					$this->sinkType = $type ;
+				}
+			//$this->sinkContext->getAllSinks()
+			}elseif(array_key_exists($nodeName,$this->sinkContext->getAllSinks())){
+				
 				//处理用户定义的sink
+				$type = TypeUtils::getTypeByFuncName($nodeName) ;
+				if($type){
+					//返回sink类型
+					$this->sinkType = $type ;
+				}
+				
 				$context = Context::getInstance() ;
 			    $funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));
 			    if(!$funcBody) break ;
 			    $cfg = new CFGGenerator() ;
-			    foreach ($this->block->function[$nodeName] as $pos){
+			    //$this->block->function[$nodeName]
+			    $arr = $this->sinkContext->getAllSinks() ;
+			    $arr = $arr[$nodeName] ;
+			    foreach ($arr as $pos){
 			        //print_r($node->args[$pos]);
 			        $argName = NodeUtils::getNodeFuncParams($node);
 			        $argName = $argName[$pos] ;
 			        $this->vars = $cfg->traceback($argName, $this->block);			        
 			    }
-			
+				
 			}
 
 		}

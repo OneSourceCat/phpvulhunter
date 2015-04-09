@@ -11,7 +11,7 @@ class BasicBlock extends CFGNode{
 	private $containedNodes ;
 	private $blockSummary;
 	//array('function_name'=>'xxx',array(0,1))
-    public $function = array(); 
+    //public $function = array(); 
 	public function __construct(){
 		$this->containedNodes = array() ;
 		$this->blockSummary =  new BlockSummary() ;

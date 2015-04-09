@@ -38,54 +38,44 @@ class UserDefinedSinkContext {
 		
 		switch ($type) {
 			case 'XSS':
-				foreach ($item as $k => $v){
-					$this->F_XSS[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_XSS)) break ;
+				$this->F_XSS[$item[0]] = $item[1] ;
 				break;
 			case 'SQLI':
-				foreach ($item as $k => $v){
-					$this->F_SQLI[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_DATABASE)) break ;
+				$this->F_DATABASE[$item[0]] = $item[1] ;
 				break;
 			case 'HTTP':
-				foreach ($item as $k => $v){
-					$this->F_HTTP_HEADER[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_HTTP_HEADER)) break ;
+				$this->F_HTTP_HEADER[$item[0]] = $item[1] ;
 				break ;
 			case 'CODE':
-				foreach ($item as $k => $v){
-					$this->F_CODE[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_CODE)) break ;
+				$this->F_CODE[$item[0]] = $item[1] ;
 				break;
 			case 'EXEC':
-				foreach ($item as $k => $v){
-					$this->F_EXEC[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_EXEC)) break ;
+				$this->F_EXEC[$item[0]] = $item[1] ;
 				break;
 			case 'LDAP':
-				foreach ($item as $k => $v){
-					$this->F_LDAP[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_LDAP)) break ;
+				$this->F_LDAP[$item[0]] = $item[1] ;
 				break;
 			case 'INCLUDE':
-				foreach ($item as $k => $v){
-					$this->F_FILE_INCLUDE[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_FILE_INCLUDE)) break ;
+				$this->F_FILE_INCLUDE[$item[0]] = $item[1] ;
 				break;
 			case 'FILE':
-				foreach ($item as $k => $v){
-					$this->F_FILE_READ[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_FILE_READ)) break ;
+				$this->F_FILE_READ[$item[0]] = $item[1] ;
 				break;
 			case 'XPATH':
-				foreach ($item as $k => $v){
-					$this->F_XPATH[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_XPATH)) break ;
+				$this->F_XPATH[$item[0]] = $item[1] ;
 				break;
 			case 'FILEAFFECT':
-				foreach ($item as $k => $v){
-					$this->F_FILE_AFFECT[$k] = $v ;
-				}
+				if(array_key_exists($item[0], $this->F_FILE_AFFECT)) break ;
+				$this->F_FILE_AFFECT[$item[0]] = $item[1] ;
 				break;
 		}
 	}
@@ -96,7 +86,7 @@ class UserDefinedSinkContext {
 	 */
 	public function getAllSinks(){
 		return array_merge(
-				$this->$F_XSS,
+				$this->F_XSS,
 				$this->F_CODE,
 				$this->F_DATABASE,
 				$this->F_EXEC,
@@ -114,7 +104,7 @@ class UserDefinedSinkContext {
 	 */
 	public function getAllSinkArray(){
 		return array(
-				$this->$F_XSS,
+				$this->F_XSS,
 				$this->F_CODE,
 				$this->F_DATABASE,
 				$this->F_EXEC,
@@ -128,7 +118,7 @@ class UserDefinedSinkContext {
 	
 	//--------------------单例模式---------------------------------
 	private function __construct(){
-		$this->records = array() ;
+		
 	}
 	
 	

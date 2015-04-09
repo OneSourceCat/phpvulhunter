@@ -363,5 +363,8 @@ $F_SINK_ARRAY = array(
 		$F_HTTP_HEADER
 );
 
+//var_dump($F_SINK_ALL) ;
+
+var_dump(key_exists("mysql_query", $F_DATABASE)) ;
 
 ?>	
