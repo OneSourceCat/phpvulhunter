@@ -12,7 +12,9 @@ class FileSummary{
 	 * @var string
 	*/
 	private $path = '' ;
-	
+	public function setPath($path) {
+	    $this->path = $path ;
+	}
 	/**
 	 * 用于存放require信息
 	 * @var Array
@@ -37,7 +39,7 @@ class FileSummary{
 	 */
 	public function addIncludeToMap($include){
 		if($include){
-			array_push($this->$includeMap,$include) ;
+			array_push($this->includeMap,$include) ;
 		}
 	}
 	

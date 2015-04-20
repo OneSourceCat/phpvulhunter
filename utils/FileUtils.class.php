@@ -27,7 +27,7 @@ class FileUtils
         $dh = opendir($dirpath);
         while (($file = readdir($dh)) != false) {
             // 文件名的全路径 包含文件名
-            $filePath = $dirpath . "\\" . $file;
+            $filePath = $dirpath . "/" . $file;
             // echo $filePath."<br/>";
             if ($file == "." or $file == "..")
                 continue;

@@ -58,60 +58,163 @@ class Context {
 		}
 	}
 
-	/*
-		获取类中的一个函数的AST节点
-		@param $funcname  给定一个方法的名称，没法知道调用的函数在那个php文件，当类名：：函数名都相同概率低，不影响得到函数歧义
-		@return 返回相应的AST上的方法节点
-	*/
-	public function getFunctionBody($funcname){
-		$method = NULL ;
-		$path = '';
-		$code = '' ;
-		$records = $this->records ;
-		$funcinfo = explode(":", $funcname);
-		if(count($funcinfo)>1){
-		    $classname = $funcinfo[0];
-		    $funcname = $funcinfo[1];
-		}else{
-		    $funcname = $funcinfo[0];
-		}
-		//echo "$classname";
-		//print_r($records);
-		//寻找相应的method
-		for($i=0;$i<count($records);$i++) {
-			foreach($this->records[$i]->class_methods as $k => $item){
-				if($item['name'] ==  $funcname ){
-					$method = $item ;
-					$path = $this->records[$i]->path;
-				}
-			}
-		}
-
-		//设置code
-		if (!$path)
-		    return null;
-		$code = file_get_contents($path) ;
-		
-		//找到了相应的方法名称
-		if($method && $code){
-			$startLine = $method['startLine'] ;
-			$endLine = $method['endLine'] ;
-
-			$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-			$visitor = new FunctionBodyVisitor ;
-			$traverser = new PhpParser\NodeTraverser ;
-			$visitor->startLine = $startLine ;
-			$visitor->endLine = $endLine ;
-
-			
-			$stmts = $parser->parse($code) ;
-			$traverser->addVisitor($visitor) ;
-			$traverser->traverse($stmts) ;
-			return $visitor->getFunctionBody() ;
-
-		}else{
-			return NULL ;
-		}
+	/**
+	 * 获取一个函数的AST节点，不精确
+	 * @param 类名:函数名 or 函数名  $funcName
+	 * @return 返回相应的AST上的方法节点
+	 */
+	public function getFunctionBody($funcName){    
+	    $method = NULL ;
+	    $path = '';
+	    $funcInfo = explode(":", $funcName);
+	    $className = '';
+	    if(count($funcInfo)>1){
+	        $className = $funcInfo[0];
+	        $funcName = $funcInfo[1];
+	    }else{
+	        $funcName = $funcInfo[0];
+	    }
+	    //寻找相应的method
+	    for($i=0;$i<count($this->records);$i++) {
+            if($this->records[$i]->class_name == $className){
+                foreach($this->records[$i]->class_methods as $k => $item){
+                    if($item['name'] ==  $funcName ){
+                        $method = $item ;
+                        $path = $this->records[$i]->path;
+                        break;
+                    }
+                }
+            }
+        }
+	    return $this->getFunction($path, $method);
+	}
+	
+	/**
+	 * 获取一个函数的AST节点
+	 * @param 类名:函数名 or 函数名  $funcName
+	 * @param 文件包含的文件路径 $require_array
+	 * @return 返回相应的AST上的方法节点
+	 */
+	public function getClassMethodBody($funcName,$path,$require_array){
+	    //得到require文件包含的函数集合
+	    $records = $this->getRequireFileFuncs($path,$require_array);
+	    $method = NULL ;
+	    $path = '';
+	    $funcInfo = explode(":", $funcName);
+	    $className = '';
+	    if(count($funcInfo)>1){
+	        $className = $funcInfo[0];
+	        $funcName = $funcInfo[1];
+	    }else{
+	        $funcName = $funcInfo[0];
+	    }
+	    //寻找相应的method
+	    for($i=0;$i<count($records);$i++) {
+	        if($records[$i]->class_name == $className){
+    	        foreach($records[$i]->class_methods as $k => $item){
+    	            if($item['name'] ==  $funcName ){
+    	                $method = $item ;
+    	                $path = $records[$i]->path;
+    	                break;
+    	            }
+    	        }
+	        }
+	    }
+	    if($path == '' && $method = NULL){
+	        //在包含的文件中找不到相应函数，只能去全部的函数集合中寻找
+	        for($i=0;$i<count($this->records);$i++) {
+	            if($this->records[$i]->class_name == $className){
+	                foreach($this->records[$i]->class_methods as $k => $item){
+	                    if($item['name'] ==  $funcName ){
+	                        $method = $item ;
+	                        $path = $this->records[$i]->path;
+	                        break;
+	                    }
+	                }
+	            }
+	        }
+	    }
+	    return $this->getFunction($path, $method);
+	}
+	
+    /**
+     * @param 当前文件路径 $path
+     * @param 当前文件包含文件路径集合 $require_array
+     * @return 返回当前文件包含文件的函数集合
+     */
+    public function getRequireFileFuncs($path,$require_array){
+        $tempRequireFile = array();
+        //补全路径
+        $currentDir = dirname($path);
+        global $rootPath;
+        $allfile = FileUtils::getPHPfile($rootPath);
+        foreach ($require_array as $filepath){
+            if(!strpbrk($filepath,'/')){
+                //require_once "test.php"
+                $filepath = $currentDir .'/'. $filepath;
+                array_push($tempRequireFile, $filepath);
+            }elseif (substr($filepath,0,2) == './'){
+                //require_once "./test.php"
+                $filepath = $currentDir .'/'. substr($filepath, 2);
+                array_push($tempRequireFile, $filepath);
+            }elseif (substr($filepath,0,3) == '../'){
+                //require_once "../test.php" or ../../test.php
+                $tempPath = $currentDir;
+                while(substr($filepath,0,3) == '../'){
+                    $tempPath = substr($tempPath, 0,strrpos($tempPath, '/'));
+                    $filepath = substr($filepath, 3);
+                }
+                $filepath = $tempPath .'/'. $filepath;
+                array_push($tempRequireFile, $filepath);
+            }else{
+                //require_once CURR_PATH . '/c.php';
+                $pathLen = strlen($filepath);
+                foreach ($allfile as $fileAbsolutePath){
+                    if(strstr($fileAbsolutePath,$filepath)){
+                        array_push($tempRequireFile, $fileAbsolutePath);
+                    }
+                }
+            }
+        }
+        $records = array();
+        //不能定义同名类和函数，不同类方法可以相同
+        //寻找相应的method
+        foreach ($this->records as $record){
+            if (in_array($record->path,$tempRequireFile)){
+                array_push($records, $record);
+            }
+        }
+        return $records;
+    }
+	/**
+	 * @param 包含函数的文件路径 $path
+	 * @param 函数的信息 $mehod
+	 * @return 函数体
+	 */
+	public function getFunction($path,$method){
+	    //设置code
+	    if (!$path)
+	        return null;
+	    $code = file_get_contents($path) ;
+	     
+	    //找到了相应的方法名称
+	    if($method && $code){
+	        $startLine = $method['startLine'] ;
+	        $endLine = $method['endLine'] ;
+	         
+	        $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+	        $visitor = new FunctionBodyVisitor ;
+	        $traverser = new PhpParser\NodeTraverser ;
+	        $visitor->startLine = $startLine ;
+	        $visitor->endLine = $endLine ;
+	         
+	        $stmts = $parser->parse($code) ;
+	        $traverser->addVisitor($visitor) ;
+	        $traverser->traverse($stmts) ;
+	        return $visitor->getFunctionBody() ;
+	    }else{
+	        return NULL ;
+	    }
 	}
 	
 	public static function getInstance(){
@@ -385,7 +488,8 @@ class ClassFinder{
 //$path = "E:/School_of_software/information_security/PHPVulScanner_project/CMS/chengshiCMS/Cscmsv3.5.6/upload" ;
 //$path = "source.class.php" ;
 //$path = "./test" ;
-$path = CURR_PATH . '/test/simple_demo.php';
+// $path = CURR_PATH . '/test/simple_demo.php';
+$path = CURR_PATH . '/test';
 $finder = new  ClassFinder($path) ;
 $finder->getContext() ;
 $context = Context::getInstance() ;

@@ -553,7 +553,7 @@ class CFGGenerator{
 					$funcName = NodeUtils::getNodeFunctionName($node);
 					//print_r($funcName) ;
 					$context = Context::getInstance() ;
-					$funcBody = $context->getFunctionBody($funcName);
+					$funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
 					if(!$funcBody) break ;
 					$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
 				    $ret = $this->functionHandler($funcBody, $nextblock, $block); //危险参数的位置比如：array(0)
@@ -612,14 +612,12 @@ class CFGGenerator{
 			//搜集节点中的require include require_once include_once的PHP文件名称
 			$fileSummary->addIncludeToMap(NodeUtils::getNodeIncludeInfo($node)) ;
 			
-			
 			if(!is_object($node)) continue ;
 			
 			//不分析函数定义
 			if($node->getType() == "Stmt_Function"){
 				continue ;
 			}
-	
 			
 			//如果节点是跳转类型的语句
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
@@ -780,6 +778,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	public $sinkContext ;   // 当前sink上下文
 	
 	public function leaveNode(Node $node){
+	    global $fileSummary ;
 		//处理过程间代码，即调用的方法定义中的源码
 		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
 			//获取到方法的名称
@@ -815,7 +814,8 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 				}
 				
 				$context = Context::getInstance() ;
-			    $funcBody = $context->getFunctionBody(NodeUtils::getNodeFunctionName($node));
+				$funcName = NodeUtils::getNodeFunctionName($node);
+			    $funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
 			    if(!$funcBody) break ;
 			    $cfg = new CFGGenerator() ;
 			    //$this->block->function[$nodeName]
@@ -853,13 +853,15 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 
 }
 
-
-
+//从用户那接受项目路径
+$rootPath = 'F:/wamp/www/phpvulhunter/test';
 $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 $traverser = new PhpParser\NodeTraverser ;
-$code = file_get_contents('./test/simple_demo.php') ;
+$path = CURR_PATH . '/test/simple_demo.php';
+$fileSummary->setPath($path);
+$code = file_get_contents($path);
 $stmts = $parser->parse($code) ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
@@ -871,10 +873,12 @@ $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
 //print_r($pEntryBlock) ;
-
-//获取
 $sinkContext = UserDefinedSinkContext::getInstance();
 print_r($sinkContext);
+// $context = Context::getInstance() ;
+// $funcName = "goods:buy";
+// $funcBody = $context->getClassMethodBody($funcName,$path,$fileSummary->getIncludeMap());
+// print_r($funcBody);
 ?>
 
 

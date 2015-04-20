@@ -165,6 +165,8 @@ class SanitizeParamsFinder{
                         //递归，return onefunction
                         $next = new SanitizeParamsFinder($this->className, $funcname);
                         $ret = $next->findSanitizeParam($funcnode->stmts, $funcnode->params);
+                        if(!$ret)
+                            break;
                         //根据return onefunction，加入到this->onefunction
                         foreach ($ret->getSanitizeParams() as $param){
                             $pos = $this->searchPos(NodeUtils::getNodeStringName($node->args[$param['positon']]), $params);
@@ -321,8 +323,8 @@ class UserSanitiFuncFinder{
         $filearr = $this->getAllSourceFiles() ;
         $len = count($filearr) ;
         for($i=0;$i<$len;$i++){
-            $this->visitor->class_path = $filearr[$i] ;
-            $code = file_get_contents($this->visitor->class_path);
+            $this->visitor->filePath = $filearr[$i] ;
+            $code = file_get_contents($this->visitor->filePath);
             try{
                 $stmts = $this->parser->parse($code) ;
             }catch (PhpParser\Error $e) {
@@ -353,10 +355,12 @@ class UserSanitiFuncFinder{
 class SanitizeFuncVisitor extends PhpParser\NodeVisitorAbstract{
     private $nodes = array();
     private $className = '';
+    public $filePath = '';
     public function beforeTraverse(array $nodes){
         $this->nodes = $nodes ;
     }
-    
+    //TODO：在这要得到文件的require_array,在获取函数体使用
+    //净化函数获取funcbody时采用暂时使用getFuncBody
     public function enterNode(Node $node){
         //遇到函数，判断是否是净化函数，净化了的参数位置和净化类型
         $type = $node->getType();
