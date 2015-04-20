@@ -1,6 +1,6 @@
 <?php
-define('CURR_PATH', str_replace('\\', '/',dirname(__FILE__))) ;
 
+use PhpParser\Node\Expr\Isset_;
 require 'securing.php';
 
 
@@ -364,7 +364,5 @@ $F_SINK_ARRAY = array(
 );
 
 //var_dump($F_SINK_ALL) ;
-
-var_dump(key_exists("mysql_query", $F_DATABASE)) ;
 
 ?>	

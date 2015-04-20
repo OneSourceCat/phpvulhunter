@@ -15,14 +15,26 @@ class SantinizationHandler {
 	 * @param Node $node
 	 * @param DataFlow $dataFlow
 	 */
-	public function setSantiInfo($node,$dataFlow){
+	public static function setSantiInfo($node,$dataFlow){
 		global $F_SECURES_ALL ;
 		$funcName = NodeUtils::getNodeFunctionName($node) ;
+		$funcInfo = explode(":", $funcName);
+		$className= "";
+		if (count($funcInfo) ==2){
+		    $className = $funcInfo[0];
+		    $funcName = $funcInfo[1];
+		}
 		//查看sqli的净化信息
 		if(in_array($funcName, $F_SECURES_ALL)){
 			//设置净化函数
 			$dataFlow->getLocation()->addSanitization($funcName) ;
+		}else{
+		    $userSanitizeFuncConetxt = UserSanitizeFuncConetxt::getInstance() ;
+		    $funcSanitizeInfo = $userSanitizeFuncConetxt->getFuncSanitizeInfo($className, $funcName);
+		    if($funcSanitizeInfo)
+		        $dataFlow->getLocation()->addSanitization($className . ":" .$funcName) ;
 		}
+// 		print_r($dataFlow);
 		//清除反作用的函数
 		SantinizationHandler::clearSantiInfo($funcName, $node, $dataFlow) ;
 		
@@ -36,7 +48,7 @@ class SantinizationHandler {
 	 * @param Node $node
 	 * @param DataFlow $dataFlow
 	 */
-	public function clearSantiInfo($funcName, $node,$dataFlow){
+	public static function clearSantiInfo($funcName, $node,$dataFlow){
 		global $F_INSECURING_STRING ;
 		//判断$funcName相反的函数是否在净化Map中
 		//比如调用stripslashes($funcName=stripslashes)

@@ -1,8 +1,8 @@
 <?php
 
 require_once '/ClassFinder.php';
-require_once CURR_PATH . '/../vendor/autoload.php' ;
-require_once CURR_PATH . '/../utils/NodeUtils.class.php';
+require_once CURR_PATH . '/vendor/autoload.php' ;
+require_once CURR_PATH . '/utils/NodeUtils.class.php';
 
 use PhpParser\Node;
 
@@ -25,7 +25,15 @@ class UserSanitizeFuncConetxt{
     public function addFunction($onefunction){
         array_push($this->sanitizeFunctions, $onefunction);
     }
-        
+    //得到某函数的净化信息，未净化，返回null
+    public function getFuncSanitizeInfo($className,$funcName){
+        foreach ($this->sanitizeFunctions as $oneFunction){
+            if (($className == $oneFunction->className) && ($funcName == $oneFunction->functionName))
+                return $oneFunction;
+            else 
+                return null;
+        }
+    }
     //获得实例
     public static function getInstance(){
         if(!(self::$instance instanceof self)){
@@ -44,9 +52,9 @@ class UserSanitizeFuncConetxt{
  *
  */
 class OneFunction{
-    private $className ;
-    private $functionName ;
-    private $sanitizeParams ;
+    public $className ;
+    public $functionName ;
+    public $sanitizeParams ;
     
     public function __construct($className,$functionName){
         $this->className = $className;
@@ -117,14 +125,17 @@ class SanitizeParamsFinder{
                             break;
                         //递归，return onefunction
                         $next = new SanitizeParamsFinder(null, $funcname);
-                        $ret = $next->findSanitizeParam($funcnode->stmts, $funcnode->params);                      
+                        $ret = $next->findSanitizeParam($funcnode->stmts, $funcnode->params); 
+                        if(!$ret)
+                            break;                     
                         //根据return onefunction，加入到this->onefunction
                         foreach ($ret->getSanitizeParams() as $param){
+                            echo "<br/>";
                             $pos = $this->searchPos(NodeUtils::getNodeStringName($node->args[$param['positon']]), $params);
                             if ($pos>-1){
                                 $this->oneFunction->addSanitizeParam($pos, $param['type']);
                             }
-                        }                       
+                        }
                     }
                     break;
                 //class method
@@ -163,10 +174,49 @@ class SanitizeParamsFinder{
                         }
                     }
                     break;
-                
+                case "Stmt_Return":
+                    //处理return中的函数调用
+                    if ($node->expr->getType() != "Expr_FuncCall"){
+                        break;
+                    }
+                    $funcName = NodeUtils::getNodeStringName($node->expr->name);
+                    //递归，return onefunction
+                    $next = new SanitizeParamsFinder(null, $funcName);
+                    
+                    $ret = $next->findSanitizeParam(array($node->expr), $node->expr->args); 
+                    if(!$ret)
+                        break;
+                    //根据return onefunction，加入到this->onefunction
+                    foreach ($ret->getSanitizeParams() as $param){
+                        $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$param['positon']]), $params);
+                        if ($pos>-1){
+                            $this->oneFunction->addSanitizeParam($pos, $param['type']);
+                        }
+                    }
+                    break;
+                case "Expr_Assign":
+                    //处理赋值右边中的函数调用
+                    if ($node->expr->getType() != "Expr_FuncCall"){
+                        break;
+                    }
+                    $funcName = NodeUtils::getNodeStringName($node->expr->name);
+                    //递归，return onefunction
+                    $next = new SanitizeParamsFinder(null, $funcName);
+                    
+                    $ret = $next->findSanitizeParam(array($node->expr), $node->expr->args); 
+                    if(!$ret)
+                        break;
+                    //根据return onefunction，加入到this->onefunction
+                    foreach ($ret->getSanitizeParams() as $param){
+                        $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$param['positon']]), $params);
+                        if ($pos>-1){
+                            $this->oneFunction->addSanitizeParam($pos, $param['type']);
+                        }
+                    }
+                    break;
                 default:
                     break;
-            }            
+            }
         }
         if($this->isSanitizeFunc($this->oneFunction))
             return $this->oneFunction;
@@ -177,7 +227,7 @@ class SanitizeParamsFinder{
     }
     // 检测是否为净化函数
     public function isSecureFunction($funcName){  
-        include CURR_PATH . '/../conf/securing.php';
+        include CURR_PATH . '/conf/securing.php';
         $arrayName = array(
             'F_SECURING_BOOL',
             'F_SECURING_STRING',
@@ -242,7 +292,7 @@ class UserSanitiFuncFinder{
     public function __construct($path){
         $this->path = $path ;
         $this->parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-        $this->visitor = new FunctionVisitor ;
+        $this->visitor = new SanitizeFuncVisitor ;
         $this->traverser = new PhpParser\NodeTraverser ;
         $this->traverser->addVisitor($this->visitor) ;
     }
@@ -261,7 +311,7 @@ class UserSanitiFuncFinder{
      */
     public function getUserSanitizeFuncConetxt(){
         //判断本地序列化文件中是否存在UserSanitizeFuncConetxt
-        if(($serial_str = file_get_contents("../data/sanitizeFuncConetxtSerialData"))!=''){
+        if(($serial_str = file_get_contents(CURR_PATH . "/data/sanitizeFuncConetxtSerialData"))!=''){
             $sanitizeFunctions = unserialize($serial_str) ;
             $funcContext = UserSanitizeFuncConetxt::getInstance() ;
             $funcContext->sanitizeFunctions = $sanitizeFunctions ;
@@ -289,16 +339,18 @@ class UserSanitiFuncFinder{
     }
     
     public function serializeContext($funcContext){
-        file_put_contents("../data/sanitizeFuncConetxtSerialData",serialize($funcContext->sanitizeFunctions )) ;
+        file_put_contents(CURR_PATH . "/data/sanitizeFuncConetxtSerialData",serialize($funcContext->sanitizeFunctions )) ;
     }
     
+
+  
 }
 
 /**
  * AST tree 遍历，寻找净化函数
  * @author xyw55
  */
-class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
+class SanitizeFuncVisitor extends PhpParser\NodeVisitorAbstract{
     private $nodes = array();
     private $className = '';
     public function beforeTraverse(array $nodes){
@@ -334,13 +386,13 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 
 }
 
-$path = 'F:\wamp\www\phpvulhunter\test\simple_demo.php';
+$path = CURR_PATH . '/test/simple_demo.php';
 $finder = new UserSanitiFuncFinder($path) ;
 $finder->getUserSanitizeFuncConetxt() ;
 $funcContext = UserSanitizeFuncConetxt::getInstance() ;
 
 echo '<pre>';
-print_r($funcContext->sanitizeFunctions);
+// print_r($funcContext->sanitizeFunctions);
 
 
 ?>

@@ -36,7 +36,7 @@ class EncodingHandler {
 	 * @param Node $node
 	 * @param DataFlow $dataFlow
 	 */
-	public function clearEncodeInfo($funcName, $node,$dataFlow){
+	public static function clearEncodeInfo($funcName, $node,$dataFlow){
 		global $F_DECODING_STRING ;
 		if(in_array($funcName,$F_DECODING_STRING)){
 			switch ($funcName){

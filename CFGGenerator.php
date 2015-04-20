@@ -18,6 +18,7 @@ require_once CURR_PATH . '/symbols/EncodingHandler.class.php';
 require_once CURR_PATH . '/summary/FileSummary.class.php';
 require_once CURR_PATH . '/context/ClassFinder.php';
 require_once CURR_PATH . '/context/UserDefinedSinkContext.class.php';
+require_once CURR_PATH . '/context/UserSanitizeFuncConetxt.php';
 ini_set('xdebug.max_nesting_level', 2000);
 
 
@@ -378,14 +379,15 @@ class CFGGenerator{
 	 * @param BasicBlock $block
 	 * @return Ambigous <multitype:, multitype:string >
 	 */
-	public function senstivePostion($node,$block)
+	public function senstivePostion($node,$block, $args)
 	{
 		$ret = array();
 		//得到sink函数的参数位置(1)
-		$args = array(0) ;  //1  => mysql_query
+		//$args = array(0) ;  //1  => mysql_query
 		foreach($args as $arg){
-			$argNameStr = NodeUtils::getNodeStringName($node->args[$arg]) ;   //sql
-			$ret = $this->traceback($argNameStr ,$block);  //array(where,id)
+		    //args[$arg-1] sinks函数的危险参数位置商量调整
+			$argNameStr = NodeUtils::getNodeStringName($node->args[$arg-1]) ;   //sql
+			$ret = $this->traceback($argNameStr ,$block,0);  //array(where,id)
 		}
 		//var_dump($ret) ;	
 		return $ret ;
@@ -395,29 +397,49 @@ class CFGGenerator{
 	 * 进行回溯
 	 * @param string $argName
 	 * @param BasicBlock $block
+	 * @param flowNum 遍历过的flow数量
 	 * @return array
 	 */
-	public function traceback($argName,$block){
+	public function traceback($argName,$block,$flowNum){
 		//print_r($block) ;
 		$flows = $block->getBlockSummary()->getDataFlowMap();
+		//需要将遍历过的dataflow删除
+		$temp = $flowNum;
+		while ($temp>0){
+		    array_pop($flows);
+		    $temp --;
+		}
+		//将块内数据流逆序，从后往前遍历
+		$flows = array_reverse($flows);
+		
 		foreach($flows as $flow){
+		    $flowNum ++;
 			//trace back
 			if($flow->getName() == $argName){
+			    //处理净化信息
+			    if ($flow->getlocation()->getSanitization()){
+			        return "safe";
+			    }
 				//得到flow.getValue()的变量node
 				if($flow->getValue() instanceof ConcatSymbol){
 					$vars = $flow->getValue()->getItems();
 				}else{
 					$vars = array($flow->getValue()) ;
 				}
-				
 				$retarr = array();
 				foreach($vars as $var){
-				    //$var = NodeUtils::getNodeStringName($var);
-					$ret = $this->traceback($var,$block);
-					$retarr = array_merge($ret,$retarr) ;
+				    $var = NodeUtils::getNodeStringName($var);
+					$ret = $this->traceback($var,$block,$flowNum);
+					//变量经过净化，这不需要跟踪该变量
+					if ($ret == "safe"){
+					    $retarr = array_slice($retarr, array_search($var,$retarr));
+					}else{
+					    $retarr = array_merge($ret,$retarr) ;
+					}
 				}
 				return $retarr;
 			}
+			
 		}
 		if ($argName instanceof Node)
 		    $argName = NodeUtils::getNodeStringName($argName);
@@ -445,10 +467,11 @@ class CFGGenerator{
 		
 		//返回
 		$posArr = array();  
-		if(!$visitor->vars){
+		//当变量无法跟踪到或变量被净化，返回null
+		if((!$visitor->vars) || $visitor->vars == "safe"){
 			return null;
 		}
-		   
+		
 		foreach($del_arg_pos as $k => $v){
 		    if(in_array($v,$visitor->vars)){
 		        array_push($posArr, $k) ;
@@ -457,7 +480,6 @@ class CFGGenerator{
 		
 		//将sink的类型拿到
 		$posArr['type'] = $visitor->sinkType ;
-		
 		return $posArr;
 	}
 	
@@ -536,7 +558,7 @@ class CFGGenerator{
 					$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
 				    $ret = $this->functionHandler($funcBody, $nextblock, $block); //危险参数的位置比如：array(0)
 				    if(!$ret){
-				        print_r("func ending--------------<br/>");
+				        //print_r("simulate func ending--------------<br/>");
 				        break;
 				    }
 				    
@@ -553,13 +575,12 @@ class CFGGenerator{
 				    $item = array($funcName,$ret) ;
 				    $userDefinedSink->addByTagName($item, $type) ;
 					//print_r($userDefinedSink->getAllSinks()) ;
-				    print_r(UserDefinedSinkContext::getInstance());
-				    echo "==========================" ;
-				    print_r("func ending--------------<br/>");
+				    //print_r(UserDefinedSinkContext::getInstance());
+				    //print_r("============simulate func ending--------------<br/>");
 					break ;
 			}
 		}
-		
+// 		print_r($block->getBlockSummary());
 		
 	}
 	
@@ -645,7 +666,7 @@ class CFGGenerator{
 		}
 		
 		$this->simulate($currBlock) ;
-		//print_r($currBlock->getBlockSummary()) ;
+// 		print_r($currBlock->getBlockSummary()) ;
 		//print_r($currBlock) ;
 		if($pNextBlock && !$currBlock->is_exit){
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
@@ -653,7 +674,7 @@ class CFGGenerator{
 			$pNextBlock->addInEdge($block_edge) ;
 		}
 		
-		//print_r($currBlock) ;
+// 		print_r($currBlock) ;
 		return $currBlock ;
 	}
 	
@@ -759,21 +780,20 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	public $sinkContext ;   // 当前sink上下文
 	
 	public function leaveNode(Node $node){
-
 		//处理过程间代码，即调用的方法定义中的源码
 		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
 			//获取到方法的名称
 			$nodeName = NodeUtils::getNodeFunctionName($node);
-			
+			$ret = $this->isSinkFunction($nodeName);
 			//进行危险参数的辨别
-			if($nodeName == "mysql_query"){
-				
+			if($ret[0]){
 				//处理系统内置的sink
 				//找到了mysql_query
 				$cfg = new CFGGenerator() ;
 				
 				//array(where)找到危险参数的位置
-				$vars = $cfg->senstivePostion($node,$this->block) ;  
+				$args = $ret[1];
+				$vars = $cfg->senstivePostion($node,$this->block,$args) ;  
 				$type = TypeUtils::getTypeByFuncName($nodeName) ;
 				
 				if($vars){
@@ -785,9 +805,8 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 					//返回sink类型
 					$this->sinkType = $type ;
 				}
-			//$this->sinkContext->getAllSinks()
 			}elseif(array_key_exists($nodeName,$this->sinkContext->getAllSinks())){
-				
+			    //处理已经加入sinksContext用户自定义函数
 				//处理用户定义的sink
 				$type = TypeUtils::getTypeByFuncName($nodeName) ;
 				if($type){
@@ -806,12 +825,30 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 			        //print_r($node->args[$pos]);
 			        $argName = NodeUtils::getNodeFuncParams($node);
 			        $argName = $argName[$pos] ;
-			        $this->vars = $cfg->traceback($argName, $this->block);			        
-			    }
-				
+			        $this->vars = $cfg->traceback($argName, $this->block,0);			        
+			    }	
+			}else {
+                ;
 			}
 
 		}
+	}
+	
+	// 检测是否为sink函数
+	public function isSinkFunction($funcName){
+	    include CURR_PATH . '/conf/sinks.php';
+	    $nameNum = count($F_SINK_ARRAY);
+
+        for($i = 0;$i < $nameNum; $i++)
+        {
+            if(key_exists($funcName, $F_SINK_ARRAY[$i]))
+            {
+                //print 'find sucessful!'.'<br/>';
+                return array(true,$F_SINK_ARRAY[$i][$funcName][0]);
+            }
+        }
+        //print 'Dont include this function!'.'<br/>';
+        return array(false);
 	}
 
 }
@@ -836,7 +873,8 @@ echo "<pre>" ;
 //print_r($pEntryBlock) ;
 
 //获取
-
+$sinkContext = UserDefinedSinkContext::getInstance();
+print_r($sinkContext);
 ?>
 
 
