@@ -28,6 +28,7 @@ class UserDefinedSinkContext {
 
 	/**
 	 * 将回溯中获取的用户定义sink函数传入
+	 * key为函数名，value为参数的位置
 	 * @param Array $item  array(PDF,array(0,1))
 	 * @param string $type=>()
 	 */

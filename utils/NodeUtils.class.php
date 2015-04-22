@@ -218,6 +218,75 @@ class NodeUtils{
     }
     
     
+	/**
+	 * 根据函数名称，检测是否为sink函数
+	 * @param string $funcName
+	 * @return array(is_sink,args_position)
+	 */
+    public static function isSinkFunction($funcName){
+    	global $F_SINK_ALL,$F_SINK_ARRAY ;
+    	$nameNum = count($F_SINK_ARRAY);
+    	$userDefinedSink = UserDefinedSinkContext::getInstance() ;
+    	$U_SINK_ALL = $userDefinedSink->getAllSinks() ;
+    	//如果是系统的sink
+    	if(key_exists($funcName, $F_SINK_ALL)){
+    		for($i = 0;$i < $nameNum; $i++){
+		    	if(key_exists($funcName, $F_SINK_ARRAY[$i])){
+		    		return array(true,$F_SINK_ARRAY[$i][$funcName][0]);
+		    	}
+	    	}
+    		return array(false);
+    	}
+    	
+    	//如果是用户的sink
+    	if(key_exists($funcName, $U_SINK_ALL)){
+    		foreach ($userDefinedSink->getAllSinkArray() as $value){
+    			if(key_exists($funcName, $value)){
+    				return array(true,$U_SINK_ALL[$funcName]) ;
+    			}
+    		}
+    		
+    		return array(false) ;
+    	}
+    	
+    	return array(false);
+    	
+    }
+    
+	/**
+	 * 根据sink方法的名称获取危险参数的位置
+	 * 比如提交mysql_query的调用node，返回危险参数位置array(0)
+	 * 如果找不到，默认返回array()
+	 * @param Node $node
+	 */
+    public static function getVulArgs($node){
+    	global $F_SINK_ALL,$F_SINK_ARRAY ;
+    	$funcName = NodeUtils::getNodeFunctionName($node) ;
+    	$nameNum = count($F_SINK_ARRAY);
+    	$userDefinedSink = UserDefinedSinkContext::getInstance() ;
+    	$U_SINK_ALL = $userDefinedSink->getAllSinks() ;
+    	//如果是系统的sink
+    	if(key_exists($funcName, $F_SINK_ALL)){
+    		for($i = 0;$i < $nameNum; $i++){
+    			if(key_exists($funcName, $F_SINK_ARRAY[$i])){
+    				return array($F_SINK_ARRAY[$i][$funcName][0]);
+    			}
+    		}
+    		return array();
+    	}
+    	 
+    	//如果是用户的sink
+    	if(key_exists($funcName, $U_SINK_ALL)){
+    		foreach ($userDefinedSink->getAllSinkArray() as $value){
+    			if(key_exists($funcName, $value)){
+    				return array($U_SINK_ALL[$funcName]) ;
+    			}
+    		}
+    	
+    		return array() ;
+    	}
+    }
+    
     
 }
 

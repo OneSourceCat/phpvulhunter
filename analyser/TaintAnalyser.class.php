@@ -1,6 +1,4 @@
 <?php
-
-
 /**
  * 用于污点分析的类
  * 污点分析的任务：
@@ -13,7 +11,6 @@
 class TaintAnalyser {
 	//方法getPrevBlocks返回的参数
 	private $pathArr = array() ;
-	
 	public function getPathArr() {
 		return $this->pathArr;
 	}

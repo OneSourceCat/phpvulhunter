@@ -554,31 +554,45 @@ class CFGGenerator{
 				    break;
 				    
 				//处理用户自定义函数
-				//过程间分析
+				//过程间分析以及污点分析
 				case 'Expr_FuncCall' || 'Expr_MethodCall':
 					echo "<pre>";
+					//获取调用的函数名判断是否是sink调用
 					$funcName = NodeUtils::getNodeFunctionName($node);
-					$context = Context::getInstance() ;
-					$funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
-					if(!$funcBody) break ;
-					$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
-					//危险参数的位置比如：array(0)
-				    $ret = $this->functionHandler($funcBody, $nextblock, $block); 
-				    if(!$ret){
-				        break;
-				    }
-				    
-				    //找到了array('del',array(0)) ;
-				    $userDefinedSink = UserDefinedSinkContext::getInstance() ;
+					if(NodeUtils::isSinkFunction($funcName)){
+						//如果发现了sink调用，启动污点分析
+						$analyser = new TaintAnalyser() ;
+						//获取危险参数的名称
+						$argName = array() ;
+						$argName = NodeUtils::getVulArgs($node) ;
+						//调用污点分析函数
+						$analyser->analysis($block, $node, $argName) ;
+						
+					}else{
+						//如果不是sink调用，启动过程间分析
+						$context = Context::getInstance() ;
+						$funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
+						if(!$funcBody) break ;
+						$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
+						//危险参数的位置比如：array(0)
+						$ret = $this->functionHandler($funcBody, $nextblock, $block);
+						if(!$ret){
+							break;
+						}
+						
+						//找到了array('del',array(0)) ;
+						$userDefinedSink = UserDefinedSinkContext::getInstance() ;
+							
+						//$type应该从visitor中获取，使用$ret返回
+						$type = $ret['type'] ;
+						unset($ret['type']) ;
+						
+						//加入sink上下文
+						$item = array($funcName,$ret) ;
+						$userDefinedSink->addByTagName($item, $type) ;
+						//print_r($userDefinedSink->getAllSinks()) ;
+					}
 					
-					//$type应该从visitor中获取，使用$ret返回
-				    $type = $ret['type'] ;
-				    unset($ret['type']) ;
-				    
-				    //加入sink上下文
-				    $item = array($funcName,$ret) ;
-				    $userDefinedSink->addByTagName($item, $type) ;
-					//print_r($userDefinedSink->getAllSinks()) ;
 					break ;
 			}
 		}
@@ -789,10 +803,10 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
 			//获取到方法的名称
 			$nodeName = NodeUtils::getNodeFunctionName($node);
-			$ret = $this->isSinkFunction($nodeName);
+			$ret = NodeUtils::isSinkFunction($nodeName);
 			
 			//进行危险参数的辨别
-			if($ret[0] != null){
+			if($ret[0] == true){
 				//处理系统内置的sink
 				//找到了mysql_query
 				$cfg = new CFGGenerator() ;
@@ -841,20 +855,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 		}
 	}
 	
-	// 检测是否为sink函数
-	public function isSinkFunction($funcName){
-	    global $F_SINK_ARRAY ;
-	    $nameNum = count($F_SINK_ARRAY);
 
-        for($i = 0;$i < $nameNum; $i++)
-        {
-            if(key_exists($funcName, $F_SINK_ARRAY[$i]))
-            {
-                return array(true,$F_SINK_ARRAY[$i][$funcName][0]);
-            }
-        }
-        return array(false);
-	}
 
 }
 
