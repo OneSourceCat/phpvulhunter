@@ -1,46 +1,10 @@
 <?php
-// function goods_del($id)
-// {
-// 	$a = $id;
-// 	if(is_array($id))
-// 	{
-// 		foreach($id as $key => $val)
-// 		{
-// 			del2($val);
-// 		}
-// 	}
 
-// }
-
-
-// function del2($where)
-// {
-// 	$where = ' WHERE '.$where;
-// 	$sql   = 'DELETE FROM '.$this->tableName.$where;
-// 	return mysql_query($sql);
-// }
-
-// //main file
-// $id = $_POST['id'] .$a ."b" ;
-// goods_del($id) ;
-function goods_del($id)
-{
-	$a = $id;
-	del2($a);
-
-
+$a = "xxxx" ;
+$b = 3 ;
+if($a == 2){
+	echo 1;
 }
-
-
-function del2($where)
-{
-	$where = ' WHERE '.$where;
-	$sql   = 'DELETE FROM '.$where;
-	return mysql_query($sql);
-}
-
-
-$id = $_POST['id'] .$a ."b" ;
-goods_del($id) ;
+echo $b ;
 
 ?>

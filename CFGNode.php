@@ -11,15 +11,6 @@ class CFGNode{
 	//CFG节点的出边
 	private $outEdges = array() ;
 
-	
-	/**
-	 * 构造函数
-	 */
-	public function __construct(){
-	
-	}
-	
-
 	/**
 	 * 为CFG中的节点添加入入边
 	 * @param unknown $inEdge

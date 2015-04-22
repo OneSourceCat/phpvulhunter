@@ -19,6 +19,10 @@ require_once CURR_PATH . '/summary/FileSummary.class.php';
 require_once CURR_PATH . '/context/ClassFinder.php';
 require_once CURR_PATH . '/context/UserDefinedSinkContext.class.php';
 require_once CURR_PATH . '/context/UserSanitizeFuncConetxt.php';
+require_once CURR_PATH . '/conf/sinks.php' ;
+require_once CURR_PATH . '/analyser/TaintAnalyser.class.php';
+
+header("Content-type:text/html;charset=utf-8") ;
 ini_set('xdebug.max_nesting_level', 2000);
 
 
@@ -420,12 +424,15 @@ class CFGGenerator{
 			    if ($flow->getlocation()->getSanitization()){
 			        return "safe";
 			    }
-				//得到flow.getValue()的变量node
+			    
+				//得到flow->getValue()的变量node
+				//$sql = $a . $b ;  =>  array($a,$b)
 				if($flow->getValue() instanceof ConcatSymbol){
 					$vars = $flow->getValue()->getItems();
 				}else{
 					$vars = array($flow->getValue()) ;
 				}
+				
 				$retarr = array();
 				foreach($vars as $var){
 				    $var = NodeUtils::getNodeStringName($var);
@@ -548,17 +555,16 @@ class CFGGenerator{
 				    
 				//处理用户自定义函数
 				//过程间分析
-				case 'Expr_FuncCall':
+				case 'Expr_FuncCall' || 'Expr_MethodCall':
 					echo "<pre>";
 					$funcName = NodeUtils::getNodeFunctionName($node);
-					//print_r($funcName) ;
 					$context = Context::getInstance() ;
 					$funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
 					if(!$funcBody) break ;
 					$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
-				    $ret = $this->functionHandler($funcBody, $nextblock, $block); //危险参数的位置比如：array(0)
+					//危险参数的位置比如：array(0)
+				    $ret = $this->functionHandler($funcBody, $nextblock, $block); 
 				    if(!$ret){
-				        //print_r("simulate func ending--------------<br/>");
 				        break;
 				    }
 				    
@@ -568,19 +574,14 @@ class CFGGenerator{
 					//$type应该从visitor中获取，使用$ret返回
 				    $type = $ret['type'] ;
 				    unset($ret['type']) ;
-					
-				    //$block->function[$funcName] = $ret ;
 				    
 				    //加入sink上下文
 				    $item = array($funcName,$ret) ;
 				    $userDefinedSink->addByTagName($item, $type) ;
 					//print_r($userDefinedSink->getAllSinks()) ;
-				    //print_r(UserDefinedSinkContext::getInstance());
-				    //print_r("============simulate func ending--------------<br/>");
 					break ;
 			}
 		}
-// 		print_r($block->getBlockSummary());
 		
 	}
 	
@@ -664,15 +665,20 @@ class CFGGenerator{
 		}
 		
 		$this->simulate($currBlock) ;
-// 		print_r($currBlock->getBlockSummary()) ;
-		//print_r($currBlock) ;
+		
+		echo  "当前基本块:<br/>" ;
+		print_r($currBlock) ;
+		echo "前驱基本块：<br/>" ;
+		$analyser = new TaintAnalyser() ;
+		$analyser->getPrevBlocks($currBlock) ;
+		print_r($analyser->getPathArr()) ;
+		
 		if($pNextBlock && !$currBlock->is_exit){
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;
 			$currBlock->addOutEdge($block_edge) ;
 			$pNextBlock->addInEdge($block_edge) ;
 		}
 		
-// 		print_r($currBlock) ;
 		return $currBlock ;
 	}
 	
@@ -784,8 +790,9 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 			//获取到方法的名称
 			$nodeName = NodeUtils::getNodeFunctionName($node);
 			$ret = $this->isSinkFunction($nodeName);
+			
 			//进行危险参数的辨别
-			if($ret[0]){
+			if($ret[0] != null){
 				//处理系统内置的sink
 				//找到了mysql_query
 				$cfg = new CFGGenerator() ;
@@ -836,18 +843,16 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	
 	// 检测是否为sink函数
 	public function isSinkFunction($funcName){
-	    include CURR_PATH . '/conf/sinks.php';
+	    global $F_SINK_ARRAY ;
 	    $nameNum = count($F_SINK_ARRAY);
 
         for($i = 0;$i < $nameNum; $i++)
         {
             if(key_exists($funcName, $F_SINK_ARRAY[$i]))
             {
-                //print 'find sucessful!'.'<br/>';
                 return array(true,$F_SINK_ARRAY[$i][$funcName][0]);
             }
         }
-        //print 'Dont include this function!'.'<br/>';
         return array(false);
 	}
 
@@ -859,7 +864,7 @@ $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 $traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/simple_demo.php';
+$path = CURR_PATH . '/test/test.php';
 $fileSummary->setPath($path);
 $code = file_get_contents($path);
 $stmts = $parser->parse($code) ;
@@ -874,7 +879,7 @@ $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
 //print_r($pEntryBlock) ;
 $sinkContext = UserDefinedSinkContext::getInstance();
-print_r($sinkContext);
+//print_r($sinkContext);
 // $context = Context::getInstance() ;
 // $funcName = "goods:buy";
 // $funcBody = $context->getClassMethodBody($funcName,$path,$fileSummary->getIncludeMap());
