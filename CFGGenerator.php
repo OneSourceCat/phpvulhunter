@@ -3,9 +3,11 @@ define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 
 require_once CURR_PATH . '/vendor/autoload.php' ;
 require_once CURR_PATH . '/BasicBlock.php';
+
 require_once CURR_PATH . '/utils/SymbolUtils.class.php';
 require_once CURR_PATH . '/utils/NodeUtils.class.php';
 require_once CURR_PATH . '/utils/TypeUtils.class.php';
+
 require_once CURR_PATH . '/symbols/Symbol.class.php' ;
 require_once CURR_PATH . '/symbols/ValueSymbol.class.php';
 require_once CURR_PATH . '/symbols/VariableSymbol.class.php';
@@ -15,11 +17,16 @@ require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
 require_once CURR_PATH . '/symbols/SantinizationHandler.class.php';
 require_once CURR_PATH . '/symbols/EncodingHandler.class.php';
+
 require_once CURR_PATH . '/summary/FileSummary.class.php';
+
 require_once CURR_PATH . '/context/ClassFinder.php';
 require_once CURR_PATH . '/context/UserDefinedSinkContext.class.php';
 require_once CURR_PATH . '/context/UserSanitizeFuncConetxt.php';
+
 require_once CURR_PATH . '/conf/sinks.php' ;
+require_once CURR_PATH . '/conf/sources.php' ;
+
 require_once CURR_PATH . '/analyser/TaintAnalyser.class.php';
 
 header("Content-type:text/html;charset=utf-8") ;
@@ -456,11 +463,12 @@ class CFGGenerator{
 	
 	/**
 	 * 处理用户自定义函数
-	 * @param unknown $nodes
-	 * @param unknown $block
-	 * @return multitype:
+	 * @param Node $nodes  方法调用node
+	 * @param BasicBlock $block  当前基本块
+	 * @return array(position) 返回危险参数的位置
 	 */
 	private function functionHandler($node,$block,$parentBlock){
+		//对函数体的代码进行遍历并获取敏感参数的位置
 		$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 		$traverser = new PhpParser\NodeTraverser;
 		$visitor = new FunctionVisitor() ;
@@ -469,12 +477,14 @@ class CFGGenerator{
 		$traverser->addVisitor($visitor) ;
 		$traverser->traverse(array($node)) ;
 		
-		//array(id,where)
+		//获取函数的参数名列表：array(id,where)
 		$del_arg_pos = NodeUtils::getNodeFuncParams($node) ;  
 		
-		//返回
+		//方法返回的数组
 		$posArr = array();  
+		
 		//当变量无法跟踪到或变量被净化，返回null
+		//$visitor->vars是敏感参数列表
 		if((!$visitor->vars) || $visitor->vars == "safe"){
 			return null;
 		}
@@ -553,28 +563,40 @@ class CFGGenerator{
 				    $this->registerGLOBALSHandler($node, $block);
 				    break;
 				    
-				//处理用户自定义函数
+				//处理函数调用以及类方法的调用
 				//过程间分析以及污点分析
-				case 'Expr_FuncCall' || 'Expr_MethodCall':
+				case 'Expr_MethodCall':
+				case 'Expr_FuncCall':
 					echo "<pre>";
 					//获取调用的函数名判断是否是sink调用
 					$funcName = NodeUtils::getNodeFunctionName($node);
+					
 					if(NodeUtils::isSinkFunction($funcName)){
 						//如果发现了sink调用，启动污点分析
 						$analyser = new TaintAnalyser() ;
-						//获取危险参数的名称
-						$argName = array() ;
-						$argName = NodeUtils::getVulArgs($node) ;
+						
+						//获取危险参数的位置
+						print_r($node->getType()) ;
+						$argPosition = NodeUtils::getVulArgs($node) ;
+						$argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
+						
+						//print_r($argArr) ;
 						//调用污点分析函数
-						$analyser->analysis($block, $node, $argName) ;
+						if(count($argArr) > 0){
+							foreach ($argArr as $item){
+								$analyser->analysis($block, $node, $item) ;
+							}
+							
+						}
 						
 					}else{
 						//如果不是sink调用，启动过程间分析
 						$context = Context::getInstance() ;
 						$funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
 						if(!$funcBody) break ;
+						
 						$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
-						//危险参数的位置比如：array(0)
+						//ret危险参数的位置比如：array(0)
 						$ret = $this->functionHandler($funcBody, $nextblock, $block);
 						if(!$ret){
 							break;
@@ -587,10 +609,9 @@ class CFGGenerator{
 						$type = $ret['type'] ;
 						unset($ret['type']) ;
 						
-						//加入sink上下文
+						//加入用户sink上下文
 						$item = array($funcName,$ret) ;
 						$userDefinedSink->addByTagName($item, $type) ;
-						//print_r($userDefinedSink->getAllSinks()) ;
 					}
 					
 					break ;
@@ -680,12 +701,12 @@ class CFGGenerator{
 		
 		$this->simulate($currBlock) ;
 		
-		echo  "当前基本块:<br/>" ;
-		print_r($currBlock) ;
-		echo "前驱基本块：<br/>" ;
-		$analyser = new TaintAnalyser() ;
-		$analyser->getPrevBlocks($currBlock) ;
-		print_r($analyser->getPathArr()) ;
+		//echo  "当前基本块:<br/>" ;
+		//print_r($currBlock) ;
+		//echo "前驱基本块：<br/>" ;
+		//$analyser = new TaintAnalyser() ;
+		//$analyser->getPrevBlocks($currBlock) ;
+		//print_r($analyser->getPathArr()) ;
 		
 		if($pNextBlock && !$currBlock->is_exit){
 			$block_edge = new CFGEdge($currBlock, $pNextBlock) ;

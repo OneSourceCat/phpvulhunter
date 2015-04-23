@@ -54,6 +54,12 @@ class NodeUtils{
                        
             //$a[],$[a]$a[]][]    
             case "Expr_ArrayDimFetch":
+            	//不处理_GET _POST等
+            	$userInput = Sources::getUserInput() ;
+            	if(in_array($node->var->name, $userInput)){
+            		return $node->var->name ;
+            	}
+            	
                 $names = $node->getSubNodeNames();
                 $temp = "";
                 foreach ($names as $name)
@@ -171,11 +177,16 @@ class NodeUtils{
         }
     }
     
-    
+    /**
+     * 获取函数的参数名称
+     * @param Node $node 函数调用的node
+     * @return array(arg1[,arg2,arg3,...])
+     */
     public static function getNodeFuncParams($node){
     	if (!$node instanceof Node){
     		return null;
     	}
+
     	$argsArr = array();
     	if ($node->args){
     	    foreach ($node->args as $arg){
@@ -189,6 +200,29 @@ class NodeUtils{
     	
     	return $argsArr;
     }
+    
+    /**
+     * 根据参数的位置，返回参数的名称
+     * @param Node $node
+     * @param array $argsPos
+     * @return array
+     */
+    public static function getFuncParamsByPos($node,$argsPos){
+    	if (!$node instanceof Node){
+    		return null;
+    	}
+    	$argsNameArr = self::getNodeFuncParams($node) ;
+    	$retArr = array() ;
+    	if(count($argsNameArr) > 0){
+    		foreach ($argsPos as $value){
+    			//sink是否索引1开始的
+    			$value -= 1 ;
+    			array_push($retArr,$argsNameArr[$value]) ;
+    		}
+    	}
+    	return $retArr ;
+    }
+    
     
     
 	/**
@@ -263,13 +297,16 @@ class NodeUtils{
     	global $F_SINK_ALL,$F_SINK_ARRAY ;
     	$funcName = NodeUtils::getNodeFunctionName($node) ;
     	$nameNum = count($F_SINK_ARRAY);
+    	
+    	//从上下文中获取用户定义sink
     	$userDefinedSink = UserDefinedSinkContext::getInstance() ;
     	$U_SINK_ALL = $userDefinedSink->getAllSinks() ;
+    	
     	//如果是系统的sink
     	if(key_exists($funcName, $F_SINK_ALL)){
     		for($i = 0;$i < $nameNum; $i++){
     			if(key_exists($funcName, $F_SINK_ARRAY[$i])){
-    				return array($F_SINK_ARRAY[$i][$funcName][0]);
+    				return $F_SINK_ARRAY[$i][$funcName][0];
     			}
     		}
     		return array();
@@ -279,7 +316,7 @@ class NodeUtils{
     	if(key_exists($funcName, $U_SINK_ALL)){
     		foreach ($userDefinedSink->getAllSinkArray() as $value){
     			if(key_exists($funcName, $value)){
-    				return array($U_SINK_ALL[$funcName]) ;
+    				return $U_SINK_ALL[$funcName] ;
     			}
     		}
     	

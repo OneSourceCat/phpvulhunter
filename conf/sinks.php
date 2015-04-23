@@ -1,8 +1,6 @@
 <?php
 
-use PhpParser\Node\Expr\Isset_;
 require 'securing.php';
-
 
 //跨站脚本的危险函数
 //参数为0表示所有的参数都要进行分析

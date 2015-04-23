@@ -3,23 +3,23 @@ final class Sources
 {	
 	//用户输入参数
 	public static $V_USERINPUT = array(
-		'$_GET',
-		'$_POST',
-		'$_COOKIE',
-		'$_REQUEST',
-		'$_FILES',
-		'$_SERVER',
-		'$_ENV',
-		'$HTTP_GET_VARS',
-		'$HTTP_POST_VARS',
-		'$HTTP_COOKIE_VARS',  
-		'$HTTP_REQUEST_VARS', 
-		'$HTTP_POST_FILES',
-		'$HTTP_SERVER_VARS',
-		'$HTTP_ENV_VARS',
-		'$HTTP_RAW_POST_DATA',
-		'$argc',
-		'$argv'
+		'_GET',
+		'_POST',
+		'_COOKIE',
+		'_REQUEST',
+		'_FILES',
+		'_SERVER',
+		'_ENV',
+		'HTTP_GET_VARS',
+		'HTTP_POST_VARS',
+		'HTTP_COOKIE_VARS',  
+		'HTTP_REQUEST_VARS', 
+		'HTTP_POST_FILES',
+		'HTTP_SERVER_VARS',
+		'HTTP_ENV_VARS',
+		'HTTP_RAW_POST_DATA',
+		'argc',
+		'argv'
 	);
 	
 	//Server内容
@@ -46,6 +46,19 @@ final class Sources
 		'PATH_TRANSLATED',
 		'PHP_SELF'
 	);
+	
+	/**
+	 * 获取用户的输入sources
+	 * @return array()
+	 */
+	public static function getUserInput(){
+		return array_merge(
+					self::$V_USERINPUT ,
+					self::$V_SERVER_PARAMS
+				) ;
+	}
+	
+	
 	
 	//文件内容当做输入
 	public static $F_FILE_INPUT = array(
@@ -88,13 +101,9 @@ final class Sources
 		'sqlite_fetch_string'
 	);
 	
-	//其他当做输入的函数
-	public static $F_OTHER_INPUT = array(
-		'get_headers',
-		'runkit_superglobals',
-		'import_request_variables'
-	);
-
+	
 }
 	
+
+
 ?>	

@@ -1,10 +1,16 @@
 <?php
 
-$a = "xxxx" ;
-$b = 3 ;
-if($a == 2){
-	echo 1;
+$where = "f4cky0u" ;
+$id = $where . $_GET['id'] ;
+
+if($id){
+	echo 11;
+}else{
+	echo 22;
 }
-echo $b ;
+
+$sql = "select * from User where id=" .$id ;
+$sql = addslashes($sql) ;
+mysql_query($sql) ;
 
 ?>

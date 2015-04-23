@@ -9,6 +9,7 @@
  *
  */
 class TaintAnalyser {
+	
 	//方法getPrevBlocks返回的参数
 	private $pathArr = array() ;
 	public function getPathArr() {
@@ -58,19 +59,91 @@ class TaintAnalyser {
 	}
 	
 	/**
-	 * 污点分析的函数
+	 * 污点分析中，对当前基本块的探测
 	 * @param BasicBlock $block
+	 * @param Node $node
+	 * @param string $argName
 	 */
-	public function analysis($block,$node,$argName){
+	public function currBlockTaintHandler($block,$node,$argName){
+		$summary = $block->getBlockSummary() ;
+		$flows = $summary->getDataFlowMap() ;
+		$flows = array_reverse($flows); //逆序处理flows
+
+		foreach ($flows as $flow){
+			if($flow->getName() == $argName){
+				//处理净化信息
+				if ($flow->getlocation()->getSanitization()){
+					return "safe";
+				}
+				
+				//获取flow中的右边赋值变量
+				//得到flow->getValue()的变量node
+				//$sql = $a . $b ;  =>  array($a,$b)
+				if($flow->getValue() instanceof ConcatSymbol){
+					$vars = $flow->getValue()->getItems();
+				}else{
+					$vars = array($flow->getValue()) ;
+				}
+				
+				$retarr = array();
+				foreach($vars as $var){
+					$varName = NodeUtils::getNodeStringName($var) ;
+					$ret = $this->currBlockTaintHandler($block, $node, $varName) ;
+					//变量经过净化，这不需要跟踪该变量
+					if ($ret == "safe"){
+						$retarr = array_slice($retarr, array_search($varName,$retarr)) ;
+					}else{
+						//如果var右边有source项
+						$sourcesArr = Sources::getUserInput() ;
+						if(in_array($varName, $sourcesArr)){
+							//报告漏洞
+							$this->report($node, $var) ;
+						}
+					}
+				}
+
+			}
+		}
+	}
+	
+	/**
+	 * 报告漏洞的函数
+	 * @param Node $node 出现漏洞的node
+	 * @param Node $var  出现漏洞的变量node
+	 */
+	public function report($node,$var){
+		echo "<pre>" ;
+		echo "有漏洞！！！！<br/>" ;
+		echo "漏洞变量：<br/>" ;
+		print_r($var) ;
+		echo "漏洞节点：<br/>" ;
+		print_r($node) ;
+	}
+	
+	
+	
+	/**
+	 * 污点分析的函数
+	 * @param BasicBlock $block 当前基本块
+	 * @param Node $node 当前的函数调用node
+	 * @param $argNameArr 危险参数名的列表
+	 */
+	public function analysis($block,$node,$argNameArr){
 		//获取所有的前驱节点集合
-		$block_list = $this->getPrevBlocks($block) ;
+		$this->getPrevBlocks($block) ;
+		
+		//获取前驱基本块集合并将当前基本量添加至列表
+		$block_list = $this->pathArr ;
+		array_push($block_list, $block) ;
+		
+		//首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
+		$ret = $this->currBlockTaintHandler($block, $node, $argNameArr) ;
+		print_r($ret) ;
 		
 		//遍历每个前驱block
 		foreach($block_list as $bitem){
 			//不是平行结构
 			if(!is_array($bitem)){
-				$summary = $bitem->getBlockSummary();
-				$flows = $summary->getDataFlowMap();
 				
 			}else{
 				//是平行结构，比如if-else
