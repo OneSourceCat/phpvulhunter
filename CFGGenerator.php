@@ -439,7 +439,6 @@ class CFGGenerator{
 				}else{
 					$vars = array($flow->getValue()) ;
 				}
-				
 				$retarr = array();
 				foreach($vars as $var){
 				    $var = NodeUtils::getNodeStringName($var);
@@ -576,7 +575,6 @@ class CFGGenerator{
 						$analyser = new TaintAnalyser() ;
 						
 						//获取危险参数的位置
-						print_r($node->getType()) ;
 						$argPosition = NodeUtils::getVulArgs($node) ;
 						$argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
 						

@@ -10,6 +10,8 @@ if($id){
 }
 
 $sql = "select * from User where id=" .$id ;
+$sql = htmlentities($sql) ;
+$sql = stripcslashes($sql) ;
 $sql = addslashes($sql) ;
 mysql_query($sql) ;
 

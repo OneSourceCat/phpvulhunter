@@ -16,6 +16,7 @@ class TaintAnalyser {
 		return $this->pathArr;
 	}
 
+
 	/**
 	 * 获取当前基本块的所有前驱基本块
 	 * @param BasicBlock $block
@@ -60,19 +61,20 @@ class TaintAnalyser {
 	
 	/**
 	 * 污点分析中，对当前基本块的探测
-	 * @param BasicBlock $block
-	 * @param Node $node
-	 * @param string $argName
+	 * @param BasicBlock $block  当前基本块
+	 * @param Node $node  当前调用sink的node
+	 * @param string $argName  危险参数的名称
 	 */
 	public function currBlockTaintHandler($block,$node,$argName){
 		$summary = $block->getBlockSummary() ;
 		$flows = $summary->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
-
+		
 		foreach ($flows as $flow){
+			//print_r($flow) ;
 			if($flow->getName() == $argName){
-				//处理净化信息
-				if ($flow->getlocation()->getSanitization()){
+				//处理净化信息,如果被编码或者净化则返回safe
+				if ($flow->getlocation()->getSanitization() || $flow->getLocation()->getEncoding()){
 					return "safe";
 				}
 				
@@ -106,20 +108,18 @@ class TaintAnalyser {
 		}
 	}
 	
-	/**
-	 * 报告漏洞的函数
-	 * @param Node $node 出现漏洞的node
-	 * @param Node $var  出现漏洞的变量node
-	 */
-	public function report($node,$var){
-		echo "<pre>" ;
-		echo "有漏洞！！！！<br/>" ;
-		echo "漏洞变量：<br/>" ;
-		print_r($var) ;
-		echo "漏洞节点：<br/>" ;
-		print_r($node) ;
-	}
 	
+	/**
+	 * 根据sink的类型、危险参数的净化信息列表、编码列表
+	 * 判断是否是有效的净化
+	 * 返回true or false
+	 * @param string $type
+	 * @param array $saniArr
+	 * @param array $encodingArr
+	 */
+	public function isSanitization($type,$saniArr,$encodingArr){
+		
+	}
 	
 	
 	/**
@@ -138,7 +138,6 @@ class TaintAnalyser {
 		
 		//首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
 		$ret = $this->currBlockTaintHandler($block, $node, $argNameArr) ;
-		print_r($ret) ;
 		
 		//遍历每个前驱block
 		foreach($block_list as $bitem){
@@ -156,6 +155,22 @@ class TaintAnalyser {
 		}
 		return array() ;
 	}
+	
+	
+	/**
+	 * 报告漏洞的函数
+	 * @param Node $node 出现漏洞的node
+	 * @param Node $var  出现漏洞的变量node
+	 */
+	public function report($node,$var){
+		echo "<pre>" ;
+		echo "有漏洞！！！！<br/>" ;
+		echo "漏洞变量：<br/>" ;
+		print_r($var) ;
+		echo "漏洞节点：<br/>" ;
+		print_r($node) ;
+	}
+	
 	
 }
 
