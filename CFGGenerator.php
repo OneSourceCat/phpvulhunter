@@ -490,7 +490,8 @@ class CFGGenerator{
 		
 		foreach($del_arg_pos as $k => $v){
 		    if(in_array($v,$visitor->vars)){
-		        array_push($posArr, $k) ;
+		        //$k+1：参数第一个记成1，而不是0
+		        array_push($posArr, ($k+1)) ;
 		    }
 		}
 		
@@ -569,8 +570,9 @@ class CFGGenerator{
 					echo "<pre>";
 					//获取调用的函数名判断是否是sink调用
 					$funcName = NodeUtils::getNodeFunctionName($node);
-					
-					if(NodeUtils::isSinkFunction($funcName)){
+					//判断是否为sink函数,返回格式为array(true,funcname) or array(false)
+					$ret = NodeUtils::isSinkFunction($funcName);
+					if($ret[0]){
 						//如果发现了sink调用，启动污点分析
 						$analyser = new TaintAnalyser() ;
 						

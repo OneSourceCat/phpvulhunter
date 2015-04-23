@@ -98,7 +98,7 @@ class Context {
 	public function getClassMethodBody($funcName,$path,$require_array){
 	    //得到require文件包含的函数集合
 	    $records = $this->getRequireFileFuncs($path,$require_array);
-	    $method = NULL ;
+	    $method = null ;
 	    $path = '';
 	    $funcInfo = explode(":", $funcName);
 	    $className = '';
@@ -120,7 +120,7 @@ class Context {
     	        }
 	        }
 	    }
-	    if($path == '' && $method = NULL){
+	    if(($path == '') && ($method = null)){
 	        //在包含的文件中找不到相应函数，只能去全部的函数集合中寻找
 	        for($i=0;$i<count($this->records);$i++) {
 	            if($this->records[$i]->class_name == $className){
@@ -144,6 +144,8 @@ class Context {
      */
     public function getRequireFileFuncs($path,$require_array){
         $tempRequireFile = array();
+        //将文件自身添加
+        array_push($tempRequireFile, $path);
         //补全路径
         $currentDir = dirname($path);
         global $rootPath;

@@ -113,7 +113,8 @@ class SanitizeParamsFinder{
                             $argName = NodeUtils::getNodeStringName($arg);
                             $pos = $this->searchPos($argName, $params);
                             if ($pos>-1){
-                                $this->oneFunction->addSanitizeParam($pos, $ret['type']);
+                                //当函数的第1个参数净化时，数组为0，记为1
+                                $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
                             }
                         }                                               
                     }else{
@@ -130,10 +131,12 @@ class SanitizeParamsFinder{
                             break;                     
                         //根据return onefunction，加入到this->onefunction
                         foreach ($ret->getSanitizeParams() as $param){
-                            echo "<br/>";
-                            $pos = $this->searchPos(NodeUtils::getNodeStringName($node->args[$param['positon']]), $params);
+                            //计算参数位置，因为认为第一个参数设为位置1，而AST树中 是从0开始
+                            $postion = $param['positon']-1;
+                            $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$postion]), $params);
                             if ($pos>-1){
-                                $this->oneFunction->addSanitizeParam($pos, $param['type']);
+                                //当函数的第1个参数净化时，数组为0，记为1
+                                $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
                             }
                         }
                     }
@@ -152,7 +155,8 @@ class SanitizeParamsFinder{
                             $argName = NodeUtils::getNodeStringName($arg);
                             $pos = $this->searchPos($argName, $params);
                             if ($pos>-1){
-                                $this->oneFunction->addSanitizeParam($pos, $ret['type']);
+                                //当函数的第1个参数净化时，数组为0，记为1
+                                $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
                             }
                         }        
                     }else{
@@ -169,9 +173,12 @@ class SanitizeParamsFinder{
                             break;
                         //根据return onefunction，加入到this->onefunction
                         foreach ($ret->getSanitizeParams() as $param){
-                            $pos = $this->searchPos(NodeUtils::getNodeStringName($node->args[$param['positon']]), $params);
+                            //计算参数位置，因为认为第一个参数设为位置1，而AST树中 是从0开始
+                            $postion = $param['positon']-1;
+                            $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$postion]), $params);
                             if ($pos>-1){
-                                $this->oneFunction->addSanitizeParam($pos, $param['type']);
+                                //当函数的第1个参数净化时，数组为0，记为1
+                                $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
                             }
                         }
                     }
@@ -190,9 +197,12 @@ class SanitizeParamsFinder{
                         break;
                     //根据return onefunction，加入到this->onefunction
                     foreach ($ret->getSanitizeParams() as $param){
-                        $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$param['positon']]), $params);
+                        //计算参数位置，因为认为第一个参数设为位置1，而AST树中 是从0开始
+                        $postion = $param['positon']-1;
+                        $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$postion]), $params);
                         if ($pos>-1){
-                            $this->oneFunction->addSanitizeParam($pos, $param['type']);
+                            //当函数的第1个参数净化时，数组为0，记为1
+                                $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
                         }
                     }
                     break;
@@ -210,9 +220,11 @@ class SanitizeParamsFinder{
                         break;
                     //根据return onefunction，加入到this->onefunction
                     foreach ($ret->getSanitizeParams() as $param){
-                        $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$param['positon']]), $params);
+                        //计算参数位置，因为认为第一个参数设为位置1，而AST树中 是从0开始
+                        $postion = $param['positon']-1;
+                        $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$postion]), $params);
                         if ($pos>-1){
-                            $this->oneFunction->addSanitizeParam($pos, $param['type']);
+                            $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
                         }
                     }
                     break;
@@ -396,7 +408,7 @@ $finder->getUserSanitizeFuncConetxt() ;
 $funcContext = UserSanitizeFuncConetxt::getInstance() ;
 
 echo '<pre>';
-// print_r($funcContext->sanitizeFunctions);
+print_r($funcContext->sanitizeFunctions);
 
 
 ?>
