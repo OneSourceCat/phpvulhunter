@@ -26,6 +26,7 @@ require_once CURR_PATH . '/context/UserSanitizeFuncConetxt.php';
 
 require_once CURR_PATH . '/conf/sinks.php' ;
 require_once CURR_PATH . '/conf/sources.php' ;
+require_once CURR_PATH . '/conf/securing.php';
 
 require_once CURR_PATH . '/analyser/TaintAnalyser.class.php';
 
@@ -702,7 +703,7 @@ class CFGGenerator{
 		$this->simulate($currBlock) ;
 		
 		//echo  "当前基本块:<br/>" ;
-		//print_r($currBlock) ;
+		//print_r($currBlock->getBlockSummary()) ;
 		//echo "前驱基本块：<br/>" ;
 		//$analyser = new TaintAnalyser() ;
 		//$analyser->getPrevBlocks($currBlock) ;
@@ -872,12 +873,8 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 			}else {
                 ;
 			}
-
 		}
 	}
-	
-
-
 }
 
 //从用户那接受项目路径
@@ -886,7 +883,7 @@ $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 $traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/test.php';
+$path = CURR_PATH . '/test/simple_demo.php';
 $fileSummary->setPath($path);
 $code = file_get_contents($path);
 $stmts = $parser->parse($code) ;
@@ -901,7 +898,7 @@ $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
 //print_r($pEntryBlock) ;
 $sinkContext = UserDefinedSinkContext::getInstance();
-//print_r($sinkContext);
+print_r($sinkContext);
 // $context = Context::getInstance() ;
 // $funcName = "goods:buy";
 // $funcBody = $context->getClassMethodBody($funcName,$path,$fileSummary->getIncludeMap());

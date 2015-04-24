@@ -2,6 +2,7 @@
 
 //bool判断的安全函数
 $F_SECURING_BOOL = array(
+    '__NAME__'  => 'bool',
 	'is_double',
 	'is_float',
 	'is_real',
@@ -27,6 +28,7 @@ $F_SECURING_BOOL = array(
 
 //可以防止所有漏洞的函数
 $F_SECURING_STRING = array(
+    '__NAME__'  => 'all',
 	'intval',
 	'floatval',
 	'doubleval',
@@ -61,6 +63,7 @@ $F_SECURING_STRING = array(
 
 //PHP中的编码函数
 $F_ENCODING_STRING = array(
+    '__NAME__'  => 'encoding',
 	'rawurlencode',
 	'urlencode',
 	'base64_encode',
@@ -69,6 +72,7 @@ $F_ENCODING_STRING = array(
 
 //PHP中的解码函数
 $F_DECODING_STRING = array(
+    '__NAME__'  => 'decoding',
 	'rawurldecode',
 	'urldecode',
 	'base64_decode',
@@ -78,6 +82,7 @@ $F_DECODING_STRING = array(
 
 //消除净化标签的函数
 $F_INSECURING_STRING = array(
+    '__NAME__'  => 'insecuring',
 	'rawurldecode',
 	'urldecode',
 	'base64_decode',
@@ -90,12 +95,14 @@ $F_INSECURING_STRING = array(
 
 //XSS的安全标签
 $F_SECURING_XSS = array(
+    '__NAME__'  => 'XSS',
 	'htmlentities',
 	'htmlspecialchars'
 );	
 
 //SQLI的安全标签
 $F_SECURING_SQL = array(
+    '__NAME__'  => 'SQLI',
 	'addslashes',
 	'dbx_escape_string',
 	'db2_escape_string',
@@ -114,40 +121,63 @@ $F_SECURING_SQL = array(
 
 //使用正则过滤RCE
 $F_SECURING_PREG = array(
+    '__NAME__'  => 'PREG',
 	'preg_quote'
 );
 
 //文件操作的安全函数
 $F_SECURING_FILE = array(
+    '__NAME__'  => 'FILE',
 	'basename',
 	'pathinfo'
 );
 
 //防止命令注入的安全函数
 $F_SECURING_SYSTEM = array(
+    '__NAME__'  => 'EXEC',
 	'escapeshellarg',
 	'escapeshellcmd'
 );	
 
 //防止XPath注入的安全函数
 $F_SECURING_XPATH = array(
+    '__NAME__'  => 'XPATH',
 	'addslashes'
 );
 
 //防止LDAP注入的安全函数
 $F_SECURING_LDAP = array(
+    '__NAME__'  => 'LDAP',
 );
 
 //全部的安全函数集合
 $F_SECURES_ALL = array_merge(
-	$F_SECURING_XSS, 
-	$F_SECURING_SQL,
-	$F_SECURING_PREG,
-	$F_SECURING_FILE,
-	$F_SECURING_SYSTEM,
-	$F_SECURING_XPATH
+	$F_SECURING_BOOL,
+    $F_SECURING_STRING,
+    $F_ENCODING_STRING,
+    $F_DECODING_STRING,
+    $F_INSECURING_STRING,
+    $F_SECURING_XSS,
+    $F_SECURING_SQL,
+    $F_SECURING_PREG,
+    $F_SECURING_FILE,
+    $F_SECURING_SYSTEM,
+    $F_SECURING_XPATH
 );	
 
+$F_SECURES_ARRAY = array(
+    $F_SECURING_BOOL,
+    $F_SECURING_STRING,
+    $F_ENCODING_STRING,
+    $F_DECODING_STRING,
+    $F_INSECURING_STRING,
+    $F_SECURING_XSS,
+    $F_SECURING_SQL,
+    $F_SECURING_PREG,
+    $F_SECURING_FILE,
+    $F_SECURING_SYSTEM,
+    $F_SECURING_XPATH
+);
 // securing functions that work only when embedded in quotes
 $F_QUOTE_ANALYSIS = $F_SECURING_SQL;
 		

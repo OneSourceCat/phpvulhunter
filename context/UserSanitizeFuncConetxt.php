@@ -133,10 +133,10 @@ class SanitizeParamsFinder{
                         foreach ($ret->getSanitizeParams() as $param){
                             //计算参数位置，因为认为第一个参数设为位置1，而AST树中 是从0开始
                             $postion = $param['positon']-1;
-                            $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$postion]), $params);
+                            $pos = $this->searchPos(NodeUtils::getNodeStringName($node->args[$postion]), $params);
                             if ($pos>-1){
                                 //当函数的第1个参数净化时，数组为0，记为1
-                                $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
+                                $this->oneFunction->addSanitizeParam(($pos+1), $param['type']);
                             }
                         }
                     }
@@ -175,10 +175,10 @@ class SanitizeParamsFinder{
                         foreach ($ret->getSanitizeParams() as $param){
                             //计算参数位置，因为认为第一个参数设为位置1，而AST树中 是从0开始
                             $postion = $param['positon']-1;
-                            $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$postion]), $params);
+                            $pos = $this->searchPos(NodeUtils::getNodeStringName($node->args[$postion]), $params);
                             if ($pos>-1){
                                 //当函数的第1个参数净化时，数组为0，记为1
-                                $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
+                                $this->oneFunction->addSanitizeParam(($pos+1), $param['type']);
                             }
                         }
                     }
@@ -202,7 +202,7 @@ class SanitizeParamsFinder{
                         $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$postion]), $params);
                         if ($pos>-1){
                             //当函数的第1个参数净化时，数组为0，记为1
-                                $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
+                                $this->oneFunction->addSanitizeParam(($pos+1), $param['type']);
                         }
                     }
                     break;
@@ -224,7 +224,7 @@ class SanitizeParamsFinder{
                         $postion = $param['positon']-1;
                         $pos = $this->searchPos(NodeUtils::getNodeStringName($node->expr->args[$postion]), $params);
                         if ($pos>-1){
-                            $this->oneFunction->addSanitizeParam(($pos+1), $ret['type']);
+                            $this->oneFunction->addSanitizeParam(($pos+1), $param['type']);
                         }
                     }
                     break;
@@ -240,42 +240,26 @@ class SanitizeParamsFinder{
         return count($oneFunction->getSanitizeParams());       
     }
     // 检测是否为净化函数
-    public function isSecureFunction($funcName){  
-        include CURR_PATH . '/conf/securing.php';
-        $arrayName = array(
-            'F_SECURING_BOOL',
-            'F_SECURING_STRING',
-            'F_ENCODING_STRING',
-            'F_DECODING_STRING'	,
-            'F_INSECURING_STRING',
-            'F_SECURING_XSS',
-            'F_SECURING_SQL',
-            'F_SECURING_PREG',
-            'F_SECURING_FILE',
-            'F_SECURING_SYSTEM',
-            'F_SECURING_XPATH'
-        );
-        
-        $string = 'pathinfo';
-        $nameNum = count($arrayName);
-        
-        for($j = 0;$j < $nameNum; $j++)
-        {
-            $arrayNum = count($$arrayName[$j]);
-            for($i = 0;$i < $arrayNum; $i++)
-            {
-                $middlestr_1 = $$arrayName[$j];
-                $middlestr_2 = $middlestr_1[$i];
-        
-                if(strcasecmp($middlestr_2,$funcName) == 0)
-                {
-				    print 'sucessful!'.'<br/>';
-                    return array(true,'type'=>$arrayName[$j]);
-                }
-            }
+    public function isSecureFunction($funcName){ 
+        global $F_SECURES_ARRAY,$F_SECURES_ALL;
+        $nameNum = count($F_SECURES_ARRAY); 
+        if (in_array($funcName, $F_SECURES_ALL)){
+            $type = array();
+            for($i = 0;$i < $nameNum; $i++){
+		    	if(in_array($funcName, $F_SECURES_ARRAY[$i])){
+		    	    print_r("      find<br/>");
+		    	    array_push($type, $F_SECURES_ARRAY[$i]['__NAME__']);
+		    		//return array(true,'type'=>$F_SECURES_ARRAY[$i]['__NAME__']);
+		    	}
+	    	}
+	    	if($type)
+	    	    return array(true,'type'=>$type);
+	    	print_r("      not find<br/>");
+    		return array(false);
+        }else{
+            print_r("      not find<br/>");
+            return array(false);
         }
-	   print 'Dont include this function!'.'<br/>';
-       return array(false);
     }
     /**
      * 查找参数在参数列表的位置
