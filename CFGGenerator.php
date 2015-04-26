@@ -286,6 +286,7 @@ class CFGGenerator{
 	 * 转为两条赋值：
 	 * 		$key = $_GET
 	 * 		$value = $_GET
+	 * 即key和value全部被传染
 	 * 存入block的summary中
 	 * @param BasicBlock $block
 	 * @param Node $node
@@ -293,16 +294,23 @@ class CFGGenerator{
 	public function foreachHandler($block,$node){
 		if($node->expr->getType() == "Expr_ArrayDimFetch"){
 			// 处理$key
-			$keyFlow = new DataFlow() ;
-			$keyFlow->setName(NodeUtils::getNodeStringName($node->keyVar)) ;
-			$keyFlow->setLocation($node->keyVar) ;
-			$keyFlow->setValue($node->expr) ;
+			if($node->keyVar != null){
+				$keyFlow = new DataFlow() ;
+				$keyFlow->setName(NodeUtils::getNodeStringName($node->keyVar)) ;
+				$keyFlow->setLocation($node->keyVar) ;
+				$keyFlow->setValue($node->expr) ;
+				$block->getBlockSummary()->addDataFlowItem($keyFlow) ;
+			}
 			
 			//处理$value
-			$valueFlow = new DataFlow() ;
-			$valueFlow->setName(NodeUtils::getNodeStringName($node->valueVar)) ;
-			$valueFlow->setLocation($node->valueVar) ;
-			$valueFlow->setValue($node->expr) ;
+			if($node->valueVar != null){
+				$valueFlow = new DataFlow() ;
+				$valueFlow->setName(NodeUtils::getNodeStringName($node->valueVar)) ;
+				$valueFlow->setLocation($node->valueVar) ;
+				$valueFlow->setValue($node->expr) ;
+				$block->getBlockSummary()->addDataFlowItem($valueFlow) ;
+			}
+
 		}
 	}
 	
