@@ -20,7 +20,7 @@ class SantinizationHandler {
 		$funcName = NodeUtils::getNodeFunctionName($node) ;
 		$funcInfo = explode(":", $funcName);
 		$className= "";
-		if (count($funcInfo) ==2){
+		if (count($funcInfo) == 2){
 		    $className = $funcInfo[0];
 		    $funcName = $funcInfo[1];
 		}

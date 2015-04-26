@@ -16,6 +16,8 @@ class TaintAnalyser {
 		return $this->pathArr;
 	}
 
+	
+	
 
 	/**
 	 * 获取当前基本块的所有前驱基本块
@@ -71,10 +73,10 @@ class TaintAnalyser {
 		$flows = array_reverse($flows); //逆序处理flows
 		
 		foreach ($flows as $flow){
-			//print_r($flow) ;
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
-				if ($flow->getlocation()->getSanitization() || $flow->getLocation()->getEncoding()){
+				//被isSanitization函数取代
+				if ($flow->getlocation()->getSanitization()){
 					return "safe";
 				}
 				
@@ -86,6 +88,8 @@ class TaintAnalyser {
 				}else{
 					$vars = array($flow->getValue()) ;
 				}
+				
+				//print_r($vars) ;
 				
 				$retarr = array();
 				foreach($vars as $var){
@@ -113,12 +117,34 @@ class TaintAnalyser {
 	 * 根据sink的类型、危险参数的净化信息列表、编码列表
 	 * 判断是否是有效的净化
 	 * 返回true or false
-	 * @param string $type
-	 * @param array $saniArr
-	 * @param array $encodingArr
+	 * 'XSS','SQLI','HTTP','CODE','EXEC','LDAP','INCLUDE','FILE','XPATH','FILEAFFECT'
+	 * @param string $type 漏洞的类型，使用TypeUtils可以获取
+	 * @param array $saniArr 危险参数的净化信息栈
+	 * @param array $encodingArr 危险参数的编码信息栈
 	 */
 	public function isSanitization($type,$saniArr,$encodingArr){
-		
+		switch ($type){
+			case 'SQLI':
+				break ;
+			case 'XSS':
+				break ;
+			case 'HTTP':
+				break ;
+			case 'CODE':
+				break ;
+			case 'EXEC':
+				break ;
+			case 'LDAP':
+				break ;
+			case 'INCLUDE':
+				break ;
+			case 'FILE':
+				break ;
+			case 'XPATH':
+				break ;
+			case 'FILEAFFECT':
+				break ;
+		}
 	}
 	
 	
@@ -126,28 +152,30 @@ class TaintAnalyser {
 	 * 污点分析的函数
 	 * @param BasicBlock $block 当前基本块
 	 * @param Node $node 当前的函数调用node
-	 * @param $argNameArr 危险参数名的列表
+	 * @param string $argName 危险参数名
 	 */
-	public function analysis($block,$node,$argNameArr){
+	public function analysis($block,$node,$argName){
+		
 		//获取所有的前驱节点集合
 		$this->getPrevBlocks($block) ;
+		print_r($block) ;
 		
 		//获取前驱基本块集合并将当前基本量添加至列表
 		$block_list = $this->pathArr ;
 		array_push($block_list, $block) ;
 		
 		//首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
-		$ret = $this->currBlockTaintHandler($block, $node, $argNameArr) ;
-		
+		$ret = $this->currBlockTaintHandler($block, $node, $argName) ;
+
 		//遍历每个前驱block
 		foreach($block_list as $bitem){
 			//不是平行结构
 			if(!is_array($bitem)){
-				
+				$this->currBlockTaintHandler($bitem, $node, $argName) ;
 			}else{
 				//是平行结构，比如if-else
 				foreach($bitem as $branch){
-		
+					$this->currBlockTaintHandler($branch, $node, $argName) ;
 				}
 			}
 		

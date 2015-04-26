@@ -83,7 +83,7 @@ $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 
 //print_r($stmts) ;
-print_r($visitor->strings) ;
+//print_r($visitor->strings) ;
 
 
 ?>

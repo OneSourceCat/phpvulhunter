@@ -141,6 +141,7 @@ class CFGGenerator{
 	 * @param $block  BasicBlock
 	 */
 	public function addLoopVariable($node,$block){
+		//print_r($block) ;
 		switch ($node->getType()){
 			case 'Stmt_For':  //for(i=0;i<3;i++) ===> extract var i
 				$block->loop_var = $node->init[0] ;
@@ -149,12 +150,17 @@ class CFGGenerator{
 				$block->loop_var = $node->cond ;
 				break ;
 			case 'Stmt_Foreach':  //foreach($nodes as $node) ======> extract $nodes
-				$block->loop_var = $node->expr ;
+				$tempNode = clone $node ;
+				unset($tempNode->stmts) ;
+				$block->loop_var =  $tempNode ;
 				break ;
 			case 'Stmt_Do':   //do{}while(cond); =====> extract cond
 				$block->loop_var = $node->cond ;
 				break ;
 		}
+		//将循环条件加入到$block中
+		$block->addNode($block->loop_var) ;
+		unset($block->loop_var) ;
 	}
 	
 	/**
@@ -271,6 +277,32 @@ class CFGGenerator{
 		//处理完一条赋值语句，加入DataFlowMap
 		if($type == "right"){
 			$block->getBlockSummary()->addDataFlowItem($dataFlow);
+		}
+	}
+	
+	/**
+	 * 处理foreach语句:
+	 * foreach($_GET['id'] as $key => $value)
+	 * 转为两条赋值：
+	 * 		$key = $_GET
+	 * 		$value = $_GET
+	 * 存入block的summary中
+	 * @param BasicBlock $block
+	 * @param Node $node
+	 */
+	public function foreachHandler($block,$node){
+		if($node->expr->getType() == "Expr_ArrayDimFetch"){
+			// 处理$key
+			$keyFlow = new DataFlow() ;
+			$keyFlow->setName(NodeUtils::getNodeStringName($node->keyVar)) ;
+			$keyFlow->setLocation($node->keyVar) ;
+			$keyFlow->setValue($node->expr) ;
+			
+			//处理$value
+			$valueFlow = new DataFlow() ;
+			$valueFlow->setName(NodeUtils::getNodeStringName($node->valueVar)) ;
+			$valueFlow->setLocation($node->valueVar) ;
+			$valueFlow->setValue($node->expr) ;
 		}
 	}
 	
@@ -524,6 +556,11 @@ class CFGGenerator{
 					$this->assignHandler($node, $block,$dataFlow,"right") ;
 					break ;
 				
+				//处理foreach，转换为summary中的赋值
+				case 'Stmt_Foreach':
+					$this->foreachHandler($block, $node) ;
+					break ;
+				
 				//处理字符串连接赋值
 				//$sql .= "from users where"生成sql => "from users where"
 				case 'Expr_AssignOp_Concat': 
@@ -581,7 +618,7 @@ class CFGGenerator{
 						$argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
 						
 						//print_r($argArr) ;
-						//调用污点分析函数
+						//遍历危险参数名，调用污点分析函数
 						if(count($argArr) > 0){
 							foreach ($argArr as $item){
 								$analyser->analysis($block, $node, $item) ;
@@ -659,25 +696,22 @@ class CFGGenerator{
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
 				//生成基本块的摘要
 				$this->simulate($currBlock) ;
-				//print_r($currBlock->getBlockSummary()) ;
-				
+
 				$nextBlock = new BasicBlock() ;
 				//对每个分支，建立相应的基本块
 				$branches = $this->getBranches($node) ;
 				foreach ($branches as $b){
 					$this->CFGBuilder($b->nodes, $b->condition, $currBlock, $nextBlock)	;				
 				}
-				//var_dump($nextBlock) ;
 				$currBlock = $nextBlock ;
 				
 			//如果节点是循环语句
 			}elseif(in_array($node->getType(), $LOOP_STATEMENT)){  
 				//加入循环条件
-				$this->addLoopVariable($node, $currBlock) ; 
+				$this->addLoopVariable($node, $currBlock) ;
 				$this->simulate($currBlock) ;
-				//print_r($currBlock->getBlockSummary()) ;
-				
-				$currBlock->nodes = $node->stmts ;
+
+				//处理循环体
 				$nextBlock = new BasicBlock() ;
 				$this->CFGBuilder($node->stmts, NULL, $currBlock, $nextBlock) ;
 				$currBlock = $nextBlock ;

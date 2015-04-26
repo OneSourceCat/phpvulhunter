@@ -408,7 +408,7 @@ $finder->getUserSanitizeFuncConetxt() ;
 $funcContext = UserSanitizeFuncConetxt::getInstance() ;
 
 echo '<pre>';
-print_r($funcContext->sanitizeFunctions);
+//print_r($funcContext->sanitizeFunctions);
 
 
 ?>
