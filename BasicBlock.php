@@ -1,17 +1,26 @@
 <?php
 require CURR_PATH . '/CFGNode.php';
+require_once CURR_PATH . '/CFGEdge.php';
 require CURR_PATH . '/summary/BlockSummary.class.php';
 /**
  * 定义基本块信息
  * @author exploit
  *
  */
-class BasicBlock extends CFGNode{
+class BasicBlock{
 	//基本块中包含的AST node，放入list中
 	private $containedNodes ;
 	private $blockSummary;
-	//array('function_name'=>'xxx',array(0,1))
-    //public $function = array(); 
+	
+	public $is_entry = false ;
+	public $is_exit = false ;
+	public  $loop_var = NULL;
+	//CFG节点的进入边
+	private $inEdges = array() ;
+	//CFG节点的出边
+	private $outEdges = array() ;
+	
+	
 	public function __construct(){
 		$this->containedNodes = array() ;
 		$this->blockSummary =  new BlockSummary() ;
@@ -45,7 +54,46 @@ class BasicBlock extends CFGNode{
 		$this->blockSummary = $blockSummary;
 	}
 	
+	/**
+	 * 为CFG中的节点添加入入边
+	 * @param unknown $inEdge
+	 */
+	public function addInEdge($inEdge){
+		if($inEdge){
+			array_push($this->inEdges, $inEdge) ;
+		}else{
+			return ;
+		}
+	}
 	
+	/**
+	 * 为CFG中的节点加入出边
+	 * @param unknown $outEdge
+	 */
+	public  function addOutEdge($outEdge){
+		if($outEdge){
+			array_push($this->outEdges, $outEdge) ;
+		}else{
+			return ;
+		}
+	}
+	
+	//--------------------------Getter && Setter---------------------------------------------
+	public function getInEdges() {
+		return $this->inEdges;
+	}
+
+	public function getOutEdges() {
+		return $this->outEdges;
+	}
+
+	public function setInEdges($inEdges) {
+		$this->inEdges = $inEdges;
+	}
+
+	public function setOutEdges($outEdges) {
+		$this->outEdges = $outEdges;
+	}
 }
 
 
