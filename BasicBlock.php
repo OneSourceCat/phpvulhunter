@@ -1,5 +1,5 @@
 <?php
-require CURR_PATH . '/CFGNode.php';
+
 require_once CURR_PATH . '/CFGEdge.php';
 require CURR_PATH . '/summary/BlockSummary.class.php';
 /**

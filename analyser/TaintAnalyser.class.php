@@ -22,13 +22,12 @@ class TaintAnalyser {
 		$this->sourcesArr = Sources::getUserInput() ;
 	}
 	
-	
-	
 
 	/**
 	 * 获取当前基本块的所有前驱基本块
 	 * @param BasicBlock $block
-	 * @return Array 返回前驱基本块集合
+	 * @return Array 返回前驱基本块集合$this->pathArr
+	 * 使用该方法时，需要对类属性$this->pathArr进行初始化
 	 */
 	public function getPrevBlocks($currBlock){
 		if($currBlock != null){
@@ -109,16 +108,13 @@ class TaintAnalyser {
 					$varName = NodeUtils::getNodeStringName($var) ;
 					$ret = $this->currBlockTaintHandler($block, $node, $varName,$flowsNum) ;
 					//变量经过净化，这不需要跟踪该变量
-					if ($ret == "safe"){
-						$retarr = array_slice($retarr, array_search($varName,$retarr)) ;
-					}else{
-						//如果var右边有source项
-						if(in_array($varName, $this->sourcesArr)){
-							//报告漏洞
-							$this->report($node, $flow->getLocation()) ;
-							return true ;
-						}
+					//如果var右边有source项
+					if(in_array($varName, $this->sourcesArr)){
+						//报告漏洞
+						$this->report($node, $flow->getLocation()) ;
+						return true ;
 					}
+					
 				}
 
 			}
@@ -133,22 +129,47 @@ class TaintAnalyser {
 	 * @param Node $node 调用sink的nodeo 
 	 */
 	public function multiBlockHandler($block,$argName,$node,$flowsNum=0){
-		
 		if($this->pathArr){
 			$this->pathArr = array() ;
-		} 
+		}
 		$this->getPrevBlocks($block) ;
 		$block_list = $this->pathArr ;
- 		
+		
 		if($block_list == null || count($block_list) == 0){
 			return  ;
 		}
-
+		
 		if(!is_array($block_list[0])){
 			//如果不是平行结构
+			
 			$flows = $block_list[0]->getBlockSummary()->getDataFlowMap() ;
 			$flows = array_reverse($flows) ;
-		
+			
+			//print_r($flows) ;
+			//如果flow中没有信息，则换下一个基本块
+			if($flows == null){
+				//找到新的argName
+				foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
+					if($flow->getName() == $argName){
+						if($flow->getValue() instanceof ConcatSymbol){
+							$vars = $flow->getValue()->getItems();
+						}else{
+							$vars = array($flow->getValue()) ;
+						}
+						foreach ($vars as $var){
+							$varName = NodeUtils::getNodeStringName($var) ;
+							$ret = $this->multiBlockHandler($block_list[0], $varName, $node) ;
+						}
+					}
+					
+				}
+				
+				
+				$this->multiBlockHandler($block_list[0], $argName, $node) ;
+				array_shift($block_list) ;
+			}
+			
+			
 			//对于每个flow,寻找变量argName
 			foreach ($flows as $flow){
 				if($flow->getName() == $argName){
@@ -167,23 +188,21 @@ class TaintAnalyser {
 						$vars = array($flow->getValue()) ;
 					}
 					
+					//print_r($vars) ;
+					
 					$retarr = array();
 					foreach($vars as $var){
 						$varName = NodeUtils::getNodeStringName($var) ;
-						//print_r($block_list[0]) ;
 						$ret = $this->multiBlockHandler($block_list[0], $varName, $node,$flowsNum) ;
 						array_shift($block_list) ;
-						//变量经过净化，这不需要跟踪该变量
-						if ($ret == "safe"){
-							$retarr = array_slice($retarr, array_search($varName,$retarr)) ;
-						}else{
-							//如果var右边有source项
-							if(in_array($varName, $this->sourcesArr)){
-								//报告漏洞
-								$this->report($node, $flow->getLocation()) ;
-								return true ;
-							}
+						
+						//如果var右边有source项
+						if(in_array($varName, $this->sourcesArr)){
+							//报告漏洞
+							$this->report($node, $flow->getLocation()) ;
+							return true ;
 						}
+						
 					}
 				
 				}
@@ -191,6 +210,8 @@ class TaintAnalyser {
 			
 		}else{
 			//是平行结构
+
+			
 		}
 		
 	}
