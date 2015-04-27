@@ -298,7 +298,9 @@ class CFGGenerator{
 			if($node->keyVar != null){
 				$keyFlow = new DataFlow() ;
 				$keyFlow->setName(NodeUtils::getNodeStringName($node->keyVar)) ;
-				$keyFlow->setLocation($node->keyVar) ;
+				$location = new ArrayDimFetchSymbol() ;
+				$location->setValue($node->keyVar) ;
+				$keyFlow->setLocation($location) ;
 				$keyFlow->setValue($node->expr) ;
 				$block->getBlockSummary()->addDataFlowItem($keyFlow) ;
 			}
@@ -307,7 +309,9 @@ class CFGGenerator{
 			if($node->valueVar != null){
 				$valueFlow = new DataFlow() ;
 				$valueFlow->setName(NodeUtils::getNodeStringName($node->valueVar)) ;
-				$valueFlow->setLocation($node->valueVar) ;
+				$location = new ArrayDimFetchSymbol() ;
+				$location->setValue($node->valueVar) ;
+				$valueFlow->setLocation($location) ;
 				$valueFlow->setValue($node->expr) ;
 				$block->getBlockSummary()->addDataFlowItem($valueFlow) ;
 			}
@@ -469,7 +473,7 @@ class CFGGenerator{
 			//trace back
 			if($flow->getName() == $argName){
 			    //处理净化信息
-			    if ($flow->getlocation()->getSanitization()){
+			    if ($flow->getLocation()->getSanitization()){
 			        return "safe";
 			    }
 			    
@@ -925,7 +929,7 @@ $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 $traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/simple_demo.php';
+$path = CURR_PATH . '/test/test.php';
 $fileSummary->setPath($path);
 $code = file_get_contents($path);
 $stmts = $parser->parse($code) ;
@@ -940,7 +944,7 @@ $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
 //print_r($pEntryBlock) ;
 $sinkContext = UserDefinedSinkContext::getInstance();
-print_r($sinkContext);
+//print_r($sinkContext);
 // $context = Context::getInstance() ;
 // $funcName = "goods:buy";
 // $funcBody = $context->getClassMethodBody($funcName,$path,$fileSummary->getIncludeMap());

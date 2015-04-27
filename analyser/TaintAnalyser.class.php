@@ -9,13 +9,19 @@
  *
  */
 class TaintAnalyser {
-	
+
 	//方法getPrevBlocks返回的参数
 	private $pathArr = array() ;
 	public function getPathArr() {
 		return $this->pathArr;
 	}
 
+	private $sourcesArr = array() ;
+	
+	public function __construct(){
+		$this->sourcesArr = Sources::getUserInput() ;
+	}
+	
 	
 	
 
@@ -66,17 +72,26 @@ class TaintAnalyser {
 	 * @param BasicBlock $block  当前基本块
 	 * @param Node $node  当前调用sink的node
 	 * @param string $argName  危险参数的名称
+	 * @param int $flowsNum 数据流的数量，用于清除分析的flow
 	 */
-	public function currBlockTaintHandler($block,$node,$argName){
-		$summary = $block->getBlockSummary() ;
-		$flows = $summary->getDataFlowMap() ;
+	public function currBlockTaintHandler($block,$node,$argName,$flowsNum=0){
+		//获取数据流信息
+		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
+
+		// 去掉分析过的$flow
+		$temp = $flowsNum ;
+		while ($temp > 0){
+			array_pop($flows) ;
+			$temp -- ;
+		}
 		
 		foreach ($flows as $flow){
+			$flowsNum ++ ;
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
 				//被isSanitization函数取代
-				if ($flow->getlocation()->getSanitization()){
+				if ($flow && $flow->getLocation()->getSanitization()){
 					return "safe";
 				}
 				
@@ -89,21 +104,19 @@ class TaintAnalyser {
 					$vars = array($flow->getValue()) ;
 				}
 				
-				//print_r($vars) ;
-				
 				$retarr = array();
 				foreach($vars as $var){
 					$varName = NodeUtils::getNodeStringName($var) ;
-					$ret = $this->currBlockTaintHandler($block, $node, $varName) ;
+					$ret = $this->currBlockTaintHandler($block, $node, $varName,$flowsNum) ;
 					//变量经过净化，这不需要跟踪该变量
 					if ($ret == "safe"){
 						$retarr = array_slice($retarr, array_search($varName,$retarr)) ;
 					}else{
 						//如果var右边有source项
-						$sourcesArr = Sources::getUserInput() ;
-						if(in_array($varName, $sourcesArr)){
+						if(in_array($varName, $this->sourcesArr)){
 							//报告漏洞
-							$this->report($node, $var) ;
+							$this->report($node, $flow->getLocation()) ;
+							return true ;
 						}
 					}
 				}
@@ -112,6 +125,75 @@ class TaintAnalyser {
 		}
 	}
 	
+	
+	/**
+	 * 处理多个block的情景
+	 * @param BasicBlock $block 当前基本块
+	 * @param string $argName 敏感参数名
+	 * @param Node $node 调用sink的nodeo 
+	 */
+	public function multiBlockHandler($block,$argName,$node,$flowsNum=0){
+		
+		if($this->pathArr){
+			$this->pathArr = array() ;
+		} 
+		$this->getPrevBlocks($block) ;
+		$block_list = $this->pathArr ;
+ 		
+		if($block_list == null || count($block_list) == 0){
+			return  ;
+		}
+
+		if(!is_array($block_list[0])){
+			//如果不是平行结构
+			$flows = $block_list[0]->getBlockSummary()->getDataFlowMap() ;
+			$flows = array_reverse($flows) ;
+		
+			//对于每个flow,寻找变量argName
+			foreach ($flows as $flow){
+				if($flow->getName() == $argName){
+					//处理净化信息,如果被编码或者净化则返回safe
+					//被isSanitization函数取代
+					if ($flow && $flow->getLocation()->getSanitization()){
+						return "safe";
+					}
+				
+					//获取flow中的右边赋值变量
+					//得到flow->getValue()的变量node
+					//$sql = $a . $b ;  =>  array($a,$b)
+					if($flow->getValue() instanceof ConcatSymbol){
+						$vars = $flow->getValue()->getItems();
+					}else{
+						$vars = array($flow->getValue()) ;
+					}
+					
+					$retarr = array();
+					foreach($vars as $var){
+						$varName = NodeUtils::getNodeStringName($var) ;
+						//print_r($block_list[0]) ;
+						$ret = $this->multiBlockHandler($block_list[0], $varName, $node,$flowsNum) ;
+						array_shift($block_list) ;
+						//变量经过净化，这不需要跟踪该变量
+						if ($ret == "safe"){
+							$retarr = array_slice($retarr, array_search($varName,$retarr)) ;
+						}else{
+							//如果var右边有source项
+							if(in_array($varName, $this->sourcesArr)){
+								//报告漏洞
+								$this->report($node, $flow->getLocation()) ;
+								return true ;
+							}
+						}
+					}
+				
+				}
+			}
+			
+		}else{
+			//是平行结构
+		}
+		
+	}
 	
 	/**
 	 * 根据sink的类型、危险参数的净化信息列表、编码列表
@@ -156,31 +238,30 @@ class TaintAnalyser {
 	 */
 	public function analysis($block,$node,$argName){
 		
-		//获取所有的前驱节点集合
-		$this->getPrevBlocks($block) ;
-		print_r($block) ;
-		
 		//获取前驱基本块集合并将当前基本量添加至列表
 		$block_list = $this->pathArr ;
 		array_push($block_list, $block) ;
-		
 		//首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
-		$ret = $this->currBlockTaintHandler($block, $node, $argName) ;
+		//$ret = $this->currBlockTaintHandler($block, $node, $argName) ;
+		//if($ret === true) return ;
 
 		//遍历每个前驱block
-		foreach($block_list as $bitem){
-			//不是平行结构
-			if(!is_array($bitem)){
-				$this->currBlockTaintHandler($bitem, $node, $argName) ;
-			}else{
-				//是平行结构，比如if-else
-				foreach($bitem as $branch){
-					$this->currBlockTaintHandler($branch, $node, $argName) ;
-				}
-			}
+// 		foreach($block_list as $bitem){
+// 			//不是平行结构
+// 			if(!is_array($bitem)){
+// 				$ret = $this->currBlockTaintHandler($bitem, $node, $argName) ;
+// 				if($ret === true) return ;
+// 			}else{
+// 				//是平行结构，比如if-else
+// 				foreach($bitem as $branch){
+// 					$ret = $this->currBlockTaintHandler($branch, $node, $argName) ;
+// 					if($ret === true) return ;
+// 				}
+// 			}
+// 		}
+		$this->pathArr = array() ;
+		$this->multiBlockHandler($block, $argName, $node) ;
 		
-		
-		}
 		return array() ;
 	}
 	
