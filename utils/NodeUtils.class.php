@@ -192,7 +192,7 @@ class NodeUtils{
     	    foreach ($node->args as $arg){
     	        array_push($argsArr, NodeUtils::getNodeStringName($arg));
     	    }
-    	}else{
+    	}elseif($node->params){
     	    foreach ($node->params as $arg){
     	        array_push($argsArr, NodeUtils::getNodeStringName($arg));
     	    }

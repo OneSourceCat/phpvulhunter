@@ -1,8 +1,17 @@
 <?php
-
+$SECURES_TYPE_ALL = array(
+    'BOOL',
+    'SQLI',
+    'XSS',
+    'PREG',
+    'FILE',
+    'EXEC',
+    'XPATH',
+    'LDAP',
+);
 //bool判断的安全函数
 $F_SECURING_BOOL = array(
-    '__NAME__'  => 'bool',
+    '__NAME__'  => 'BOOL',
 	'is_double',
 	'is_float',
 	'is_real',
@@ -28,7 +37,7 @@ $F_SECURING_BOOL = array(
 
 //可以防止所有漏洞的函数
 $F_SECURING_STRING = array(
-    '__NAME__'  => 'all',
+    '__NAME__'  => $SECURES_TYPE_ALL,
 	'intval',
 	'floatval',
 	'doubleval',
@@ -154,9 +163,6 @@ $F_SECURING_LDAP = array(
 $F_SECURES_ALL = array_merge(
 	$F_SECURING_BOOL,
     $F_SECURING_STRING,
-    $F_ENCODING_STRING,
-    $F_DECODING_STRING,
-    $F_INSECURING_STRING,
     $F_SECURING_XSS,
     $F_SECURING_SQL,
     $F_SECURING_PREG,
@@ -168,9 +174,6 @@ $F_SECURES_ALL = array_merge(
 $F_SECURES_ARRAY = array(
     $F_SECURING_BOOL,
     $F_SECURING_STRING,
-    $F_ENCODING_STRING,
-    $F_DECODING_STRING,
-    $F_INSECURING_STRING,
     $F_SECURING_XSS,
     $F_SECURING_SQL,
     $F_SECURING_PREG,
@@ -178,6 +181,8 @@ $F_SECURES_ARRAY = array(
     $F_SECURING_SYSTEM,
     $F_SECURING_XPATH
 );
+
+
 // securing functions that work only when embedded in quotes
 $F_QUOTE_ANALYSIS = $F_SECURING_SQL;
 		

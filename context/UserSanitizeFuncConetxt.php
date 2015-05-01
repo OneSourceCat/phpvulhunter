@@ -22,13 +22,13 @@ class UserSanitizeFuncConetxt{
     }
     
     //添加一个净化函数
-    public function addFunction($onefunction){
-        array_push($this->sanitizeFunctions, $onefunction);
+    public function addFunction($oneFunction){
+        array_push($this->sanitizeFunctions, $oneFunction);
     }
     //得到某函数的净化信息，未净化，返回null
-    public function getFuncSanitizeInfo($className,$funcName){
+    public function getFuncSanitizeInfo($funcName){
         foreach ($this->sanitizeFunctions as $oneFunction){
-            if (($className == $oneFunction->className) && ($funcName == $oneFunction->functionName))
+            if ($funcName == $oneFunction->funcName)
                 return $oneFunction;
             else 
                 return null;
@@ -41,7 +41,7 @@ class UserSanitizeFuncConetxt{
         }
         return self::$instance ;
     }
-  
+
     private function __clone(){
     }
 }
@@ -52,28 +52,22 @@ class UserSanitizeFuncConetxt{
  *
  */
 class OneFunction{
-    public $className ;
-    public $functionName ;
-    public $sanitizeParams ;
+    public $funcName ;
+    public $sanitiType ;
     
-    public function __construct($className,$functionName){
-        $this->className = $className;
-        $this->functionName = $functionName;
-        $this->sanitizeParams = array();
+    public function __construct($funcName){
+        $this->funcName = $funcName;
+        $this->sanitiType = array();
     }
     
-    /**
-     * 添加一个净化参数
-     * @param 参数位置 $pos
-     * @param 参数净化类型 $type
-     */
-    public function addSanitizeParam($pos,$type){
-        array_push($this->sanitizeParams, array('positon' => $pos,'type' =>$type));
-    } 
-    //getter
-    public function getSanitizeParams(){
-        return $this->sanitizeParams;
-    }   
+    public function setSanitiType($type){
+        $this->sanitiType = $type;
+    }
+    
+    public function getSanitiType(){
+        return $this->sanitiType;
+    }
+    
 }
 
 
@@ -340,59 +334,7 @@ class UserSanitiFuncFinder{
         file_put_contents(CURR_PATH . "/data/sanitizeFuncConetxtSerialData",serialize($funcContext->sanitizeFunctions )) ;
     }
     
-
-  
 }
-
-/**
- * AST tree 遍历，寻找净化函数
- * @author xyw55
- */
-class SanitizeFuncVisitor extends PhpParser\NodeVisitorAbstract{
-    private $nodes = array();
-    private $className = '';
-    public $filePath = '';
-    public function beforeTraverse(array $nodes){
-        $this->nodes = $nodes ;
-    }
-    //TODO：在这要得到文件的require_array,在获取函数体使用
-    //净化函数获取funcbody时采用暂时使用getFuncBody
-    public function enterNode(Node $node){
-        //遇到函数，判断是否是净化函数，净化了的参数位置和净化类型
-        $type = $node->getType();
-        if ($type == "Stmt_Function"){
-            $findSanitizeParams = new SanitizeParamsFinder(null, $node->name);
-            $onefunction = $findSanitizeParams->findSanitizeParam($node->stmts, $node->params);
-            if($onefunction){
-                $funcContext = UserSanitizeFuncConetxt::getInstance();
-                $funcContext->addFunction($onefunction);
-            }   
-        }elseif ($type == "Stmt_ClassMethod"){
-            $findSanitizeParams = new SanitizeParamsFinder($this->className, $node->name);
-            $onefunction = $findSanitizeParams->findSanitizeParam($node->stmts, $node->params);
-            if($onefunction){
-                $funcContext = UserSanitizeFuncConetxt::getInstance();
-                $funcContext->addFunction($onefunction);
-            }   
-        }elseif ($type == "Stmt_Class"){
-            $this->className = $node->name;
-        }
-    }
-
-    //getter
-    public function getNodes(){
-        return $this->nodes ;
-    }
-
-}
-
-$path = CURR_PATH . '/test/simple_demo.php';
-$finder = new UserSanitiFuncFinder($path) ;
-$finder->getUserSanitizeFuncConetxt() ;
-$funcContext = UserSanitizeFuncConetxt::getInstance() ;
-
-echo '<pre>';
-//print_r($funcContext->sanitizeFunctions);
 
 
 ?>

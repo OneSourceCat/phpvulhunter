@@ -15,7 +15,7 @@ require_once CURR_PATH . '/symbols/MutipleSymbol.class.php';
 require_once CURR_PATH . '/symbols/ArrayDimFetchSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConcatSymbol.class.php';
 require_once CURR_PATH . '/symbols/ConstantSymbol.class.php';
-require_once CURR_PATH . '/symbols/SantinizationHandler.class.php';
+require_once CURR_PATH . '/symbols/SanitizationHandler.class.php';
 require_once CURR_PATH . '/symbols/EncodingHandler.class.php';
 
 require_once CURR_PATH . '/summary/FileSummary.class.php';
@@ -268,7 +268,7 @@ class CFGGenerator{
 			//不属于已有的任何一个symbol类型,如函数调用
 			if($part->getType() == "Expr_FuncCall" && $type == "right"){
 				//处理净化信息和编码信息
-				SantinizationHandler::setSantiInfo($part,$dataFlow) ;
+				SanitizationHandler::setSanitiInfo($part,$dataFlow, $block) ;
 				EncodingHandler::setEncodeInfo($part, $dataFlow) ;
 			}
 			
@@ -929,7 +929,7 @@ $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 $traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/test.php';
+$path = CURR_PATH . '/test/simple_demo.php';
 $fileSummary->setPath($path);
 $code = file_get_contents($path);
 $stmts = $parser->parse($code) ;
@@ -943,6 +943,8 @@ $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 echo "<pre>" ;
 //print_r($pEntryBlock) ;
+$sanitiFuncContext = UserSanitizeFuncConetxt::getInstance();
+//print_r($sanitiFuncContext->getFuncSanitizeInfo('jinghua'));
 $sinkContext = UserDefinedSinkContext::getInstance();
 //print_r($sinkContext);
 // $context = Context::getInstance() ;
