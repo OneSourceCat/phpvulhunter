@@ -429,84 +429,6 @@ class CFGGenerator{
 	}
 	
 	/**
-	 * 获取敏感sink的参数对应的危险参数
-	 * 如 :mysql_query($sql)
-	 * 返回sql
-	 * @param Node $node
-	 * @param BasicBlock $block
-	 * @return Ambigous <multitype:, multitype:string >
-	 */
-	public function senstivePostion($node,$block, $args)
-	{
-		$ret = array();
-		//得到sink函数的参数位置(1)
-		//$args = array(0) ;  //1  => mysql_query
-		foreach($args as $arg){
-		    //args[$arg-1] sinks函数的危险参数位置商量调整
-			$argNameStr = NodeUtils::getNodeStringName($node->args[$arg-1]) ;   //sql
-			$ret = $this->traceback($argNameStr ,$block,0);  //array(where,id)
-		}
-		//var_dump($ret) ;	
-		return $ret ;
-	}
-	
-	/**
-	 * 进行回溯
-	 * @param string $argName
-	 * @param BasicBlock $block
-	 * @param flowNum 遍历过的flow数量
-	 * @return array
-	 */
-	public function traceback($argName,$block,$flowNum){
-		//print_r($block) ;
-		$flows = $block->getBlockSummary()->getDataFlowMap();
-		//需要将遍历过的dataflow删除
-		$temp = $flowNum;
-		while ($temp>0){
-		    array_pop($flows);
-		    $temp --;
-		}
-		//将块内数据流逆序，从后往前遍历
-		$flows = array_reverse($flows);
-		
-		foreach($flows as $flow){
-		    $flowNum ++;
-			//trace back
-			if($flow->getName() == $argName){
-			    //处理净化信息
-			    if ($flow->getLocation()->getSanitization()){
-			        return "safe";
-			    }
-			    
-				//得到flow->getValue()的变量node
-				//$sql = $a . $b ;  =>  array($a,$b)
-				if($flow->getValue() instanceof ConcatSymbol){
-					$vars = $flow->getValue()->getItems();
-				}else{
-					$vars = array($flow->getValue()) ;
-				}
-				$retarr = array();
-				foreach($vars as $var){
-				    $var = NodeUtils::getNodeStringName($var);
-					$ret = $this->traceback($var,$block,$flowNum);
-					//变量经过净化，这不需要跟踪该变量
-					if ($ret == "safe"){
-					    $retarr = array_slice($retarr, array_search($var,$retarr));
-					}else{
-					    $retarr = array_merge($ret,$retarr) ;
-					}
-				}
-				return $retarr;
-			}
-			
-		}
-		if ($argName instanceof Node)
-		    $argName = NodeUtils::getNodeStringName($argName);
-		return array($argName);
-	}
-	
-	
-	/**
 	 * 处理用户自定义函数
 	 * @param Node $nodes  方法调用node
 	 * @param BasicBlock $block  当前基本块
@@ -882,7 +804,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 				
 				//array(where)找到危险参数的位置
 				$args = $ret[1];
-				$vars = $cfg->senstivePostion($node,$this->block,$args) ;  
+				$vars = $this->senstivePostion($node,$this->block,$args) ;  
 				$type = TypeUtils::getTypeByFuncName($nodeName) ;
 				
 				if($vars){
@@ -915,12 +837,124 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 			        //print_r($node->args[$pos]);
 			        $argName = NodeUtils::getNodeFuncParams($node);
 			        $argName = $argName[$pos] ;
-			        $this->vars = $cfg->traceback($argName, $this->block,0);			        
+			        $this->vars = $this->sinkMultiBlockTraceback($argName, $this->block,0);			        
 			    }	
 			}else {
                 ;
 			}
 		}
+	}
+	
+	/**
+	 * sink多块回溯
+	 * @param string $argName
+	 * @param BasicBlock $block
+	 * @param flowNum 遍历过的flow数量
+	 * @return array
+	 */
+	public function sinkMultiBlockTraceback($argName,$block,$flowsNum=0){
+	    //print_r("enter sinkMultiBlockTraceback<br/>");
+	    $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
+	    $block_list = $mulitBlockHandlerUtils->getPathArr();
+	    if($block_list == null || count($block_list) == 0){
+	        $flows = $block->getBlockSummary()->getDataFlowMap();
+	        if(count($flows) == $flowsNum)
+	           return  array($argName);
+	        else 
+	            //查找到第一块，但是flows没有遍历完
+	            return $this->sinkTracebackBlock($argName, $block, $flowsNum);
+	    }
+	    
+	    if(!is_array($block_list[0])){
+	        //如果不是平行结构
+	        $flows = $block->getBlockSummary()->getDataFlowMap();
+	        if(count($flows) == $flowsNum){
+	            $block = $block_list[0];
+	            $ret = $this->sinkTracebackBlock($argName, $block, 0);
+	            return $ret;
+	        }
+	        $ret = $this->sinkTracebackBlock($argName, $block, $flowsNum);
+	        return $ret;
+	    }else{
+	        //平行结构
+	    }
+	}
+	
+	/**
+	 * 获取敏感sink的参数对应的危险参数
+	 * 如 :mysql_query($sql)
+	 * 返回sql
+	 * @param Node $node
+	 * @param BasicBlock $block
+	 * @return Ambigous <multitype:, multitype:string >
+	 */
+	public function senstivePostion($node,$block, $args)
+	{
+	    $ret = array();
+	    //得到sink函数的参数位置(1)
+	    //$args = array(0) ;  //1  => mysql_query
+	    foreach($args as $arg){
+	        //args[$arg-1] sinks函数的危险参数位置商量调整
+	        $argNameStr = NodeUtils::getNodeStringName($node->args[$arg-1]) ;   //sql
+	        $ret = $this->sinkMultiBlockTraceback($argNameStr ,$block,0);  //array(where,id)
+	    }
+	    return $ret ;
+	}
+	
+	/**
+	 * sink单块回溯
+	 * @param string $argName
+	 * @param BasicBlock $block
+	 * @param flowNum 遍历过的flow数量
+	 * @return array
+	 */
+	public function sinkTracebackBlock($argName,$block,$flowsNum){
+	    $flows = $block->getBlockSummary()->getDataFlowMap();
+	    //需要将遍历过的dataflow删除
+	    $temp = $flowsNum;
+	    while ($temp>0){
+	        array_pop($flows);
+	        $temp --;
+	    }
+	    //将块内数据流逆序，从后往前遍历
+	    $flows = array_reverse($flows);
+	
+	    foreach($flows as $flow){
+	        $flowsNum ++;
+	        //trace back
+	        if($flow->getName() == $argName){
+	            //处理净化信息
+	            if ($flow->getLocation()->getSanitization()){
+	                return "safe";
+	            }
+	            //得到flow->getValue()的变量node
+	            //$sql = $a . $b ;  =>  array($a,$b)
+	            if($flow->getValue() instanceof ConcatSymbol){
+	                $vars = $flow->getValue()->getItems();
+	            }else{
+	                $vars = array($flow->getValue()) ;
+	            }
+	            $retarr = array();
+	            foreach($vars as $var){
+	                $var = NodeUtils::getNodeStringName($var);
+	                $ret = $this->sinkMultiBlockTraceback($var,$block,$flowsNum);
+	                //变量经过净化，这不需要跟踪该变量
+	                if ($ret == "safe"){
+	                    $retarr = array_slice($retarr, array_search($var,$retarr));
+	                }else{
+	                    $retarr = array_merge($ret,$retarr) ;
+	                }
+	            }
+	            return $retarr;
+	        }
+	        	
+	    }
+	    if ($argName instanceof Node){
+	        $argName = NodeUtils::getNodeStringName($argName);
+	        return array($argName);
+	    }
+	    return $this->sinkMultiBlockTraceback($argName, $block,$flowsNum);
+	    
 	}
 }
 
@@ -947,7 +981,7 @@ echo "<pre>" ;
 $sanitiFuncContext = UserSanitizeFuncConetxt::getInstance();
 //print_r($sanitiFuncContext->getFuncSanitizeInfo('jinghua'));
 $sinkContext = UserDefinedSinkContext::getInstance();
-//print_r($sinkContext);
+print_r($sinkContext);
 // $context = Context::getInstance() ;
 // $funcName = "goods:buy";
 // $funcBody = $context->getClassMethodBody($funcName,$path,$fileSummary->getIncludeMap());

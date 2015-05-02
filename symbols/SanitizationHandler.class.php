@@ -26,6 +26,7 @@ class SanitizationHandler {
 	        $sameVarSanitiInfo = array();
 	        foreach ($funcParams as $param){
 	            $dataFlows = $block->getBlockSummary()->getDataFlowMap();
+	            $dataFlows = array_reverse($dataFlows);
 	            $ret = self::sanitiSameVarMultiBlockHandler($param, $block, $dataFlows);
 	            //如果一个参数没有净化，则未净化
 	            if(!$ret[0]){
@@ -42,7 +43,7 @@ class SanitizationHandler {
 	    $funcName = NodeUtils::getNodeFunctionName($node) ;
 	    //清除反作用的函数
 	    SanitizationHandler::clearSantiInfo($funcName, $node, $dataFlow) ;
-	    print_r($dataFlow);
+	    //print_r($dataFlow);
 	}
 	/**
 	 * 相同净化变量的多块回溯
@@ -56,7 +57,12 @@ class SanitizationHandler {
         $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
         $block_list = $mulitBlockHandlerUtils->getPathArr();
 	    if($block_list == null || count($block_list) == 0){
-	        return  ;
+	        $flows = $block->getBlockSummary()->getDataFlowMap();
+	        if(count($dataFlows) == 0)
+	            return  array(false);
+	        else
+	            //查找到第一块，但是flows没有遍历完
+	            return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
 	    }
 	    
 	    if(!is_array($block_list[0])){
@@ -65,6 +71,7 @@ class SanitizationHandler {
 	            //当前块回溯完毕，回溯上一块
 	            $block = $block_list[0];
 	            $dataFlows = $block->getBlockSummary()->getDataFlowMap();
+	            $dataFlows = array_reverse($dataFlows);
 	            return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
 	        }
 	        return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
@@ -82,10 +89,10 @@ class SanitizationHandler {
 	public static function sanitiSameVarTraceback($varName, $block, $dataFlows){
 	    global $SECURES_TYPE_ALL;
 	    //将块内数据流逆序，从后往前遍历
-	    $flows = array_reverse($dataFlows);
+	    $flows = $dataFlows;
 	    foreach($flows as $flow){
 	        //需要将遍历过的dataflow删除
-	        array_pop($dataFlows);
+	        array_shift($dataFlows);
 	        //trace back
 	        if($flow->getName() == $varName){
 	            //处理净化信息
@@ -93,8 +100,30 @@ class SanitizationHandler {
 	            if ($ret){
 	                //存在净化，return
 	                return array(true,'funcs' => $ret);
-	            }else
-	                return array(false);
+	            }else{
+	                //没净化，继续回溯
+	                //$sql = $a . $b ;  =>  array($a,$b)
+	                $vars = array();
+	                if($flow->getValue() instanceof ConcatSymbol){
+	                    $vars = $flow->getValue()->getItems();
+	                }else{
+	                    $vars = array($flow->getValue()) ;
+	                }
+                    $retarr = array();
+                    foreach($vars as $var){
+                        $varName = NodeUtils::getNodeStringName($var);
+                        $ret = self::sanitiSameVarMultiBlockHandler($varName,$block,$dataFlows);
+                        if ($ret[0]){
+                            $retarr = array_merge($retarr,$ret['funcs']);
+                        }else{
+                            return array(false);
+                        }
+                    }
+                    if($retarr)
+                        return array(true,'funcs'=>$retarr);
+                    return array(false);
+	            }
+	                
 	        }
 	    }
 	    //当前块内不存在,回溯上一块
@@ -135,6 +164,7 @@ class SanitizationHandler {
 	        $visitor->funcName = $funcName;
 	        $traverser->traverse($funcBody->stmts) ;
 	        
+	        //var_dump($visitor->sanitiInfo);
 	        if($visitor->sanitiInfo[0]){
 	            //将净化函数加入净化UserSanitizeFuncContext
 	            $oneFunction = new OneFunction($funcName);
@@ -240,7 +270,7 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
     
     public function beforeTraverse(array $nodes){
         global $SECURES_TYPE_ALL;
-        $this->sanitiInfo = array('type'=>$SECURES_TYPE_ALL);
+        $this->sanitiInfo = array(false,'type'=>$SECURES_TYPE_ALL);
     }
     
     /*
@@ -278,10 +308,44 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
                 $this->sanitiInfo = array(true,'type'=>$type);
             }elseif (SymbolUtils::isArrayDimFetch($part)){
                 //return array
+                $context = Context::getInstance() ;
+                $funcBody = $context->getFunctionBody($this->funcName);
+                if(!$funcBody) return null;
+                $nodes = $funcBody->stmts;
+                $cfg = new CFGGenerator() ;
+                $block = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
                 
+                $ret = $this->sanitiMultiBlockHandler($node->expr,$block);
+                if ($ret[0]){
+                    $type = array_intersect($this->sanitiInfo['type'], $ret['type']);
+                    $this->sanitiInfo = array(true,'type'=>$type);
+                }else 
+                    $this->sanitiInfo = null;
             }elseif (SymbolUtils::isConcat($part)){
                 //return concat
+                $concat = new ConcatSymbol() ;
+                $concat->setItemByNode($part) ;
+                $items = $concat->getItems();
+                if(!$items) return null;
                 
+                $context = Context::getInstance() ;
+                $funcBody = $context->getFunctionBody($this->funcName);
+                if(!$funcBody) return null;
+                $nodes = $funcBody->stmts;
+                $cfg = new CFGGenerator() ;
+                $block = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
+                
+                $retarr = $SECURES_TYPE_ALL;
+                foreach ($items as $item){
+                    $ret = $this->sanitiMultiBlockHandler($item,$block);
+                    if ($ret[0]){
+                        $retarr = array_intersect($retarr, $ret['type']);
+                    }else{
+                        $this->sanitiInfo = array(false);
+                        break;
+                    }
+                }
+                $this->sanitiInfo = array(true, 'type'=>$retarr);
             }else{
                 //处理函数调用
                 if (($part->getType() == 'Expr_FuncCall') || ($part->getType() == 'Expr_MethodCall') ){
@@ -299,6 +363,8 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
         
     }
     
+    
+    
     /**
      * return变量多块回溯
      * @param 变量对象 $arg
@@ -311,7 +377,12 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
         $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
         $block_list = $mulitBlockHandlerUtils->getPathArr();
         if($block_list == null || count($block_list) == 0){
-            return  ;
+            $flows = $block->getBlockSummary()->getDataFlowMap();
+            if(count($flows) == $flowsNum)
+                return  ;
+            else
+                //查找到第一块，但是flows没有遍历完
+                return $this->sanitiTracebackBlock($arg, $block, $flowsNum);
         }
         
         if(!is_array($block_list[0])){
