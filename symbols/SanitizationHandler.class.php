@@ -11,13 +11,12 @@ require CURR_PATH . "/conf/securing.php" ;
  *
  */
 class SanitizationHandler {
-	
 	/**
 	 * @param Node $node
 	 * @param 数据流 $dataFlow
 	 */
-	public static function setSanitiInfo($node,$dataFlow,$dataFlows){
-	    
+	public static function setSanitiInfo($node,$dataFlow,$block){
+	    $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	    $sanitiInfo = self::SantiniFuncHandler($node);
 	    //print_r($sanitiInfo);
 	    if($sanitiInfo){
@@ -26,8 +25,8 @@ class SanitizationHandler {
 	        //traceback
 	        $sameVarSanitiInfo = array();
 	        foreach ($funcParams as $param){
-	            $ret = self::sanitiSameVarTraceback($param, $dataFlows);
-	            //print_r($ret);
+	            $dataFlows = $block->getBlockSummary()->getDataFlowMap();
+	            $ret = self::sanitiSameVarMultiBlockHandler($param, $block, $dataFlows);
 	            //如果一个参数没有净化，则未净化
 	            if(!$ret[0]){
 	                $sameVarSanitiInfo = array();
@@ -45,16 +44,43 @@ class SanitizationHandler {
 	    SanitizationHandler::clearSantiInfo($funcName, $node, $dataFlow) ;
 	    print_r($dataFlow);
 	}
-	
 	/**
+	 * 相同净化变量的多块回溯
+	 * @param 变量名 $varName
+	 * @param 当前块 $block
+	 * @param 数据流 $dataFlows
+	 * @return 
+	 */
+	public static function sanitiSameVarMultiBlockHandler($varName, $block, $dataFlows){
+	    //print_r("enter sanitiSameVarMultiBlock<br/>");
+        $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
+        $block_list = $mulitBlockHandlerUtils->getPathArr();
+	    if($block_list == null || count($block_list) == 0){
+	        return  ;
+	    }
+	    
+	    if(!is_array($block_list[0])){
+	        //如果不是平行结构
+	        if(count($dataFlows) == 0){
+	            //当前块回溯完毕，回溯上一块
+	            $block = $block_list[0];
+	            $dataFlows = $block->getBlockSummary()->getDataFlowMap();
+	            return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+	        }
+	        return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+	    }else{
+	        //平行结构
+	    }
+	    
+	}
+	/**
+	 * 相同变量块内回溯
 	 * @param 净化变量 $var
 	 * @param 数据流 $dataFlow
 	 * @return 是否净化，及净化信息
 	 */
-	public static function sanitiSameVarTraceback($varName, $dataFlows){
+	public static function sanitiSameVarTraceback($varName, $block, $dataFlows){
 	    global $SECURES_TYPE_ALL;
-	    //print_r("enter traceback<br/>");
-	    echo '<br/>';
 	    //将块内数据流逆序，从后往前遍历
 	    $flows = array_reverse($dataFlows);
 	    foreach($flows as $flow){
@@ -67,14 +93,19 @@ class SanitizationHandler {
 	            if ($ret){
 	                //存在净化，return
 	                return array(true,'funcs' => $ret);
-	            }else 
-	               return array(false);
+	            }else
+	                return array(false);
 	        }
 	    }
-	    return array(false);
+	    //当前块内不存在,回溯上一块
+	    return self::sanitiSameVarMultiBlockHandler($varName,$block,$dataFlows);
 	}
 	
+	
+	
+	
 	/**
+	 * 净化函数处理函数
 	 * @param funcNode $node
 	 * @return null | array(funcName,type)
 	 */
@@ -96,12 +127,14 @@ class SanitizationHandler {
 	        
 	        $funcBody = $context->getClassMethodBody($funcName, $path, $require_array);
 	        if(!$funcBody) return null;
+	        
 	        $visitor = new SanitiFunctionVisitor();
 	        $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 	        $traverser = new PhpParser\NodeTraverser ;
 	        $traverser->addVisitor($visitor) ;
 	        $visitor->funcName = $funcName;
 	        $traverser->traverse($funcBody->stmts) ;
+	        
 	        if($visitor->sanitiInfo[0]){
 	            //将净化函数加入净化UserSanitizeFuncContext
 	            $oneFunction = new OneFunction($funcName);
@@ -116,7 +149,7 @@ class SanitizationHandler {
 	
 	
 	/**
-	 * 检测是否为净化函数
+	 * 检测是否为系统净化函数或已处理的净化函数
 	 * @param 函数名 $funcName
 	 * @return array(true|false,type)
 	 */
@@ -196,76 +229,129 @@ class SanitizationHandler {
 
 /**
  * 寻找函数体的return语句，判断函数返回值是否净化
+ * 多个return值，取其净化信息交集
  * @author xyw55
  *  
  */
 class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
+    //函数净化信息
     public $sanitiInfo = null;
     public $funcName = null;
     
+    public function beforeTraverse(array $nodes){
+        global $SECURES_TYPE_ALL;
+        $this->sanitiInfo = array('type'=>$SECURES_TYPE_ALL);
+    }
+    
+    /*
+     * 查找return语句，判断return值得净化信息
+     */
     public function leaveNode(Node $node){
         global $SECURES_TYPE_ALL;
         if (!$node instanceof Node){
             return null;
         }
-        
         if ($node->getType() == 'Stmt_Return'){
             $part = $node->expr;
             if(SymbolUtils::isValue($part)){
                 //return value
-                $this->sanitiInfo = array(true,'type'=>$SECURES_TYPE_ALL);
+                $type = array_intersect($this->sanitiInfo['type'], $SECURES_TYPE_ALL);
+                $this->sanitiInfo = array(true,'type'=>$type);
             }elseif (SymbolUtils::isVariable($part)){
                 //return variable
                 $context = Context::getInstance() ;
                 $funcBody = $context->getFunctionBody($this->funcName);
-                if(!$funcBody) break;
+                if(!$funcBody) return null;
                 $nodes = $funcBody->stmts;
                 $cfg = new CFGGenerator() ;
                 $block = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
-                $dataFlows = $block->getBlockSummary()->getDataFlowMap();
-                $ret = $this->sanitiTraceback($node->expr, $dataFlows);
-                //print_r($ret);
-                if ($ret[0])
-                    $this->sanitiInfo = array(true,'type'=>$ret['type']);
-                else 
+                
+                $ret = $this->sanitiMultiBlockHandler($node->expr,$block);
+                if ($ret[0]){
+                    $type = array_intersect($this->sanitiInfo['type'], $ret['type']);
+                    $this->sanitiInfo = array(true,'type'=>$type);
+                }else 
                     $this->sanitiInfo = null;
             }elseif (SymbolUtils::isConstant($part)){
                 //return constant
-                $this->sanitiInfo = array(true,'type'=>$SECURES_TYPE_ALL);
+                $type = array_intersect($this->sanitiInfo['type'], $SECURES_TYPE_ALL);
+                $this->sanitiInfo = array(true,'type'=>$type);
             }elseif (SymbolUtils::isArrayDimFetch($part)){
                 //return array
+                
             }elseif (SymbolUtils::isConcat($part)){
                 //return concat
+                
             }else{
+                //处理函数调用
                 if (($part->getType() == 'Expr_FuncCall') || ($part->getType() == 'Expr_MethodCall') ){
                     $ret = SanitizationHandler::SantiniFuncHandler($part);
-                    if($ret)
-                        $this->sanitiInfo = array(true,'type'=>$ret['type']);
+                    if($ret){
+                        $type = array_intersect($this->sanitiInfo['type'], $ret->getSanitiType());
+                        $this->sanitiInfo = array(true,'type'=>$type);
+                    }
+                        
                 }
             }
 
         }else 
             return null;
+        
     }
     
     /**
-     * 进行回溯
-     * @param string $argName
-     * @param BasicBlock $block
+     * return变量多块回溯
+     * @param 变量对象 $arg
+     * @param 当前块 $block
+     * @param 数据流已处理数量 $flowsNum
+     * @return void|净化信息
+     */
+    public function sanitiMultiBlockHandler($arg, $block, $flowsNum=0){
+        //print_r("enter sanitiMultiBlock<br/>");
+        $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
+        $block_list = $mulitBlockHandlerUtils->getPathArr();
+        if($block_list == null || count($block_list) == 0){
+            return  ;
+        }
+        
+        if(!is_array($block_list[0])){
+            //如果不是平行结构
+            $flows = $block->getBlockSummary()->getDataFlowMap();
+            if(count($flows) == $flowsNum){
+                $block = $block_list[0];
+                $ret = $this->sanitiTracebackBlock($arg, $block, 0);
+                return $ret;
+            }
+            $ret = $this->sanitiTracebackBlock($arg, $block, $flowsNum);
+            return $ret;
+        }else{
+            //平行结构
+        }
+        
+        
+    }
+    /**
+     * return变量块内回溯
+     * @param 变量对象 $arg
+     * @param 当前块 $block
      * @param flowNum 遍历过的flow数量
      * @return array(),返回是否净化，净化类型是什么
      */
-    public function sanitiTraceback($arg,$dataFlows){
+    public function sanitiTracebackBlock($arg,$block,$flowsNum=0){
         global $SECURES_TYPE_ALL;
-        //print_r("enter traceback<br/>");
-        
+        $flows = $block->getBlockSummary()->getDataFlowMap();
         $argName = NodeUtils::getNodeStringName($arg);
         
+        // 去掉分析过的$flow
+        $temp = $flowsNum ;
+        while ($temp > 0){
+            array_pop($flows) ;
+            $temp -- ;
+        }
         //将块内数据流逆序，从后往前遍历
-        $flows = array_reverse($dataFlows);
+        $flows = array_reverse($flows);
         foreach($flows as $flow){
-            //需要将遍历过的dataflow删除
-            array_pop($dataFlows);
+            $flowsNum ++ ;
             //trace back
             if($flow->getName() == $argName){
                 //处理净化信息
@@ -285,7 +371,7 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
                 }
                 $retarr = array();
                 foreach($vars as $var){
-                    $ret = $this->sanitiTraceback($var,$dataFlows);
+                    $ret = $this->sanitiMultiBlockHandler($var,$block,$flowsNum);
                     //有一个变量值未净化，就是整个未净化
                     if (!$ret[0]) return array(false);
                     array_push($retarr, $ret['type']);
@@ -306,8 +392,12 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
         }elseif ($arg instanceof Scalar){
             return array(true, 'type'=>$SECURES_TYPE_ALL);
         }
-        return array(false);
+        return $this->sanitiMultiBlockHandler($arg, $block, $flowsNum);
     }
     
+    
 }
+
+
+
 ?>

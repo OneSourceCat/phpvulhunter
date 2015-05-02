@@ -15,7 +15,7 @@ class EncodingHandler {
 	 * @param Node $node
 	 * @param DataFlow $dataFlow
 	 */
-	public static function setEncodeInfo($node,$dataFlow){
+	public static function setEncodeInfo($node,$dataFlow,$block){
 		global $F_ENCODING_STRING ;
 		$funcName = NodeUtils::getNodeFunctionName($node) ;
 		//发现有编码操作的函数，将编码信息加入至map中
