@@ -69,7 +69,6 @@ class BinaryOpConcatVisitor extends PhpParser\NodeVisitorAbstract{
 		$type = $node->getType() ;
 		if($type == "Expr_BinaryOp_Concat"){
 			if($node->right){
-				
 				//如果不是常量   则收入至items中
 				if(!SymbolUtils::isValue($node->right)){
 					array_push($this->items,$node->right) ;
@@ -77,7 +76,7 @@ class BinaryOpConcatVisitor extends PhpParser\NodeVisitorAbstract{
 				
 			}
 			if($node->left->getType() != "Expr_BinaryOp_Concat"){
-				if(!SymbolUtils::isValue($node->right)){
+				if(!SymbolUtils::isValue($node->left)){
 					array_push($this->items,$node->left) ;
 				}
 				

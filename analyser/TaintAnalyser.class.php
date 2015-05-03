@@ -137,7 +137,7 @@ class TaintAnalyser {
 	 * 处理多个block的情景
 	 * @param BasicBlock $block 当前基本块
 	 * @param string $argName 敏感参数名
-	 * @param Node $node 调用sink的nodeo 
+	 * @param Node $node 调用sink的node 
 	 */
 	public function multiBlockHandler($block,$argName,$node,$flowsNum=0){
 		//echo $argName ."<br/>" ;
