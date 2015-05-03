@@ -4,7 +4,7 @@ $id = $_GET['id'] ;
 if($id){
 	echo $id ;
 }else{
-	echo false;
+	$id = addslashes($id) ;
 }
 
 $sql = "xxx". $id ;

@@ -11,15 +11,16 @@
 class TaintAnalyser {
 	//方法getPrevBlocks返回的参数
 	private $pathArr = array() ;
-	public function getPathArr() {
-		return $this->pathArr;
-	}
+	//source数组（GET POST ...）
 	private $sourcesArr = array() ;
 	
 	public function __construct(){
 		$this->sourcesArr = Sources::getUserInput() ;
 	}
 	
+	public function getPathArr() {
+		return $this->pathArr;
+	}
 	
 	/**
 	 * 根据变量的节点返回变量的名称
@@ -34,6 +35,22 @@ class TaintAnalyser {
 		}
 		return $varName ;
 	}
+	
+	
+	/**
+	 * 根据flow获取数据流中赋值的变量名列表
+	 * @param unknown $flow
+	 * @return multitype:NULL
+	 */
+	public function getVarsByFlow($flow){
+		if($flow->getValue() instanceof ConcatSymbol){
+			$vars = $flow->getValue()->getItems();
+		}else{
+			$vars = array($flow->getValue()) ;
+		}
+		return $vars ;
+	}
+	
 	
 	/**
 	 * 获取当前基本块的所有前驱基本块
@@ -109,15 +126,11 @@ class TaintAnalyser {
 				//获取flow中的右边赋值变量
 				//得到flow->getValue()的变量node
 				//$sql = $a . $b ;  =>  array($a,$b)
-				if($flow->getValue() instanceof ConcatSymbol){
-					$vars = $flow->getValue()->getItems();
-				}else{
-					$vars = array($flow->getValue()) ;
-				}
+				$vars = $this->getVarsByFlow($flow) ;
 				
 				$retarr = array();
 				foreach($vars as $var){
-					$varName = NodeUtils::getNodeStringName($var) ;
+					$varName = $this->getVarName($var) ;
 					$ret = $this->currBlockTaintHandler($block, $node, $varName,$flowsNum) ;
 					//变量经过净化，这不需要跟踪该变量
 					//如果var右边有source项
@@ -140,8 +153,6 @@ class TaintAnalyser {
 	 * @param Node $node 调用sink的node 
 	 */
 	public function multiBlockHandler($block,$argName,$node,$flowsNum=0){
-		//echo $argName ."<br/>" ;
-		
 		if($this->pathArr){
 			$this->pathArr = array() ;
 		}
@@ -150,12 +161,13 @@ class TaintAnalyser {
 		$block_list = $this->pathArr ;
 		//array_push($block_list, $block) ;
 		
+		//如果前驱基本块为空，说明完成回溯，算法停止
 		if($block_list == null || count($block_list) == 0){
 			return  ;
 		}
 		
+		//处理非平行结构的前驱基本块
 		if(!is_array($block_list[0])){
-			//如果不是平行结构
 			$flows = $block_list[0]->getBlockSummary()->getDataFlowMap() ;
 			$flows = array_reverse($flows) ;
 			
@@ -164,106 +176,20 @@ class TaintAnalyser {
 				//找到新的argName
 				foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
 					if($flow->getName() == $argName){
-						if($flow->getValue() instanceof ConcatSymbol){
-							$vars = $flow->getValue()->getItems();
-						}else{
-							$vars = array($flow->getValue()) ;
-						}
+						$vars = $this->getVarsByFlow($flow) ;
 						foreach ($vars as $var){
-							$varName = NodeUtils::getNodeStringName($var) ;
+							$varName = $this->getVarName($var) ;
 							$ret = $this->multiBlockHandler($block_list[0], $varName, $node) ;
 						}
-					}
-					
-				}
-				
-				//在最初block中，argName没有变化则直接递归
-				$this->multiBlockHandler($block_list[0], $argName, $node) ;
-				array_shift($block_list) ;
-			}
-			
-			
-			//对于每个flow,寻找变量argName
-			foreach ($flows as $flow){
-				if($flow->getName() == $argName){
-					//处理净化信息,如果被编码或者净化则返回safe
-					//被isSanitization函数取代
-					if ($flow && $flow->getLocation()->getSanitization()){
-						return "safe";
-					}
-				
-					//获取flow中的右边赋值变量
-					//得到flow->getValue()的变量node
-					//$sql = $a . $b ;  =>  array($a,$b)
-					if($flow->getValue() instanceof ConcatSymbol){
-						$vars = $flow->getValue()->getItems();
 					}else{
-						$vars = array($flow->getValue()) ;
-					}
-
-					$retarr = array();
-					foreach($vars as $var){
-						$varName = $this->getVarName($var) ;
-						$ret = $this->multiBlockHandler($block_list[0], $varName, $node,$flowsNum) ;
+						//在最初block中，argName没有变化则直接递归
+						$this->multiBlockHandler($block_list[0], $argName, $node) ;
 						array_shift($block_list) ;
-						
-						//如果var右边有source项
-						if(in_array($varName, $this->sourcesArr)){
-							//报告漏洞
-							$this->report($node, $flow->getLocation()) ;
-							return true ;
-						}
-						
-					}
-				
-				}
-			}
-			
-		}else if(is_array($block_list[0]) && count($block_list) > 0){
-			echo "here<br/>" ;
-			//是平行结构
-			foreach ($block_list[0] as $block_item){
-				//如果不是平行结构
-				$flows = $block_item->getBlockSummary()->getDataFlowMap() ;
-				$flows = array_reverse($flows) ;
-	
-				//如果flow中没有信息，则换下一个基本块
-				if($flows == null){
-					//找到新的argName
-					foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
-						if($flow->getName() == $argName){
-							if($flow->getValue() instanceof ConcatSymbol){
-								$vars = $flow->getValue()->getItems();
-							}else{
-								$vars = array($flow->getValue()) ;
-							}
-							foreach ($vars as $var){
-								if($var instanceof ArrayDimFetchSymbol){
-									$varName = NodeUtils::getNodeStringName($var->getValue()) ;
-								}else{
-									$varName = NodeUtils::getNodeStringName($var) ;
-								}
-								//print_r($block_item) ;
-								$ret = $this->multiBlockHandler($block_item, $varName, $node) ;
-								//去掉平行结构中的block_item
-								$offset = array_search($block_item, $block_list[0]) ;
-								array_splice($block_list[0], $offset, 1);
-								
-								if(count($block_list[0]) == 0){
-									array_shift($block_list) ;
-								}
-								
-							}
-						}
-						
 					}
 					
-					
-					$this->multiBlockHandler($block_item, $argName, $node) ;
-					array_shift($block_list) ;
 				}
-				
-				
+
+			}else{
 				//对于每个flow,寻找变量argName
 				foreach ($flows as $flow){
 					if($flow->getName() == $argName){
@@ -272,39 +198,102 @@ class TaintAnalyser {
 						if ($flow && $flow->getLocation()->getSanitization()){
 							return "safe";
 						}
-					
+				
 						//获取flow中的右边赋值变量
 						//得到flow->getValue()的变量node
 						//$sql = $a . $b ;  =>  array($a,$b)
-						if($flow->getValue() instanceof ConcatSymbol){
-							$vars = $flow->getValue()->getItems();
-						}else{
-							$vars = array($flow->getValue()) ;
-						}
-
+						$vars = $this->getVarsByFlow($flow) ;
+				
 						$retarr = array();
+				
 						foreach($vars as $var){
-							$varName = NodeUtils::getNodeStringName($var) ;
-							$ret = $this->multiBlockHandler($block_item, $varName, $node,$flowsNum) ;
-
-							//将分析过的item去掉
-							$offset = array_search($block_item, $block_list[0]) ;
-							array_splice($block_list[0], $offset, 1);
-							//如果
-							if(count($block_list[0]) == 0){
-								array_shift($block_list) ;
-							}
+							$varName = $this->getVarName($var) ;
+							
 							//如果var右边有source项
 							if(in_array($varName, $this->sourcesArr)){
 								//报告漏洞
 								$this->report($node, $flow->getLocation()) ;
 								return true ;
+							}else{
+								$ret = $this->multiBlockHandler($block_list[0], $varName, $node,$flowsNum) ;
+								array_shift($block_list) ;
 							}
 							
 						}
-					
+				
 					}
 				}
+			}
+			
+			
+			
+		}else if(is_array($block_list[0]) && count($block_list) > 0){
+			echo "here<br/>" ;
+			//是平行结构
+			foreach ($block_list[0] as $block_item){
+				$flows = $block_item->getBlockSummary()->getDataFlowMap() ;
+				$flows = array_reverse($flows) ;
+
+				//如果flow中没有信息，则换下一个基本块
+				if($flows == null){
+					//找到新的argName
+					foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
+						if($flow->getName() == $argName){
+							$vars = $this->getVarsByFlow($flow) ;
+							foreach ($vars as $var){
+								$varName = $this->getVarName($var) ;
+								$ret = $this->multiBlockHandler($block_item, $varName, $node) ;
+								
+								if(count($block_list[0]) == 0){
+									array_shift($block_list) ;
+								}
+								
+							}
+						}else{
+							//在最初block中，argName没有变化则直接递归
+							$this->multiBlockHandler($block_item, $argName, $node) ;
+							array_shift($block_list) ;
+						}
+						
+					}
+					
+				}else{
+					//对于每个flow,寻找变量argName
+					foreach ($flows as $flow){
+						if($flow->getName() == $argName){
+							//处理净化信息,如果被编码或者净化则返回safe
+							//被isSanitization函数取代
+							if ($flow && $flow->getLocation()->getSanitization()){
+								return "safe";
+							}
+								
+							//获取flow中的右边赋值变量
+							//得到flow->getValue()的变量node
+							//$sql = $a . $b ;  =>  array($a,$b)
+							$vars = $this->getVarsByFlow($flow) ;
+					
+							$retarr = array();
+							foreach($vars as $var){
+								$varName = $this->getVarName($var) ;
+								//如果var右边有source项,直接报告漏洞
+								if(in_array($varName, $this->sourcesArr)){
+									//报告漏洞
+									$this->report($node, $flow->getLocation()) ;
+									return true ;
+								}else{
+									$ret = $this->multiBlockHandler($block_item, $varName, $node,$flowsNum) ;
+									
+									if(count($block_list[0]) == 0){
+										array_shift($block_list) ;
+									}
+								}
+									
+							}
+								
+						}
+					}
+				}
+				
 			}
 		}
 		
@@ -322,12 +311,15 @@ class TaintAnalyser {
 	public function isSanitization($type,$saniArr,$encodingArr){
 		switch ($type){
 			case 'SQLI':
+				
 				break ;
 			case 'XSS':
 				break ;
 			case 'HTTP':
+				
 				break ;
 			case 'CODE':
+				
 				break ;
 			case 'EXEC':
 				break ;
