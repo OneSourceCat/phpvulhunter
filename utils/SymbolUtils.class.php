@@ -84,6 +84,35 @@ class SymbolUtils {
 		}
 	}
 	
+	/**
+	 * 根据AST node获取相应的symbol
+	 * @param unknown $node
+	 */
+	public static function getSymbolByNode($node){
+		if($node && SymbolUtils::isValue($node)){
+			//在DataFlow加入Location以及name
+			$vs = new ValueSymbol() ;
+			$vs->setValueByNode($node) ;
+			return $vs ;
+		}elseif ($node && SymbolUtils::isVariable($node)){
+			//加入dataFlow
+			$vars = new VariableSymbol() ;
+			$vars->setValue($node);
+			return $vars ;
+		}elseif ($node && SymbolUtils::isArrayDimFetch($node)){
+			//加入dataFlow
+			$arr = new ArrayDimFetchSymbol() ;
+			$arr->setValue($node) ;
+			return $arr ;
+		}elseif ($node && SymbolUtils::isConcat($node)){
+			$concat = new ConcatSymbol() ;
+			$concat->setItemByNode($node) ;
+			return $concat ;
+		}else{
+			return null ;
+		}
+	}
+	
 }
 
 ?>

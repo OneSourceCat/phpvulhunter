@@ -888,8 +888,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	 * @param BasicBlock $block
 	 * @return Ambigous <multitype:, multitype:string >
 	 */
-	public function senstivePostion($node,$block, $args)
-	{
+	public function senstivePostion($node,$block, $args){
 	    $ret = array();
 	    //得到sink函数的参数位置(1)
 	    //$args = array(0) ;  //1  => mysql_query

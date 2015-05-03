@@ -27,6 +27,7 @@ class ConcatSymbol extends Symbol{
 	}
 	
 	
+	///---------------------getter && setter-------------------------------
 	public function getItems(){
 		return $this->items ;
 	}
@@ -64,22 +65,20 @@ class ConcatSymbol extends Symbol{
  */
 use PhpParser\Node ;
 class BinaryOpConcatVisitor extends PhpParser\NodeVisitorAbstract{
-	private $items =array() ;   //concat字符串的各个部分
+	//concat字符串的各个部分
+	private $items = array() ;   
+	
 	public function leaveNode(Node $node){
 		$type = $node->getType() ;
 		if($type == "Expr_BinaryOp_Concat"){
 			if($node->right){
-				//如果不是常量   则收入至items中
-				if(!SymbolUtils::isValue($node->right)){
-					array_push($this->items,$node->right) ;
-				}
-				
+				//转为symbol
+				$right_symbol = SymbolUtils::getSymbolByNode($node->right) ;
+				array_push($this->items,$right_symbol) ;
 			}
 			if($node->left->getType() != "Expr_BinaryOp_Concat"){
-				if(!SymbolUtils::isValue($node->left)){
-					array_push($this->items,$node->left) ;
-				}
-				
+				$left_symbol = SymbolUtils::getSymbolByNode($node->left) ;
+				array_push($this->items,$left_symbol) ;
 			}
 		}
 	}

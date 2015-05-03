@@ -1,13 +1,6 @@
 <?php
-
-$id = $_GET['id'] ;
-if($id){
-	echo $id ;
-}else{
-	$id = addslashes($id) ;
-}
-
-$sql = "xxx". $id ;
+$id=$_GET['id'] ;
+$sql =$aaa . "xxx'". $id ."'xxxfda'".$where ."'xxxxx";
 mysql_query($sql) ;
 
 

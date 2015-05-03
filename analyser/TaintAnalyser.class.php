@@ -28,12 +28,57 @@ class TaintAnalyser {
 	 * @return Ambigous <base, NULL, string, unknown>
 	 */
 	public function getVarName($var){
-		if($var instanceof ArrayDimFetchSymbol){
+		$types = array('ArrayDimFetchSymbol','ConstantSymbol','ValueSymbol','VariableSymbol') ;
+		if(in_array(get_class($var), $types)){
 			$varName = NodeUtils::getNodeStringName($var->getValue()) ;
 		}else{
 			$varName = NodeUtils::getNodeStringName($var) ;
 		}
 		return $varName ;
+	}
+	
+	/**
+	 * 根据变量列表，判断某个元素的类型
+	 * 如：
+	 * (1)$sql = "select * from user where uid=".$uid ;
+	 * 那么uid为数值类型
+	 * (2)$sql = "select * from user where uid='".$uid ."'" ;
+	 * 那么uid为字符类型
+	 * @param array $vars
+	 */
+	public function addTypeByVars(&$vars){
+		$len = count($vars) ;
+		//调整顺序
+		if($len > 2){
+			$item_1 = $vars[0] ;
+			$item_2 = $vars[1] ;
+			$vars[0] = $item_2 ;
+			$vars[1] = $item_1 ;
+			unset($item_1) ;
+			unset($item_2) ;
+		}
+
+		//设置type
+		for($i=0;$i<$len;$i++){
+			//如果元素有前驱和后继
+			if(($i - 1) >= 0 && ($i + 1) <= $len-1){
+				$is_pre_value = $vars[$i-1] instanceof ValueSymbol ;
+				$is_curr_var = !($vars[$i] instanceof ValueSymbol) ;
+				$is_nex_value = $vars[$i+1] instanceof ValueSymbol ;
+				
+				//如果前驱后继都不是value类型或者当前symbol不是变量，则pass
+				if(!$is_pre_value || !$is_nex_value || !$is_curr_var){
+					continue ;
+				}
+				//判断是否被单引号包裹
+				$is_start_with = strpos($vars[$i-1]->getValue(),"'",0) ;
+				$is_end_with = strpos($vars[$i+1]->getValue(),"'",strlen($vars[$i-1]->getValue())-2) ;
+				
+				if($is_start_with != -1 && $is_end_with != -1){
+					$vars[$i]->setType("int") ;
+				}
+			}
+		}
 	}
 	
 	
@@ -43,11 +88,16 @@ class TaintAnalyser {
 	 * @return multitype:NULL
 	 */
 	public function getVarsByFlow($flow){
+		//获取flow中的变量数组
 		if($flow->getValue() instanceof ConcatSymbol){
 			$vars = $flow->getValue()->getItems();
 		}else{
 			$vars = array($flow->getValue()) ;
 		}
+		
+		//设置var的type，如果有引号包裹为string，否则为数值型
+		$this->addTypeByVars($vars) ;
+		print_r($vars) ;
 		return $vars ;
 	}
 	
@@ -107,15 +157,8 @@ class TaintAnalyser {
 		//获取数据流信息
 		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
-		// 去掉分析过的$flow
-		$temp = $flowsNum ;
-		while ($temp > 0){
-			array_pop($flows) ;
-			$temp -- ;
-		}
-		
+
 		foreach ($flows as $flow){
-			$flowsNum ++ ;
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
 				//被isSanitization函数取代
@@ -127,18 +170,21 @@ class TaintAnalyser {
 				//得到flow->getValue()的变量node
 				//$sql = $a . $b ;  =>  array($a,$b)
 				$vars = $this->getVarsByFlow($flow) ;
-				
+				//print_r($vars) ;
 				$retarr = array();
 				foreach($vars as $var){
 					$varName = $this->getVarName($var) ;
-					$ret = $this->currBlockTaintHandler($block, $node, $varName,$flowsNum) ;
-					//变量经过净化，这不需要跟踪该变量
+					
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
 						//报告漏洞
 						$this->report($node, $flow->getLocation()) ;
 						return true ;
 					}
+					
+					$ret = $this->currBlockTaintHandler($block, $node, $varName,$flowsNum) ;
+					//变量经过净化，这不需要跟踪该变量
+					
 					
 				}
 			}
@@ -228,7 +274,6 @@ class TaintAnalyser {
 			
 			
 		}else if(is_array($block_list[0]) && count($block_list) > 0){
-			echo "here<br/>" ;
 			//是平行结构
 			foreach ($block_list[0] as $block_item){
 				$flows = $block_item->getBlockSummary()->getDataFlowMap() ;
@@ -311,7 +356,8 @@ class TaintAnalyser {
 	public function isSanitization($type,$saniArr,$encodingArr){
 		switch ($type){
 			case 'SQLI':
-				
+				$sql_analyser = new SqliAnalyser() ;
+				$sql_analyser->analyse($saniArr, $encodingArr) ;
 				break ;
 			case 'XSS':
 				break ;
