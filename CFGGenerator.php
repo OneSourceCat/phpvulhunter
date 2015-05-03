@@ -749,7 +749,7 @@ class CFGGenerator{
 		$this->simulate($currBlock) ;
 		
 		//echo  "当前基本块:<br/>" ;
-		//print_r($currBlock->getBlockSummary()) ;
+		//print_r($currBlock) ;
 		//echo "前驱基本块：<br/>" ;
 		//$analyser = new TaintAnalyser() ;
 		//$analyser->getPrevBlocks($currBlock) ;

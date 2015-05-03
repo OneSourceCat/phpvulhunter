@@ -15,10 +15,7 @@ class NodeUtils{
         if (!$node instanceof Node){
             return null;
         }      
-        //print_r($node);
         $type = $node->getType();
-        //print_r($type);
-        //echo "<br/>";
         switch ($type) {    
             case "Expr_Variable":
             case "Scalar_String":

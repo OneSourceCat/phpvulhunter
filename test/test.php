@@ -1,14 +1,14 @@
 <?php
-$where = "f4cky0u" ;
-$id = $where . $_GET['id'] ;
 
-while($id){
-	echo "1" ;
+$id = $_GET['id'] ;
+if($id){
+	echo $id ;
+}else{
+	echo false;
 }
 
-$id = "xxxxxxxx".$id ;
-$sql = "select * from User where id=" .$id ;
-
+$sql = "xxx". $id ;
 mysql_query($sql) ;
+
 
 ?>
