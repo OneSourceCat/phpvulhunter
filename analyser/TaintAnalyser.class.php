@@ -1,4 +1,8 @@
 <?php
+
+require_once CURR_PATH .  'SqliAnalyser.class.php';
+require_once CURR_PATH .  'XssAnalyser.class.php';
+
 /**
  * 用于污点分析的类
  * 污点分析的任务：
@@ -162,7 +166,11 @@ class TaintAnalyser {
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
 				//被isSanitization函数取代
-				if ($flow && $flow->getLocation()->getSanitization()){
+				$variable = $flow->getLocation() ;
+				$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFuncParams($node)) ;
+				$encodingArr = $flow->getLocation()->getEncoding() ;
+				$saniArr =  $flow->getLocation()->getSanitization() ;
+				if ($flow && $this->isSanitization($type, $variable, $saniArr, $encodingArr)){
 					return "safe";
 				}
 				
@@ -174,17 +182,13 @@ class TaintAnalyser {
 				$retarr = array();
 				foreach($vars as $var){
 					$varName = $this->getVarName($var) ;
-					
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
 						//报告漏洞
 						$this->report($node, $flow->getLocation()) ;
 						return true ;
 					}
-					
 					$ret = $this->currBlockTaintHandler($block, $node, $varName,$flowsNum) ;
-					//变量经过净化，这不需要跟踪该变量
-					
 					
 				}
 			}
@@ -240,8 +244,12 @@ class TaintAnalyser {
 				foreach ($flows as $flow){
 					if($flow->getName() == $argName){
 						//处理净化信息,如果被编码或者净化则返回safe
-						//被isSanitization函数取代
-						if ($flow && $flow->getLocation()->getSanitization()){
+						//被isSanitization函数取代  $flow->getLocation()->getSanitization()
+						$variable = $flow->getLocation() ;
+						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFuncParams($node)) ;
+						$encodingArr = $flow->getLocation()->getEncoding() ;
+						$saniArr =  $flow->getLocation()->getSanitization() ;
+						if ($flow && $this->isSanitization($type, $variable, $saniArr, $encodingArr)){
 							return "safe";
 						}
 				
@@ -308,7 +316,11 @@ class TaintAnalyser {
 						if($flow->getName() == $argName){
 							//处理净化信息,如果被编码或者净化则返回safe
 							//被isSanitization函数取代
-							if ($flow && $flow->getLocation()->getSanitization()){
+							$variable = $flow->getLocation() ;
+							$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFuncParams($node)) ;
+							$encodingArr = $flow->getLocation()->getEncoding() ;
+							$saniArr =  $flow->getLocation()->getSanitization() ;
+							if ($flow && $this->isSanitization($type, $variable, $saniArr, $encodingArr)){
 								return "safe";
 							}
 								
@@ -347,22 +359,24 @@ class TaintAnalyser {
 	/**
 	 * 根据sink的类型、危险参数的净化信息列表、编码列表
 	 * 判断是否是有效的净化
-	 * 返回true or false
+	 * 返回:
+	 * 		(1)true		=>得到净化
+	 * 		(2)false	=>没有净化
 	 * 'XSS','SQLI','HTTP','CODE','EXEC','LDAP','INCLUDE','FILE','XPATH','FILEAFFECT'
 	 * @param string $type 漏洞的类型，使用TypeUtils可以获取
 	 * @param array $saniArr 危险参数的净化信息栈
 	 * @param array $encodingArr 危险参数的编码信息栈
 	 */
-	public function isSanitization($type,$saniArr,$encodingArr){
+	public function isSanitization($type,$var,$saniArr,$encodingArr){
 		switch ($type){
 			case 'SQLI':
 				$sql_analyser = new SqliAnalyser() ;
-				$sql_analyser->analyse($saniArr, $encodingArr) ;
+				$is_clean = $sql_analyser->analyse($var,$saniArr, $encodingArr) ;
+				return $is_clean ;
 				break ;
 			case 'XSS':
 				break ;
 			case 'HTTP':
-				
 				break ;
 			case 'CODE':
 				
