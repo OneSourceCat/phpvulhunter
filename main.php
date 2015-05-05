@@ -5,6 +5,7 @@ define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 require_once CURR_PATH . '/vendor/autoload.php' ;
 require_once CURR_PATH . '/BasicBlock.php';
 
+require_once CURR_PATH . '/utils/FileUtils.class.php';
 require_once CURR_PATH . '/utils/SymbolUtils.class.php';
 require_once CURR_PATH . '/utils/NodeUtils.class.php';
 require_once CURR_PATH . '/utils/TypeUtils.class.php';
@@ -32,6 +33,8 @@ require_once CURR_PATH . '/conf/securing.php';
 
 require_once CURR_PATH . '/analyser/TaintAnalyser.class.php';
 
+require_once CURR_PATH . '/libs/Smarty.class.php';
+
 header("Content-type:text/html;charset=utf-8") ;
 ini_set('xdebug.max_nesting_level', 2000);
 
@@ -42,18 +45,6 @@ ini_set('xdebug.max_nesting_level', 2000);
 
 
 //3、获取ResultContext  传给template
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

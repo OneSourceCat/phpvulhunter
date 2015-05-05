@@ -1,7 +1,5 @@
 <?php
 
-
-require CURR_PATH . '/utils/FileUtils.class.php';
 require CURR_PATH . '/vendor/autoload.php' ;
 
 ini_set('xdebug.max_nesting_level', 2000);
