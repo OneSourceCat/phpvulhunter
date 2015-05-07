@@ -18,6 +18,10 @@ class VariableSymbol extends Symbol{
 		return $this->value;
 	}
 	
+	public function getName(){
+		return $this->name ;
+	}
+	
 	/**
 	 * @param field_type $value
 	 */

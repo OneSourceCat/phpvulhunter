@@ -1,7 +1,8 @@
 <?php
-$id=$_GET['id'] ;
-$sql =$aaa . "xxx'". $id ."'xxxfda'".$where ."'xxxxx";
-mysql_query($sql) ;
 
+$id = $_GET['id'] ;
+$where = "order by" ;
+
+mysql_query($where . "xxx". $id) ;
 
 ?>

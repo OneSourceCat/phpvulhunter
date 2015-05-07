@@ -1,6 +1,6 @@
 <?php
 
-require_once CURR_PATH . './main.php';
+require_once 'main.php';
 
 //定义PHP语句类别
 $RETURN_STATEMENT = array('Stmt_Return') ;
@@ -518,13 +518,24 @@ class CFGGenerator{
 						
 						//获取危险参数的位置
 						$argPosition = NodeUtils::getVulArgs($node) ;
-						$argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
+						if(count($argPosition) == 0){
+							break ;
+						}
 						
-						//print_r($argArr) ;
+						//获取到危险参数位置的变量
+						$argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);		
+
 						//遍历危险参数名，调用污点分析函数
 						if(count($argArr) > 0){
 							foreach ($argArr as $item){
-								$analyser->analysis($block, $node, $item) ;
+								if(is_array($item)){
+									foreach ($item as $v){
+										$analyser->analysis($block, $node, $v) ;
+									}
+								}else{
+									$analyser->analysis($block, $node, $item) ;
+								}
+								
 							}
 							
 						}
@@ -801,7 +812,6 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 			    $arr = $this->sinkContext->getAllSinks() ;
 			    $arr = $arr[$nodeName] ;
 			    foreach ($arr as $pos){
-			        //print_r($node->args[$pos]);
 			        $argName = NodeUtils::getNodeFuncParams($node);
 			        $argName = $argName[$pos] ;
 			        $this->vars = $this->sinkMultiBlockTraceback($argName, $this->block,0);			        

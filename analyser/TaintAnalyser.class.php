@@ -1,7 +1,7 @@
 <?php
 
-require_once CURR_PATH .  'SqliAnalyser.class.php';
-require_once CURR_PATH .  'XssAnalyser.class.php';
+require_once 'SqliAnalyser.class.php';
+require_once 'XssAnalyser.class.php';
 
 /**
  * 用于污点分析的类
@@ -101,7 +101,7 @@ class TaintAnalyser {
 		
 		//设置var的type，如果有引号包裹为string，否则为数值型
 		$this->addTypeByVars($vars) ;
-		print_r($vars) ;
+		//print_r($vars) ;
 		return $vars ;
 	}
 	
@@ -167,7 +167,7 @@ class TaintAnalyser {
 				//处理净化信息,如果被编码或者净化则返回safe
 				//被isSanitization函数取代
 				$variable = $flow->getLocation() ;
-				$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFuncParams($node)) ;
+				$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 				$encodingArr = $flow->getLocation()->getEncoding() ;
 				$saniArr =  $flow->getLocation()->getSanitization() ;
 				if ($flow && $this->isSanitization($type, $variable, $saniArr, $encodingArr)){
@@ -246,7 +246,7 @@ class TaintAnalyser {
 						//处理净化信息,如果被编码或者净化则返回safe
 						//被isSanitization函数取代  $flow->getLocation()->getSanitization()
 						$variable = $flow->getLocation() ;
-						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFuncParams($node)) ;
+						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 						$encodingArr = $flow->getLocation()->getEncoding() ;
 						$saniArr =  $flow->getLocation()->getSanitization() ;
 						if ($flow && $this->isSanitization($type, $variable, $saniArr, $encodingArr)){
@@ -295,12 +295,10 @@ class TaintAnalyser {
 							$vars = $this->getVarsByFlow($flow) ;
 							foreach ($vars as $var){
 								$varName = $this->getVarName($var) ;
-								$ret = $this->multiBlockHandler($block_item, $varName, $node) ;
-								
+								$this->multiBlockHandler($block_item, $varName, $node) ;
 								if(count($block_list[0]) == 0){
 									array_shift($block_list) ;
 								}
-								
 							}
 						}else{
 							//在最初block中，argName没有变化则直接递归
@@ -317,7 +315,7 @@ class TaintAnalyser {
 							//处理净化信息,如果被编码或者净化则返回safe
 							//被isSanitization函数取代
 							$variable = $flow->getLocation() ;
-							$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFuncParams($node)) ;
+							$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 							$encodingArr = $flow->getLocation()->getEncoding() ;
 							$saniArr =  $flow->getLocation()->getSanitization() ;
 							if ($flow && $this->isSanitization($type, $variable, $saniArr, $encodingArr)){
@@ -339,7 +337,6 @@ class TaintAnalyser {
 									return true ;
 								}else{
 									$ret = $this->multiBlockHandler($block_item, $varName, $node,$flowsNum) ;
-									
 									if(count($block_list[0]) == 0){
 										array_shift($block_list) ;
 									}

@@ -97,6 +97,7 @@ class SymbolUtils {
 		}elseif ($node && SymbolUtils::isVariable($node)){
 			//加入dataFlow
 			$vars = new VariableSymbol() ;
+			$vars->setNameByNode($node) ;
 			$vars->setValue($node);
 			return $vars ;
 		}elseif ($node && SymbolUtils::isArrayDimFetch($node)){

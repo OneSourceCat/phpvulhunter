@@ -175,6 +175,28 @@ class NodeUtils{
     }
     
     /**
+     * 获取concat中的所有变量名
+     * @param Node $node
+     */
+    private function getConcatParams($node){
+    	$retArr = array() ;
+    	if($node->getType() != "Expr_BinaryOp_Concat"){
+    		return $retArr ;
+    	}
+    	$symbol = new ConcatSymbol() ;
+    	$symbol->setItemByNode($node) ;
+    	$items = $symbol->getItems() ;
+    	foreach ($items as $item){
+    		if($item instanceof ValueSymbol){
+    			continue ;
+    		}
+    		array_push($retArr, $item->getName()) ;
+    	}
+    	return $retArr ;
+    }
+    
+    
+    /**
      * 获取函数的参数名称
      * @param Node $node 函数调用的node
      * @return array(arg1[,arg2,arg3,...])
@@ -187,14 +209,24 @@ class NodeUtils{
     	$argsArr = array();
     	if ($node->args){
     	    foreach ($node->args as $arg){
-    	        array_push($argsArr, NodeUtils::getNodeStringName($arg));
+    	    	//如果为concat类型
+    	    	if($arg->value->getType() == "Expr_BinaryOp_Concat"){
+    	    		$concatArr = self::getConcatParams($arg->value) ;
+    	    		array_push($argsArr, $concatArr);
+    	    	}else{
+    	    		array_push($argsArr, NodeUtils::getNodeStringName($arg));
+    	    	}  
     	    }
     	}elseif($node->params){
     	    foreach ($node->params as $arg){
-    	        array_push($argsArr, NodeUtils::getNodeStringName($arg));
+    	    	if($arg->getType() == "Expr_BinaryOp_Concat"){
+    	    		$concatArr = self::getConcatParams($arg->value) ;
+    	    		array_push($argsArr, $concatArr);
+    	    	}else{
+    	    		array_push($argsArr, NodeUtils::getNodeStringName($arg));
+    	    	}
     	    }
     	}
-    	
     	return $argsArr;
     }
     
@@ -208,11 +240,11 @@ class NodeUtils{
     	if (!$node instanceof Node){
     		return null;
     	}
-    	$argsNameArr = self::getNodeFuncParams($node) ;
+    	$argsNameArr = self::getNodeFuncParams($node) ;	
     	$retArr = array() ;
     	if(count($argsNameArr) > 0){
     		foreach ($argsPos as $value){
-    			//sink是否索引1开始的
+    			//sink是从索引1开始的
     			$value -= 1 ;
     			array_push($retArr,$argsNameArr[$value]) ;
     		}
