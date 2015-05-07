@@ -74,13 +74,25 @@ class BinaryOpConcatVisitor extends PhpParser\NodeVisitorAbstract{
 			if($node->right){
 				//转为symbol
 				$right_symbol = SymbolUtils::getSymbolByNode($node->right) ;
-				array_push($this->items,$right_symbol) ;
+				($right_symbol != null) && array_push($this->items,$right_symbol) ;
 			}
 			if($node->left->getType() != "Expr_BinaryOp_Concat"){
 				$left_symbol = SymbolUtils::getSymbolByNode($node->left) ;
-				array_push($this->items,$left_symbol) ;
+				($left_symbol != null) && array_push($this->items,$left_symbol) ;
+			}
+		}else if($type == "Scalar_Encapsed"){
+			foreach ($node->parts as $item){
+				if(!is_object($item)){
+					$valueSymbol = new ValueSymbol() ;
+					$valueSymbol->setValue($item) ;
+					($valueSymbol != null) && array_push($this->items, $valueSymbol) ;
+				}else{
+					$setItem = SymbolUtils::getSymbolByNode($item) ;
+					($setItem != null) && array_push($this->items, $setItem) ;
+				}
 			}
 		}
+		
 	}
 	
 	public function getItems(){

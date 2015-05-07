@@ -186,6 +186,7 @@ class NodeUtils{
     	$symbol = new ConcatSymbol() ;
     	$symbol->setItemByNode($node) ;
     	$items = $symbol->getItems() ;
+
     	foreach ($items as $item){
     		if($item instanceof ValueSymbol){
     			continue ;
