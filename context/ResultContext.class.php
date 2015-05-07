@@ -16,7 +16,9 @@ class ResultContext {
 	 * @param Result $ele
 	 */
 	public function addResElement($ele){
-		array_push($this->resArr, $ele) ;
+		if($ele instanceof  Result){
+			array_push($this->resArr, $ele) ;
+		}
 	}
 	
 	
@@ -44,9 +46,10 @@ class ResultContext {
 /**
  * 一条漏洞记录
  * array(
+ * 		'path' => $path,  //漏洞的页面路径
  *		'node'=> null, //调用sink的node
  *		'var' => null, //追踪的变量node
- *		'type' => ''   //漏洞类型
+ *		'type' => 'SQLI'   //漏洞类型
  * ) ;
  * 
  * @author Exploit
@@ -55,8 +58,9 @@ class ResultContext {
 class Result{
 	private $record = array();
 	//construct
-	public function __construct($type,$node,$var){
+	public function __construct($path,$type,$node,$var){
 		$this->record = array(
+				'path' => $path,
 				'node'=> $node,
 				'var' => $var,
 				'type' => $type
