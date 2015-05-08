@@ -21,7 +21,6 @@ class ConcatSymbol extends Symbol{
 			$traverser->addVisitor($visitor) ;
 			$traverser->traverse(array($node)) ;
 			$this->items = $visitor->getItems() ;
-			
 		}
 		
 	}

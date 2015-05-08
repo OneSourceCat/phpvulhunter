@@ -61,7 +61,7 @@ class TaintAnalyser {
 			unset($item_1) ;
 			unset($item_2) ;
 		}
-
+		
 		//设置type
 		for($i=0;$i<$len;$i++){
 			//如果元素有前驱和后继
@@ -81,6 +81,12 @@ class TaintAnalyser {
 				if($is_start_with != -1 && $is_end_with != -1){
 					$vars[$i]->setType("int") ;
 				}
+			}else{
+				//如果没有前驱和后继 ，即为开头和结尾,且为var类型，直接设为int
+				if($vars[$i] instanceof VariableSymbol){
+					$vars[$i]->setType("int") ;
+				}
+				
 			}
 		}
 	}
@@ -98,10 +104,9 @@ class TaintAnalyser {
 		}else{
 			$vars = array($flow->getValue()) ;
 		}
-		
+
 		//设置var的type，如果有引号包裹为string，否则为数值型
 		$this->addTypeByVars($vars) ;
-		//print_r($vars) ;
 		return $vars ;
 	}
 	
@@ -161,24 +166,35 @@ class TaintAnalyser {
 		//获取数据流信息
 		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
-
+		
 		foreach ($flows as $flow){
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
 				//被isSanitization函数取代
-				$variable = $flow->getLocation() ;
+				$variable = $this->getVarsByFlow($flow) ;
+				
 				$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 				$encodingArr = $flow->getLocation()->getEncoding() ;
 				$saniArr =  $flow->getLocation()->getSanitization() ;
-				if ($flow && $this->isSanitization($type, $variable, $saniArr, $encodingArr)){
-					return "safe";
+				
+				if ($flow && (count($variable) > 0)){
+					foreach($variable as $var){
+						if(is_object($var)){
+							$ret = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+							if($ret == true){
+								return "safe" ;
+							}
+						}
+						
+					}
+					
 				}
 				
 				//获取flow中的右边赋值变量
 				//得到flow->getValue()的变量node
 				//$sql = $a . $b ;  =>  array($a,$b)
 				$vars = $this->getVarsByFlow($flow) ;
-				//print_r($vars) ;
+				
 				$retarr = array();
 				foreach($vars as $var){
 					$varName = $this->getVarName($var) ;
@@ -244,13 +260,24 @@ class TaintAnalyser {
 				foreach ($flows as $flow){
 					if($flow->getName() == $argName){
 						//处理净化信息,如果被编码或者净化则返回safe
-						//被isSanitization函数取代  $flow->getLocation()->getSanitization()
-						$variable = $flow->getLocation() ;
+						//被isSanitization函数取代
+						$variable = $this->getVarsByFlow($flow) ;
+						
 						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 						$encodingArr = $flow->getLocation()->getEncoding() ;
 						$saniArr =  $flow->getLocation()->getSanitization() ;
-						if ($flow && $this->isSanitization($type, $variable, $saniArr, $encodingArr)){
-							return "safe";
+						
+						if ($flow && (count($variable) > 0)){
+							foreach($variable as $var){
+								if(is_object($var)){
+									$ret = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+									if($ret == true){
+										return "safe" ;
+									}
+								}
+								
+							}
+							
 						}
 				
 						//获取flow中的右边赋值变量
@@ -314,12 +341,23 @@ class TaintAnalyser {
 						if($flow->getName() == $argName){
 							//处理净化信息,如果被编码或者净化则返回safe
 							//被isSanitization函数取代
-							$variable = $flow->getLocation() ;
+							$variable = $this->getVarsByFlow($flow) ;
+							
 							$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 							$encodingArr = $flow->getLocation()->getEncoding() ;
 							$saniArr =  $flow->getLocation()->getSanitization() ;
-							if ($flow && $this->isSanitization($type, $variable, $saniArr, $encodingArr)){
-								return "safe";
+							
+							if ($flow && (count($variable) > 0)){
+								foreach($variable as $var){
+									if(is_object($var)){
+										$ret = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+										if($ret == true){
+											return "safe" ;
+										}
+									}
+									
+								}
+								
 							}
 								
 							//获取flow中的右边赋值变量
@@ -409,7 +447,7 @@ class TaintAnalyser {
 		//首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
 		$ret = $this->currBlockTaintHandler($block, $node, $argName) ;
 		if($ret === true) return ;
-		
+
 		//多个基本块的处理
 		$this->pathArr = array() ;
 		$this->multiBlockHandler($block, $argName, $node) ;
