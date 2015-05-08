@@ -13,8 +13,11 @@ ini_set('xdebug.max_nesting_level', 2000);
  */
 
 class Context {
-	private static $instance ;   //单例
-	public $records ;    //上下文中全部类的记录
+	//单例
+	private static $instance ;  
+	
+	//上下文中全部类的记录
+	public $records ;    
 	
 	/**
 	 * 构造方法私有化
