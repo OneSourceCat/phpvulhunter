@@ -5,6 +5,7 @@ define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 require_once CURR_PATH . '/vendor/autoload.php' ;
 require_once CURR_PATH . '/BasicBlock.php';
 
+require_once CURR_PATH . '/utils/AnalyseUtils.class.php';
 require_once CURR_PATH . '/utils/FileUtils.class.php';
 require_once CURR_PATH . '/utils/SymbolUtils.class.php';
 require_once CURR_PATH . '/utils/NodeUtils.class.php';

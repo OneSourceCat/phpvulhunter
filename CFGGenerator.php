@@ -11,9 +11,7 @@ $JUMP_STATEMENT = array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','
 //全局的filesummary对象
 $fileSummary = new FileSummary() ;
 
-
 use PhpParser\Node ;
-
 class CFGGenerator{
 	
 	private $parser ;  //AST解析类
