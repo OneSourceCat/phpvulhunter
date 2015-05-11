@@ -232,10 +232,24 @@ class CFGGenerator{
 			}
 		}else{
 			//不属于已有的任何一个symbol类型,如函数调用
-			if($part->getType() == "Expr_FuncCall" && $type == "right"){
-				//处理净化信息和编码信息
-				SanitizationHandler::setSanitiInfo($part,$dataFlow, $block) ;
-				EncodingHandler::setEncodeInfo($part, $dataFlow, $block) ;
+			if($part && $part->getType() == "Expr_FuncCall"){
+				//处理 id = urlencode($_GET['id']) ;
+				$funcName = NodeUtils::getNodeFunctionName($part) ;
+
+				if(!SymbolUtils::isValue($part)){
+					$vars = SymbolUtils::getSymbolByNode($part->args[0]->value) ;
+					if($type == "right" && in_array($funcName, array('urldecode','urlencode'))){
+						$dataFlow->setValue($vars) ;
+					}
+				}
+				
+				
+				if($type == 'right'){
+					//处理净化信息和编码信息
+					SanitizationHandler::setSanitiInfo($part,$dataFlow, $block) ;
+					EncodingHandler::setEncodeInfo($part, $dataFlow, $block) ;
+				}
+				
 			}
 			
 		}
@@ -528,10 +542,10 @@ class CFGGenerator{
 							foreach ($argArr as $item){
 								if(is_array($item)){
 									foreach ($item as $v){
-										$analyser->analysis($block, $node, $v) ;
+										$analyser->analysis($block, $node, $v, $fileSummary) ;
 									}
 								}else{
-									$analyser->analysis($block, $node, $item) ;
+									$analyser->analysis($block, $node, $item, $fileSummary) ;
 								}
 								
 							}

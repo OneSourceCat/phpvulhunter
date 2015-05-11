@@ -1,9 +1,20 @@
 <?php
 
-$id = $_GET['id'] ;
-$where = "order by" ;
+$content = urldecode($where) ;
+$id = $content;
+if($id){
+	echo $id ;
+}else if($id>0){
+	echo false;
+}else{
+	if(1){
+		echo "xxxx" ;
+	}
+	echo "shit";
+}
 
-isset($sql)? $sql = "xxx$where". $id:'' ;
+$sql = "xxx". $id ;
+$sql = addslashes($sql) ;
 mysql_query($sql) ;
 
 ?>

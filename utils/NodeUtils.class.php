@@ -292,6 +292,7 @@ class NodeUtils{
     	$nameNum = count($F_SINK_ARRAY);
     	$userDefinedSink = UserDefinedSinkContext::getInstance() ;
     	$U_SINK_ALL = $userDefinedSink->getAllSinks() ;
+    	
     	//如果是系统的sink
     	if(key_exists($funcName, $F_SINK_ALL)){
     		for($i = 0;$i < $nameNum; $i++){

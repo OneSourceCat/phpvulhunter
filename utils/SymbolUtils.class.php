@@ -5,8 +5,7 @@
  *
  */
 class SymbolUtils {
-	
-	
+
 	/**
 	 * 判断节点是否是Value类型的symbol
 	 * 如果是静态String、Integer、Float则返回true

@@ -40,7 +40,7 @@ header("Content-type:text/html;charset=utf-8") ;
 ini_set('xdebug.max_nesting_level', 2000);
 
 //1、从web ui中获取并加载项目工程
-
+//path  scan_type 
 
 //2、循环每个文件  进行分析工作
 

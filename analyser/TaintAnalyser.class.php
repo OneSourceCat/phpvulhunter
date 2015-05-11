@@ -162,13 +162,14 @@ class TaintAnalyser {
 	 * @param string $argName  危险参数的名称
 	 * @param int $flowsNum 数据流的数量，用于清除分析的flow
 	 */
-	public function currBlockTaintHandler($block,$node,$argName,$flowsNum=0){
+	public function currBlockTaintHandler($block,$node,$argName){
 		//获取数据流信息
 		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
 		
 		foreach ($flows as $flow){
 			if($flow->getName() == $argName){
+
 				//处理净化信息,如果被编码或者净化则返回safe
 				//被isSanitization函数取代
 				$variable = $this->getVarsByFlow($flow) ;
@@ -180,8 +181,9 @@ class TaintAnalyser {
 				if ($flow && (count($variable) > 0)){
 					foreach($variable as $var){
 						if(is_object($var)){
-							$ret = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-							if($ret == true){
+							$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+							if($res == true){
+								$name = NodeUtils::getNodeStringName($var) ;
 								return "safe" ;
 							}
 						}
@@ -203,12 +205,13 @@ class TaintAnalyser {
 						//报告漏洞
 						$this->report($node, $flow->getLocation()) ;
 						return true ;
+					}else{
+						$this->currBlockTaintHandler($block, $node, $varName) ;
 					}
-					$ret = $this->currBlockTaintHandler($block, $node, $varName,$flowsNum) ;
-					
 				}
 			}
 		}
+
 	}
 	
 	
@@ -217,15 +220,22 @@ class TaintAnalyser {
 	 * @param BasicBlock $block 当前基本块
 	 * @param string $argName 敏感参数名
 	 * @param Node $node 调用sink的node 
+	 * @param array $argArr 多基本块分析过程中，进行的变量转化列表
+	 * 						如果遍历为true，说明已经处理过了，如果为false，则说明没有被处理过，
+	 * 						转为多文件间的分析
 	 */
-	public function multiBlockHandler($block,$argName,$node,$flowsNum=0){
+	public function multiBlockHandler($block, $argName, $node, &$argArr){
 		if($this->pathArr){
 			$this->pathArr = array() ;
 		}
 		
+		if($argName && !array_key_exists($argName, $argArr)){
+			$argArr[$argName] = false ;
+		}
+		
 		$this->getPrevBlocks($block) ;
 		$block_list = $this->pathArr ;
-		//array_push($block_list, $block) ;
+		!empty($block) && array_push($block_list, $block) ;
 		
 		//如果前驱基本块为空，说明完成回溯，算法停止
 		if($block_list == null || count($block_list) == 0){
@@ -242,23 +252,28 @@ class TaintAnalyser {
 				//找到新的argName
 				foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
 					if($flow->getName() == $argName){
+						
+						$argArr[$argName] == false && $argArr[$argName] = true ;
+						
 						$vars = $this->getVarsByFlow($flow) ;
 						foreach ($vars as $var){
 							$varName = $this->getVarName($var) ;
-							$ret = $this->multiBlockHandler($block_list[0], $varName, $node) ;
+							$this->multiBlockHandler($block_list[0], $varName, $node, $argArr) ;
 						}
 					}else{
 						//在最初block中，argName没有变化则直接递归
-						$this->multiBlockHandler($block_list[0], $argName, $node) ;
+						$this->multiBlockHandler($block_list[0], $argName, $node, $argArr) ;
 						array_shift($block_list) ;
 					}
 					
 				}
-
 			}else{
 				//对于每个flow,寻找变量argName
 				foreach ($flows as $flow){
 					if($flow->getName() == $argName){
+						
+						$argArr[$argName] == false && $argArr[$argName] = true ;
+						
 						//处理净化信息,如果被编码或者净化则返回safe
 						//被isSanitization函数取代
 						$variable = $this->getVarsByFlow($flow) ;
@@ -270,8 +285,9 @@ class TaintAnalyser {
 						if ($flow && (count($variable) > 0)){
 							foreach($variable as $var){
 								if(is_object($var)){
-									$ret = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-									if($ret == true){
+									$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+									if($res == true){
+										$name = NodeUtils::getNodeStringName($var) ;
 										return "safe" ;
 									}
 								}
@@ -294,10 +310,9 @@ class TaintAnalyser {
 							if(in_array($varName, $this->sourcesArr)){
 								//报告漏洞
 								$this->report($node, $flow->getLocation()) ;
-								return true ;
 							}else{
-								$ret = $this->multiBlockHandler($block_list[0], $varName, $node,$flowsNum) ;
-								array_shift($block_list) ;
+								!empty($block_list) && $this->multiBlockHandler($block_list[0], $varName, $node, $argArr) ;
+								!empty($block_list) && array_shift($block_list) ;
 							}
 							
 						}
@@ -305,31 +320,29 @@ class TaintAnalyser {
 					}
 				}
 			}
-			
-			
-			
+
 		}else if(is_array($block_list[0]) && count($block_list) > 0){
 			//是平行结构
 			foreach ($block_list[0] as $block_item){
 				$flows = $block_item->getBlockSummary()->getDataFlowMap() ;
 				$flows = array_reverse($flows) ;
-
 				//如果flow中没有信息，则换下一个基本块
 				if($flows == null){
 					//找到新的argName
 					foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
 						if($flow->getName() == $argName){
+							$argArr[$argName] == false && $argArr[$argName] = true ;				
 							$vars = $this->getVarsByFlow($flow) ;
 							foreach ($vars as $var){
 								$varName = $this->getVarName($var) ;
-								$this->multiBlockHandler($block_item, $varName, $node) ;
+								$this->multiBlockHandler($block_item, $varName, $node, $argArr) ;
 								if(count($block_list[0]) == 0){
 									array_shift($block_list) ;
 								}
 							}
 						}else{
 							//在最初block中，argName没有变化则直接递归
-							$this->multiBlockHandler($block_item, $argName, $node) ;
+							$this->multiBlockHandler($block_item, $argName, $node, $argArr) ;
 							array_shift($block_list) ;
 						}
 						
@@ -339,6 +352,7 @@ class TaintAnalyser {
 					//对于每个flow,寻找变量argName
 					foreach ($flows as $flow){
 						if($flow->getName() == $argName){
+							$argArr[$argName] == false && $argArr[$argName] = true ;
 							//处理净化信息,如果被编码或者净化则返回safe
 							//被isSanitization函数取代
 							$variable = $this->getVarsByFlow($flow) ;
@@ -374,7 +388,7 @@ class TaintAnalyser {
 									$this->report($node, $flow->getLocation()) ;
 									return true ;
 								}else{
-									$ret = $this->multiBlockHandler($block_item, $varName, $node,$flowsNum) ;
+									$ret = $this->multiBlockHandler($block_item, $varName, $node, $argArr) ;
 									if(count($block_list[0]) == 0){
 										array_shift($block_list) ;
 									}
@@ -388,8 +402,20 @@ class TaintAnalyser {
 				
 			}
 		}
+	}
+	
+	
+	/**
+	 * 多文件间分析
+	 * @param BasicBlock $block  当前基本块
+	 * @param string $argName 漏洞变量
+	 * @param Node $node 调用sink的node
+	 * @param array $fileSummaryMap 要分析的require文件的summary的list
+	 */
+	public function multiFileHandler($block, $argName, $node, $fileSummaryMap){
 		
 	}
+	
 	
 	/**
 	 * 根据sink的类型、危险参数的净化信息列表、编码列表
@@ -407,14 +433,14 @@ class TaintAnalyser {
 			case 'SQLI':
 				$sql_analyser = new SqliAnalyser() ;
 				$is_clean = $sql_analyser->analyse($var,$saniArr, $encodingArr) ;
-				return $is_clean ;
 				break ;
 			case 'XSS':
+				$xss_analyser = new XssAnalyser() ;
+				$is_clean = $xss_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 			case 'HTTP':
 				break ;
 			case 'CODE':
-				
 				break ;
 			case 'EXEC':
 				break ;
@@ -429,6 +455,7 @@ class TaintAnalyser {
 			case 'FILEAFFECT':
 				break ;
 		}
+		return $is_clean ;
 	}
 	
 	
@@ -437,23 +464,39 @@ class TaintAnalyser {
 	 * @param BasicBlock $block 当前基本块
 	 * @param Node $node 当前的函数调用node
 	 * @param string $argName 危险参数名
+	 * @param FileSummary 当前文件摘要
 	 */
-	public function analysis($block,$node,$argName){
-		
+	public function analysis($block,$node,$argName,$fileSummary){
+		$path = $fileSummary->getPath() ;
 		//获取前驱基本块集合并将当前基本量添加至列表
 		$this->getPrevBlocks($block) ;
 		$block_list = $this->pathArr ;
 		array_push($block_list, $block) ;
 		//首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
-		$ret = $this->currBlockTaintHandler($block, $node, $argName) ;
-		if($ret === true) return ;
-
+		$this->currBlockTaintHandler($block, $node, $argName) ;
+		
 		//多个基本块的处理
 		$this->pathArr = array() ;
-		$this->multiBlockHandler($block, $argName, $node) ;
+		$argArr = array() ;
+		$this->multiBlockHandler($block, $argName, $node, $argArr) ;
+
+		//文件间分析
+		//1.首先要根据$fileSummary获取到summary map
+		$fileSummaryMap = array() ;
+		
+		//2.多文件间分析
+		//分析为false的变量
+		foreach ($argArr as $key => $value){
+			if($value === false){
+				$this->multiFileHandler($block, $key, $node, $fileSummaryMap) ;
+			}
+		}
+		
 		
 		return array() ;
 	}
+	
+	
 	
 	
 	/**
@@ -468,6 +511,7 @@ class TaintAnalyser {
 		print_r($var) ;
 		echo "漏洞节点：<br/>" ;
 		print_r($node) ;
+		return  ;
 	}
 	
 	

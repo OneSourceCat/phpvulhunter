@@ -17,8 +17,7 @@ class FileUtils
      * @param php项目文件夹路径 $dirpath            
      * @return array of phpfiles 
      */
-    public static function getPHPfile($dirpath)
-    {
+    public static function getPHPfile($dirpath){
         $ret = array();
         if (substr($dirpath, - 4) == ".php")
             array_push($ret, $dirpath);
@@ -47,8 +46,7 @@ class FileUtils
      * @param  php项目文件夹路径$dirpath
      * @return multitype:
      */
-    public static function mainFileFinder($dirpath)
-    {
+    public static function mainFileFinder($dirpath){
         $files = FileUtils::getPHPfile($dirpath);
         //print_r($files);
         $should2parser = array();
@@ -77,6 +75,20 @@ class FileUtils
         }
        return $should2parser;
     }
+    
+    /**
+     * require信息中，将相对路径转为绝对路径
+     * 如何处理同名文件
+     * @param string $rpath
+     * @return string
+     */
+    public static function getAbsPath($rpath){
+    	
+    	return '' ; 
+    }
+    
+    
+    
 }
 
 /**
@@ -108,40 +120,31 @@ class VisitorForLine extends PhpParser\NodeVisitorAbstract
                 break;
         }
     }
-	/**
-     * @return the $nodes
-     */
+
+    
+    
+    
+    //-------------------gettetr && setter----------------------------
     public function getNodes()
     {
         return $this->nodes;
     }
 
-	/**
-     * @return the $count
-     */
     public function getCount()
     {
         return $this->count;
     }
 
-	/**
-     * @param multitype: $nodes
-     */
     public function setNodes($nodes)
     {
         $this->nodes = $nodes;
     }
 
-	/**
-     * @param number $count
-     */
     public function setCount($count)
     {
         $this->count = $count;
     }
 }
-/* echo "<pre>";
-$dirpath = "F:\wamp\www\discuz7.2\upload";
-$should2parser = FileUtils::mainFileFinder($dirpath);
-print_r($should2parser); */
+
+
 ?>
