@@ -245,6 +245,9 @@ class CFGGenerator{
 				
 				
 				if($type == 'right'){
+				    global $fileSummary;
+				    //检查是否为sink函数
+				    $this->functionHandler($part, $block, $fileSummary);
 					//处理净化信息和编码信息
 					SanitizationHandler::setSanitiInfo($part,$dataFlow, $block) ;
 					EncodingHandler::setEncodeInfo($part, $dataFlow, $block) ;
@@ -413,7 +416,7 @@ class CFGGenerator{
 	 * @param BasicBlock $block  当前基本块
 	 * @return array(position) 返回危险参数的位置
 	 */
-	private function functionHandler($node,$block,$parentBlock){
+	private function sinkFunctionHandler($node,$block,$parentBlock){
 		//对函数体的代码进行遍历并获取敏感参数的位置
 		$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 		$traverser = new PhpParser\NodeTraverser;
@@ -448,6 +451,70 @@ class CFGGenerator{
 	}
 	
 	
+	/**
+	 * 检测是否为sink函数
+	 * @param node $node
+	 * @param BasicBlock $block
+	 * @param fileSummary $fileSummary
+	 */
+	private function functionHandler($node,$block, $fileSummary){
+	    //获取调用的函数名判断是否是sink调用
+	    $funcName = NodeUtils::getNodeFunctionName($node);
+	    //判断是否为sink函数,返回格式为array(true,funcname) or array(false)
+	    $ret = NodeUtils::isSinkFunction($funcName);
+	    if($ret[0]){
+	        //如果发现了sink调用，启动污点分析
+	        $analyser = new TaintAnalyser() ;
+	    
+	        //获取危险参数的位置
+	        $argPosition = NodeUtils::getVulArgs($node) ;
+	        if(count($argPosition) == 0){
+	            return ;
+	        }
+	    
+	        //获取到危险参数位置的变量
+	        $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
+	    
+	        //遍历危险参数名，调用污点分析函数
+	        if(count($argArr) > 0){
+	            foreach ($argArr as $item){
+	                if(is_array($item)){
+	                    foreach ($item as $v){
+	                        $analyser->analysis($block, $node, $v, $fileSummary) ;
+	                    }
+	                }else{
+	                    $analyser->analysis($block, $node, $item, $fileSummary) ;
+	                }
+	    
+	            }
+	            	
+	        }
+	    
+	    }else{
+	        //如果不是sink调用，启动过程间分析
+	        $context = Context::getInstance() ;
+	        $funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
+	        if(!$funcBody) return ;
+	    
+	        $nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
+	        //ret危险参数的位置比如：array(0)
+	        $ret = $this->sinkFunctionHandler($funcBody, $nextblock, $block);
+	        if(!$ret){
+	            return ;
+	        }
+	    
+	        //找到了array('del',array(0)) ;
+	        $userDefinedSink = UserDefinedSinkContext::getInstance() ;
+	        	
+	        //$type应该从visitor中获取，使用$ret返回
+	        $type = $ret['type'] ;
+	        unset($ret['type']) ;
+	    
+	        //加入用户sink上下文
+	        $item = array($funcName,$ret) ;
+	        $userDefinedSink->addByTagName($item, $type) ;
+	    }
+	}
 	/**
 	 * 生成基本块摘要，为数据流分析做准备
 	 * 1、处理赋值语句
@@ -519,64 +586,7 @@ class CFGGenerator{
 				//过程间分析以及污点分析
 				case 'Expr_MethodCall':
 				case 'Expr_FuncCall':
-					echo "<pre>";
-					//获取调用的函数名判断是否是sink调用
-					$funcName = NodeUtils::getNodeFunctionName($node);
-					//判断是否为sink函数,返回格式为array(true,funcname) or array(false)
-					$ret = NodeUtils::isSinkFunction($funcName);
-					if($ret[0]){
-						//如果发现了sink调用，启动污点分析
-						$analyser = new TaintAnalyser() ;
-						
-						//获取危险参数的位置
-						$argPosition = NodeUtils::getVulArgs($node) ;
-						if(count($argPosition) == 0){
-							break ;
-						}
-						
-						//获取到危险参数位置的变量
-						$argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);		
-
-						//遍历危险参数名，调用污点分析函数
-						if(count($argArr) > 0){
-							foreach ($argArr as $item){
-								if(is_array($item)){
-									foreach ($item as $v){
-										$analyser->analysis($block, $node, $v, $fileSummary) ;
-									}
-								}else{
-									$analyser->analysis($block, $node, $item, $fileSummary) ;
-								}
-								
-							}
-							
-						}
-						
-					}else{
-						//如果不是sink调用，启动过程间分析
-						$context = Context::getInstance() ;
-						$funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
-						if(!$funcBody) break ;
-						
-						$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
-						//ret危险参数的位置比如：array(0)
-						$ret = $this->functionHandler($funcBody, $nextblock, $block);
-						if(!$ret){
-							break;
-						}
-						
-						//找到了array('del',array(0)) ;
-						$userDefinedSink = UserDefinedSinkContext::getInstance() ;
-							
-						//$type应该从visitor中获取，使用$ret返回
-						$type = $ret['type'] ;
-						unset($ret['type']) ;
-						
-						//加入用户sink上下文
-						$item = array($funcName,$ret) ;
-						$userDefinedSink->addByTagName($item, $type) ;
-					}
-					
+					$this->functionHandler($node, $block, $fileSummary);
 					break ;
 			}
 		}
@@ -592,7 +602,6 @@ class CFGGenerator{
 	 * @param $pNextBlock   下一个基本块
 	 */
 	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
-		echo "<pre>" ;
 		//此文件的fileSummary
 		global $fileSummary ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
@@ -774,7 +783,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 
 	public $posArr ;   //参数列表
 	public $block ;  //当前基本块
-	public $vars;    //返回的数据array()
+	public $vars = array();    //返回的数据array()
 	public $sinkType ;   //返回的sink类型
 	public $sinkContext ;   // 当前sink上下文
 	
@@ -785,7 +794,6 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 			//获取到方法的名称
 			$nodeName = NodeUtils::getNodeFunctionName($node);
 			$ret = NodeUtils::isSinkFunction($nodeName);
-			
 			//进行危险参数的辨别
 			if($ret[0] == true){
 				//处理系统内置的sink
@@ -798,8 +806,8 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 				$type = TypeUtils::getTypeByFuncName($nodeName) ;
 				
 				if($vars){
-					//返回处理结果
-					$this->vars = $vars;
+					//返回处理结果，将多个相关变量位置返回
+					$this->vars = array_merge($this->vars, $vars);
 				}
 				
 				if($type){
@@ -827,7 +835,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 			        $argName = NodeUtils::getNodeFuncParams($node);
 			        $argName = $argName[$pos] ;
 			        $this->vars = $this->sinkMultiBlockTraceback($argName, $this->block,0);			        
-			    }	
+			    }
 			}else {
                 ;
 			}
@@ -844,29 +852,40 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	public function sinkMultiBlockTraceback($argName,$block,$flowsNum=0){
 	    //print_r("enter sinkMultiBlockTraceback<br/>");
 	    $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
-	    $block_list = $mulitBlockHandlerUtils->getPathArr();
-	    if($block_list == null || count($block_list) == 0){
-	        $flows = $block->getBlockSummary()->getDataFlowMap();
-	        if(count($flows) == $flowsNum)
-	           return  array($argName);
-	        else 
-	            //查找到第一块，但是flows没有遍历完
-	            return $this->sinkTracebackBlock($argName, $block, $flowsNum);
-	    }
+	    $blockList = $mulitBlockHandlerUtils->getPathArr();
 	    
-	    if(!is_array($block_list[0])){
+	    $flows = $block->getBlockSummary()->getDataFlowMap();
+	    //当前块flows没有遍历完
+	    if(count($flows) != $flowsNum)
+	        return $this->sinkTracebackBlock($argName, $block, $flowsNum);
+	    
+	    if($blockList == null || count($blockList) == 0){
+            return  array($argName);
+	    }
+
+	    if(!is_array($blockList[0])){
 	        //如果不是平行结构
 	        $flows = $block->getBlockSummary()->getDataFlowMap();
 	        if(count($flows) == $flowsNum){
-	            $block = $block_list[0];
+	            $block = $blockList[0];
 	            $ret = $this->sinkTracebackBlock($argName, $block, 0);
 	            return $ret;
 	        }
-	        $ret = $this->sinkTracebackBlock($argName, $block, $flowsNum);
+	        $ret = $this->sinkTracebackBlock($argName, $block, 0);
 	        return $ret;
 	    }else{
 	        //平行结构
+	        //当遇到sink函数时回溯碰到平行结构，那么遍历平行结构，将所有危险的相关变量全部记录下来
+	        $retarr = array();
+	        foreach ($blockList[0] as $block){
+	            $ret = array();
+	            $ret = $this->sinkTracebackBlock($argName, $block, 0);
+	            $retarr = array_merge($retarr, $ret);
+	        }
+	        return $retarr;
+	        
 	    }
+
 	}
 	
 	/**
@@ -946,6 +965,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	}
 }
 
+echo "<pre>" ;
 //从用户那接受项目路径
 $rootPath = 'F:/wamp/www/phpvulhunter/test';
 $cfg = new CFGGenerator() ;
@@ -964,12 +984,12 @@ $pEntryBlock = new BasicBlock() ;
 $pEntryBlock->is_entry = true ;
 $endLine = $cfg->getEndLine($nodes);
 $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
-echo "<pre>" ;
+
 //print_r($pEntryBlock) ;
 $sanitiFuncContext = UserSanitizeFuncConetxt::getInstance();
 //print_r($sanitiFuncContext->getFuncSanitizeInfo('jinghua'));
 $sinkContext = UserDefinedSinkContext::getInstance();
-//print_r($sinkContext);
+// print_r($sinkContext);
 // $context = Context::getInstance() ;
 // $funcName = "goods:buy";
 // $funcBody = $context->getClassMethodBody($funcName,$path,$fileSummary->getIncludeMap());
