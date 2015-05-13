@@ -10,6 +10,7 @@ require_once CURR_PATH . '/utils/SymbolUtils.class.php';
 require_once CURR_PATH . '/utils/NodeUtils.class.php';
 require_once CURR_PATH . '/utils/TypeUtils.class.php';
 require_once CURR_PATH . '/utils/multiBlockHandlerUtils.class.php';
+require_once CURR_PATH . '/utils/SecureUtils.class.php';
 
 require_once CURR_PATH . '/symbols/Symbol.class.php' ;
 require_once CURR_PATH . '/symbols/ValueSymbol.class.php';

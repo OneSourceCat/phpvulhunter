@@ -228,7 +228,7 @@ $F_FILE_AFFECT = array(
 $NAME_EXEC = 'Command Execution';
 $F_EXEC = array(
 	'__NAME__'						=> 'EXEC',
-	'backticks'						=> array(array(1), $F_SECURING_SYSTEM), # transformed during parsing
+	'backticks'						=> array(array(1), $F_SECURING_SYSTEM), 
 	'exec'							=> array(array(1), $F_SECURING_SYSTEM),
 	'expect_popen'					=> array(array(1), $F_SECURING_SYSTEM),
 	'passthru'						=> array(array(1), $F_SECURING_SYSTEM),
@@ -237,7 +237,7 @@ $F_EXEC = array(
 	'proc_open'						=> array(array(1), $F_SECURING_SYSTEM),
 	'shell_exec'					=> array(array(1), $F_SECURING_SYSTEM),
 	'system'						=> array(array(1), $F_SECURING_SYSTEM),
-	'mail'							=> array(array(5), array()), // http://esec-pentest.sogeti.com/web/using-mail-remote-code-execution
+	'mail'							=> array(array(5), array()), 
 	'mb_send_mail'					=> array(array(5), array()),
 	'w32api_invoke_function'		=> array(array(1), array()),
 	'w32api_register_function'		=> array(array(2), array()),
@@ -247,7 +247,6 @@ $F_EXEC = array(
 $NAME_DATABASE = 'SQL Injection';
 $F_DATABASE = array(
 	'__NAME__'						=> 'SQLI',
-// Abstraction Layers
 	'dba_open'						=> array(array(1), array()),
 	'dba_popen'						=> array(array(1), array()), 
 	'dba_insert'					=> array(array(1,2), array()),
@@ -257,7 +256,6 @@ $F_DATABASE = array(
 	'odbc_do'						=> array(array(2), $F_SECURING_SQL),
 	'odbc_exec'						=> array(array(2), $F_SECURING_SQL),
 	'odbc_execute'					=> array(array(2), $F_SECURING_SQL),
-// Vendor Specific	
 	'db2_exec' 						=> array(array(2), $F_SECURING_SQL),
 	'db2_execute'					=> array(array(2), $F_SECURING_SQL),
 	'fbsql_db_query'				=> array(array(2), $F_SECURING_SQL),
@@ -360,7 +358,5 @@ $F_SINK_ARRAY = array(
 		$F_CODE,
 		$F_HTTP_HEADER
 );
-
-//var_dump($F_SINK_ALL) ;
 
 ?>	

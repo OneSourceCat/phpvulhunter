@@ -182,7 +182,7 @@ class TaintAnalyser {
 				
 				if ($flow && (count($variable) > 0)){
 					foreach($variable as $var){
-						if(is_object($var)){
+						if(is_object($var)){ 
 							$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
 							if($res == true){
 								$name = NodeUtils::getNodeStringName($var) ;
@@ -205,7 +205,7 @@ class TaintAnalyser {
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
 						//报告漏洞
-						$this->report($node, $flow->getLocation()) ;
+						$this->report($node, $flow->getLocation(), $type) ;
 						return true ;
 					}else{
 						//首先进行文件夹的分析
@@ -303,7 +303,7 @@ class TaintAnalyser {
 							//如果var右边有source项
 							if(in_array($varName, $this->sourcesArr)){
 								//报告漏洞
-								$this->report($node, $flow->getLocation()) ;
+								$this->report($node, $flow->getLocation(), $type) ;
 							}else{
 								//首先进行文件夹的分析
 								//首先根据fileSummary获取到fileSummaryMap
@@ -357,8 +357,8 @@ class TaintAnalyser {
 							if ($flow && (count($variable) > 0)){
 								foreach($variable as $var){
 									if(is_object($var)){
-										$ret = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-										if($ret == true){
+										$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+										if($res == true){
 											return "safe" ;
 										}
 									}
@@ -376,7 +376,7 @@ class TaintAnalyser {
 								//如果var右边有source项,直接报告漏洞
 								if(in_array($varName, $this->sourcesArr)){
 									//报告漏洞
-									$this->report($node, $flow->getLocation()) ;
+									$this->report($node, $flow->getLocation(),$type) ;
 									return true ;
 								}else{
 									//首先进行文件夹的分析
@@ -407,6 +407,7 @@ class TaintAnalyser {
 	 * @param array $fileSummaryMap 要分析的require文件的summary的list
 	 */
 	public function multiFileHandler($block, $argName, $node, $fileSummaryMap){
+		
 		foreach ($fileSummaryMap as $fsummary){
 			if($fsummary instanceof FileSummary){
 				$flows = $fsummary->getFlowsMap() ;
@@ -442,7 +443,7 @@ class TaintAnalyser {
 							//如果var右边有source项
 							if(in_array($varName, $this->sourcesArr)){
 								//报告漏洞
-								$this->report($node, $flow->getLocation()) ;
+								$this->report($node, $flow->getLocation(),$type) ;
 							}	
 						}
 					
@@ -525,9 +526,9 @@ class TaintAnalyser {
 	 * @param Node $node 出现漏洞的node
 	 * @param Node $var  出现漏洞的变量node
 	 */
-	public function report($node,$var){
+	public function report($node, $var, $type){
 		echo "<pre>" ;
-		echo "有漏洞！！！！<br/>" ;
+		echo "有漏洞=====>". $type ."<br/>" ;
 		echo "漏洞变量：<br/>" ;
 		print_r($var) ;
 		echo "漏洞节点：<br/>" ;

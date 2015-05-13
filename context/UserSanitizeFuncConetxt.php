@@ -1,10 +1,9 @@
 <?php
 
-require_once '/ClassFinder.php';
+require_once 'ClassFinder.php';
 require_once CURR_PATH . '/vendor/autoload.php' ;
 require_once CURR_PATH . '/utils/NodeUtils.class.php';
 
-use PhpParser\Node;
 
 /**
  * @author xyw55
@@ -14,8 +13,11 @@ use PhpParser\Node;
  *   要做成单例模式
  */
 class UserSanitizeFuncConetxt{
-    public $sanitizeFunctions; //存储全局用户定义净化函数
-    private static $instance ;   //单例
+	//存储全局用户定义净化函数
+    public $sanitizeFunctions; 
+    
+    //单例
+    private static $instance ;   
     
     private function __construct(){
         $this->sanitizeFunctions = array();
@@ -25,6 +27,7 @@ class UserSanitizeFuncConetxt{
     public function addFunction($oneFunction){
         array_push($this->sanitizeFunctions, $oneFunction);
     }
+    
     //得到某函数的净化信息，未净化，返回null
     public function getFuncSanitizeInfo($funcName){
         foreach ($this->sanitizeFunctions as $oneFunction){
@@ -34,6 +37,7 @@ class UserSanitizeFuncConetxt{
                 return null;
         }
     }
+    
     //获得实例
     public static function getInstance(){
         if(!(self::$instance instanceof self)){

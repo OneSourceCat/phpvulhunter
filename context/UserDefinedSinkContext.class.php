@@ -1,9 +1,11 @@
 <?php
 
+require_once CURR_PATH .  '/conf/securing.php';
+
 /**
  * 存放用户自定义sink的上下文结构
  * 规定一个方法放入的格式：
- * [方法名称，敏感参数位置]
+ * [方法名称，敏感参数位置,安全函数]
  * 
  * @author Exploit
  *
@@ -36,69 +38,105 @@ class UserDefinedSinkContext {
 		if(!in_array($type,array('XSS','SQLI','HTTP','CODE','EXEC','LDAP','INCLUDE','FILE','XPATH','FILEAFFECT'))){
 			return ;
 		}
-		
+		$securings = SecureUtils::getSecureListByType($type) ;
 		switch ($type) {
 			case 'XSS':
 			    //这个函数已经存在，则增加函数的危险位置
 				if(array_key_exists($item[0], $this->F_XSS)) 
-				    $this->F_XSS[$item[0]] = array_merge($this->F_XSS[$item[0]], $item[1]);
+				    $this->F_XSS[$item[0]] = array(array_merge($this->F_XSS[$item[0]], $item[1]));
 				else
-				    $this->F_XSS[$item[0]] = $item[1] ;
+				    $this->F_XSS[$item[0]] = array($item[1]) ;
+				
+				array_push($this->F_XSS[$item[0]], $securings) ;
 				break;
 			case 'SQLI':
 				if(array_key_exists($item[0], $this->F_DATABASE)) 
-				    $this->F_DATABASE[$item[0]] = array_merge($this->F_DATABASE[$item[0]], $item[1]);
+				    $this->F_DATABASE[$item[0]] = array(array_merge($this->F_DATABASE[$item[0]], $item[1]));
 				else 
-				    $this->F_DATABASE[$item[0]] = $item[1] ;
+				    $this->F_DATABASE[$item[0]] = array($item[1]) ;
+				
+				array_push($this->F_DATABASE[$item[0]], $securings) ;
 				break;
 			case 'HTTP':
 				if(array_key_exists($item[0], $this->F_HTTP_HEADER)) 
-				    $this->F_HTTP_HEADER[$item[0]] = array_merge($this->F_HTTP_HEADER[$item[0]], $item[1]);
+				    $this->F_HTTP_HEADER[$item[0]] = array(array_merge($this->F_HTTP_HEADER[$item[0]], $item[1]));
 				else
-				    $this->F_HTTP_HEADER[$item[0]] = $item[1] ;
+				    $this->F_HTTP_HEADER[$item[0]] = array($item[1]) ;
+				
+				array_push($this->F_HTTP_HEADER[$item[0]], $securings) ;
 				break ;
 			case 'CODE':
 				if(array_key_exists($item[0], $this->F_CODE))
-				    $this->F_CODE[$item[0]] = array_merge($this->F_CODE[$item[0]], $item[1]);
+				    $this->F_CODE[$item[0]] = array(array_merge($this->F_CODE[$item[0]], $item[1]));
 				else
-				    $this->F_CODE[$item[0]] = $item[1] ;
+				    $this->F_CODE[$item[0]] = array($item[1]) ;
+				
+				array_push($this->F_CODE[$item[0]], $securings) ;
 				break;
 			case 'EXEC':
 				if(array_key_exists($item[0], $this->F_EXEC)) 
-				    $this->F_EXEC[$item[0]] = array_merge($this->F_EXEC[$item[0]], $item[1]);
+				    $this->F_EXEC[$item[0]] = array(array_merge($this->F_EXEC[$item[0]], $item[1]));
 				else
-				    $this->F_EXEC[$item[0]] = $item[1] ;
+				    $this->F_EXEC[$item[0]] = array($item[1]) ;
+				
+				array_push($this->F_EXEC[$item[0]], $securings) ;
 				break;
 			case 'LDAP':
 				if(array_key_exists($item[0], $this->F_LDAP)) 
-				    $this->F_LDAP[$item[0]] = array_merge($this->F_LDAP[$item[0]], $item[1]);
+				    $this->F_LDAP[$item[0]] = array(array_merge($this->F_LDAP[$item[0]], $item[1]));
 				else
-				    $this->F_LDAP[$item[0]] = $item[1] ;
+				    $this->F_LDAP[$item[0]] = array($item[1]) ;
+				
+				array_push($this->F_LDAP[$item[0]], $securings) ;
 				break;
 			case 'INCLUDE':
 				if(array_key_exists($item[0], $this->F_FILE_INCLUDE)) 
-				    $this->F_FILE_INCLUDE[$item[0]] = array_merge($this->F_FILE_INCLUDE[$item[0]], $item[1]);
+				    $this->F_FILE_INCLUDE[$item[0]] = array(array_merge($this->F_FILE_INCLUDE[$item[0]], $item[1]));
 				else
-				    $this->F_FILE_INCLUDE[$item[0]] = $item[1] ;
+				    $this->F_FILE_INCLUDE[$item[0]] = array($item[1]) ;
+				
+				array_push($this->F_FILE_INCLUDE[$item[0]], $securings) ;
 				break;
 			case 'FILE':
 				if(array_key_exists($item[0], $this->F_FILE_READ))
-				    $this->F_FILE_READ[$item[0]] = array_merge($this->F_FILE_READ[$item[0]], $item[1]);
+				    $this->F_FILE_READ[$item[0]] = array(array_merge($this->F_FILE_READ[$item[0]], $item[1]));
 			    else
-				    $this->F_FILE_READ[$item[0]] = $item[1] ;
+				    $this->F_FILE_READ[$item[0]] = array($item[1]) ;
+			    
+			    array_push($this->F_FILE_READ[$item[0]], $securings) ;
 				break;
 			case 'XPATH':
 				if(array_key_exists($item[0], $this->F_XPATH)) 
-				    $this->F_XPATH[$item[0]] = array_merge($this->F_XPATH[$item[0]], $item[1]);
+				    $this->F_XPATH[$item[0]] = array(array_merge($this->F_XPATH[$item[0]], $item[1]));
 			    else
-				    $this->F_XPATH[$item[0]] = $item[1] ;
+				    $this->F_XPATH[$item[0]] = array($item[1]) ;
+			    
+			    array_push($this->F_XPATH[$item[0]], $securings) ;
 				break;
 			case 'FILEAFFECT':
 				if(array_key_exists($item[0], $this->F_FILE_AFFECT)) 
-				    $this->F_FILE_AFFECT[$item[0]] = array_merge($this->F_FILE_AFFECT[$item[0]], $item[1]);
+				    $this->F_FILE_AFFECT[$item[0]] = array(array_merge($this->F_FILE_AFFECT[$item[0]], $item[1]));
 			    else
-				    $this->F_FILE_AFFECT[$item[0]] = $item[1] ;
+				    $this->F_FILE_AFFECT[$item[0]] = array($item[1]) ;
+			    
+			    array_push($this->F_FILE_AFFECT[$item[0]], $securings) ;
 				break;
+			
+		}
+		
+		
+	}
+	
+	/**
+	 * 根据漏洞的类型获取净化列表
+	 * @param string $type
+	 */
+	public function getSinksSanitiByType($type){
+		$sink_list = $this->getAllSinkArray() ;
+		foreach ($sink_list as $sink){
+			if($sink['__NAME__'] == $type){
+				return $sink[2] ;
+			}
 		}
 	}
 	

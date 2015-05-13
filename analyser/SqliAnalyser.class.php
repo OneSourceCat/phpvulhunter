@@ -15,19 +15,22 @@ class SqliAnalyser {
 	 * 		(3)如果净化数组为null,返回false
 	 * @param symbol $var  判断的变量
 	 * @param array $saniArr  判断的净化数组
-	 * @return bool
+	 * @return bool  true说明净化正确   false说明没有净化
 	 */
 	private function check_sanitization($var,$saniArr){
 		//如果数组为空，说明没有进行任何净化
 		if(count($saniArr) == 0){
 			return false ;
-		}
-		//数值型注入，转义无效
-		if($var->getType() == "int" && in_array("addslashes", $saniArr)){
+		}else if (SecureUtils::checkSanitiByArr("SQLI", $saniArr)) {
+			//如果判别为真,则说明有效净化过
+			return true;
+		}else if($var->getType() == "int" && in_array("addslashes", $saniArr)){
+			//数值型注入，转义无效
+			return false ;
+		}else{
 			return false ;
 		}
-		
-		return true ;
+
 	}
 	
 	
