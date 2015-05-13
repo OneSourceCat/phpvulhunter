@@ -98,7 +98,6 @@ class CFGGenerator{
 				array_push($branches, $if_branch) ;
 				$else_branch = new Branch('else', $node->else) ;
 				array_push($branches,$else_branch) ;
-				print_r($branches) ;
 				break ;
 			
 			case 'Expr_BinaryOp_LogicalOr':
@@ -266,8 +265,6 @@ class CFGGenerator{
 				}
 				
 			}
-			
-			
 			//处理三元表达式
 			if($part && $part->getType() == "Expr_Ternary"){
 				$ter_symbol = new MutipleSymbol() ;
@@ -278,7 +275,6 @@ class CFGGenerator{
 			}
 			
 		}
-		
 		
 		//处理完一条赋值语句，加入DataFlowMap
 		if($type == "right"){
@@ -1044,10 +1040,9 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	}
 }
 
-
 echo "<pre>" ;
 //从用户那接受项目路径
-$rootPath = 'F:/wamp/www/phpvulhunter/test';
+$project_path = 'F:/wamp/www/phpvulhunter/test';
 $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
@@ -1060,8 +1055,6 @@ $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 $nodes = $visitor->getNodes() ;
 
-//print_r($stmts) ;
-
 $pEntryBlock = new BasicBlock() ;
 $pEntryBlock->is_entry = true ;
 $endLine = $cfg->getEndLine($nodes);
@@ -1069,34 +1062,11 @@ $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 
 //print_r($pEntryBlock) ;
 $sanitiFuncContext = UserSanitizeFuncConetxt::getInstance();
-//print_r($sanitiFuncContext->getFuncSanitizeInfo('jinghua'));
+// print_r($sanitiFuncContext);
 $sinkContext = UserDefinedSinkContext::getInstance();
-// print_r($sinkContext);
+//print_r($sinkContext);
 // $context = Context::getInstance() ;
 // $funcName = "goods:buy";
 // $funcBody = $context->getClassMethodBody($funcName,$path,$fileSummary->getIncludeMap());
 // print_r($funcBody);
 ?>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

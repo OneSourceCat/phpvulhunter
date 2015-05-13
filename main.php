@@ -37,8 +37,13 @@ $scan_type = $_POST['type'] ;
 
 
 //2、初始化模块
+// $project_path = 'F:/wamp/www/phpvulhunter/test';
 $initModule = new InitModule() ;
-$initModule->init() ;
+$initModule->init($project_path) ;
+// $path = 'F:/wamp/www/phpvulhunter/test/simple_demo.php';
+// $absPath = $path;
+// $ret = FileSummaryGenerator::getFileSummary($absPath);
+// FileSummaryGenerator::getIncludeFilesDataFlows($ret);
 
 //3、循环每个文件  进行分析工作
 if(is_file($project_path)){

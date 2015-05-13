@@ -2,7 +2,9 @@
 define('CURR_PATH',str_replace("\\", "/", dirname(__FILE__))) ;
 
 require_once CURR_PATH . '/vendor/autoload.php' ;
+
 require_once CURR_PATH . '/BasicBlock.php';
+require_once CURR_PATH . '/FileSummaryGenerator.php';
 
 require_once CURR_PATH . '/utils/AnalyseUtils.class.php';
 require_once CURR_PATH . '/utils/FileUtils.class.php';
@@ -27,6 +29,8 @@ require_once CURR_PATH . '/context/ClassFinder.php';
 require_once CURR_PATH . '/context/UserDefinedSinkContext.class.php';
 require_once CURR_PATH . '/context/UserSanitizeFuncConetxt.php';
 require_once CURR_PATH . '/context/InitModule.class.php';
+require_once CURR_PATH . '/context/FileSummaryContext.class.php';
+require_once CURR_PATH . '/context/ResultContext.class.php';
 
 require_once CURR_PATH . '/conf/sinks.php' ;
 require_once CURR_PATH . '/conf/sources.php' ;
@@ -36,8 +40,8 @@ require_once CURR_PATH . '/analyser/TaintAnalyser.class.php';
 
 require_once CURR_PATH . '/libs/Smarty.class.php';
 
+require_once CURR_PATH . '/CFGGenerator.php';
 header("Content-type:text/html;charset=utf-8") ;
-
 ini_set('xdebug.max_nesting_level', 2000);
 
 
