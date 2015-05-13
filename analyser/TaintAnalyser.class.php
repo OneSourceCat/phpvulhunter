@@ -225,6 +225,9 @@ class TaintAnalyser {
 	 * 						转为多文件间的分析
 	 */
 	public function multiBlockHandler($block, $argName, $node, &$argArr){
+		
+		echo $argName."<br/>" ;
+		
 		if($this->pathArr){
 			$this->pathArr = array() ;
 		}
@@ -252,9 +255,7 @@ class TaintAnalyser {
 				//找到新的argName
 				foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
 					if($flow->getName() == $argName){
-						
 						$argArr[$argName] == false && $argArr[$argName] = true ;
-						
 						$vars = $this->getVarsByFlow($flow) ;
 						foreach ($vars as $var){
 							$varName = $this->getVarName($var) ;
@@ -413,7 +414,49 @@ class TaintAnalyser {
 	 * @param array $fileSummaryMap 要分析的require文件的summary的list
 	 */
 	public function multiFileHandler($block, $argName, $node, $fileSummaryMap){
-		
+		foreach ($fileSummaryMap as $fsummary){
+			if($fsummary instanceof FileSummary){
+				$flows = $fsummary->getFlowsMap() ;
+				foreach ($flows as $flow){
+					if($flow->getName() == $argName){
+						//处理净化信息,如果被编码或者净化则返回safe
+						//被isSanitization函数取代
+						$variable = $this->getVarsByFlow($flow) ;
+						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+						$encodingArr = $flow->getLocation()->getEncoding() ;
+						$saniArr =  $flow->getLocation()->getSanitization() ;
+						
+						if ($flow && (count($variable) > 0)){
+							foreach($variable as $var){
+								if(is_object($var)){
+									$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+									if($res == true){
+										$name = NodeUtils::getNodeStringName($var) ;
+										return "safe" ;
+									}
+								}
+					
+							}
+								
+						}
+					
+						//获取flow中的右边赋值变量
+						//得到flow->getValue()的变量node
+						//$sql = $a . $b ;  =>  array($a,$b)
+						$vars = $this->getVarsByFlow($flow) ;
+						foreach($vars as $var){
+							$varName = $this->getVarName($var) ;
+							//如果var右边有source项
+							if(in_array($varName, $this->sourcesArr)){
+								//报告漏洞
+								$this->report($node, $flow->getLocation()) ;
+							}	
+						}
+					
+					}
+				}
+			}
+		}
 	}
 	
 	
@@ -479,7 +522,10 @@ class TaintAnalyser {
 		$this->pathArr = array() ;
 		$argArr = array() ;
 		$this->multiBlockHandler($block, $argName, $node, $argArr) ;
-
+		
+		var_dump($argArr) ;
+		exit ;
+		
 		//文件间分析
 		//1.首先要根据$fileSummary获取到summary map
 		$fileSummaryMap = array() ;
@@ -491,9 +537,7 @@ class TaintAnalyser {
 				$this->multiFileHandler($block, $key, $node, $fileSummaryMap) ;
 			}
 		}
-		
-		
-		return array() ;
+
 	}
 	
 	

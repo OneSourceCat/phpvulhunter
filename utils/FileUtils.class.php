@@ -88,6 +88,37 @@ class FileUtils
     }
     
     
+    /**
+     * 递归获取文件夹下的所有PHP文件
+     * @param unknown $path
+     * @return multitype:
+     */
+    public static function getDir($path){
+    	static $ret = array() ;
+    	if(!is_dir($path)){
+    		array_push($ret, $path) ;
+    		return $ret ;
+    	}
+    	if(($handle = opendir($path)) == false){
+    		return $ret ;
+    	}
+    	while(($file = readdir($handle))!=false){
+    		if($file == "." || $file == ".."){
+    			continue ;
+    		}
+    		if(is_dir($path . "/" . $file)){
+    			$item = $path . "/" . $file ;
+    			$in_charset = mb_detect_encoding($item) ;
+    			$item = iconv($in_charset, "UTF-8", $item) ;
+    			array_push($ret, $item) ;
+    		}else{
+    			continue ;				
+    		}
+    	}
+    	closedir($handle) ;
+    	return $ret ;
+    }
+
     
 }
 

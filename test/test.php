@@ -1,6 +1,6 @@
 <?php
 
-$content = urldecode($where) ;
+$content = $where . $cookie ;
 $id = $content;
 if($id){
 	echo $id ;
@@ -10,7 +10,6 @@ if($id){
 	if(1){
 		echo "xxxx" ;
 	}
-	echo "shit";
 }
 
 $sql = "xxx". $id ;

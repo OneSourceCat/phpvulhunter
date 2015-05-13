@@ -1,6 +1,6 @@
 <?php
 
-require_once 'main.php';
+require_once 'global.php';
 
 //定义PHP语句类别
 $RETURN_STATEMENT = array('Stmt_Return') ;
@@ -8,19 +8,27 @@ $STOP_STATEMENT = array('Stmt_Throw','Stmt_Break','Stmt_Continue') ;
 $LOOP_STATEMENT = array('Stmt_For','Stmt_While','Stmt_Foreach','Stmt_Do') ;
 $JUMP_STATEMENT = array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','Expr_BinaryOp_LogicalOr') ;
 
-//全局的filesummary对象
-$fileSummary = new FileSummary() ;
-
 use PhpParser\Node ;
 class CFGGenerator{
 	
 	private $parser ;  //AST解析类
 	private $traverser ;  //AST遍历类
-	
+	//全局的filesummary对象
+	private $fileSummary ;
+
+	public function getFileSummary() {
+		return $this->fileSummary;
+	}
+
+	public function setFileSummary($fileSummary) {
+		$this->fileSummary = $fileSummary;
+	}
+
 	//构造器
 	public function __construct(){
 		$this->parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 		$this->traverser = new PhpParser\NodeTraverser ;
+		$this->fileSummary = new FileSummary() ;
 	}	
 	
 	/**
@@ -418,6 +426,7 @@ class CFGGenerator{
 		$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 		$traverser = new PhpParser\NodeTraverser;
 		$visitor = new FunctionVisitor() ;
+		$visitor->fileSummary = $this->fileSummary ;
 		$visitor->block = $block ;
 		$visitor->sinkContext = UserDefinedSinkContext::getInstance() ;
 		$traverser->addVisitor($visitor) ;
@@ -458,7 +467,6 @@ class CFGGenerator{
 	 * @param BasicBlock $block
 	 */
 	public function simulate($block){
-		global $fileSummary ;
 		//获取基本块中所有的节点
 		$nodes = $block->getContainedNodes() ;
 		//循环nodes集合，搜集信息加入到blocksummary中
@@ -542,10 +550,10 @@ class CFGGenerator{
 							foreach ($argArr as $item){
 								if(is_array($item)){
 									foreach ($item as $v){
-										$analyser->analysis($block, $node, $v, $fileSummary) ;
+										$analyser->analysis($block, $node, $v, $this->fileSummary) ;
 									}
 								}else{
-									$analyser->analysis($block, $node, $item, $fileSummary) ;
+									$analyser->analysis($block, $node, $item, $this->fileSummary) ;
 								}
 								
 							}
@@ -555,7 +563,7 @@ class CFGGenerator{
 					}else{
 						//如果不是sink调用，启动过程间分析
 						$context = Context::getInstance() ;
-						$funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
+						$funcBody = $context->getClassMethodBody($funcName,$this->fileSummary->getPath(),$this->fileSummary->getIncludeMap());
 						if(!$funcBody) break ;
 						
 						$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
@@ -594,7 +602,6 @@ class CFGGenerator{
 	public function CFGBuilder($nodes,$condition,$pEntryBlock,$pNextBlock){
 		echo "<pre>" ;
 		//此文件的fileSummary
-		global $fileSummary ;
 		global $JUMP_STATEMENT,$LOOP_STATEMENT,$STOP_STATEMENT,$RETURN_STATEMENT ;
 		$currBlock = new BasicBlock() ;
 		
@@ -609,7 +616,7 @@ class CFGGenerator{
 		foreach($nodes as $node){
 			//print_r($node) ;
 			//搜集节点中的require include require_once include_once的PHP文件名称
-			$fileSummary->addIncludeToMap(NodeUtils::getNodeIncludeInfo($node)) ;
+			$this->fileSummary->addIncludeToMap(NodeUtils::getNodeIncludeInfo($node)) ;
 			
 			if(!is_object($node)) continue ;
 			
@@ -777,9 +784,9 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	public $vars;    //返回的数据array()
 	public $sinkType ;   //返回的sink类型
 	public $sinkContext ;   // 当前sink上下文
+	public $fileSummary ;
 	
 	public function leaveNode(Node $node){
-	    global $fileSummary ;
 		//处理过程间代码，即调用的方法定义中的源码
 		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
 			//获取到方法的名称
@@ -817,7 +824,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 				
 				$context = Context::getInstance() ;
 				$funcName = NodeUtils::getNodeFunctionName($node);
-			    $funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
+			    $funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$this->fileSummary->getIncludeMap());
 			    if(!$funcBody) break ;
 			    $cfg = new CFGGenerator() ;
 			    //$this->block->function[$nodeName]
@@ -953,7 +960,7 @@ $visitor = new MyVisitor() ;
 $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 $traverser = new PhpParser\NodeTraverser ;
 $path = CURR_PATH . '/test/test.php';
-$fileSummary->setPath($path);
+$cfg->getFileSummary()->setPath($path);
 $code = file_get_contents($path);
 $stmts = $parser->parse($code) ;
 $traverser->addVisitor($visitor) ;

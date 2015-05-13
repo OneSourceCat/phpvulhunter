@@ -5,13 +5,14 @@ class FileSummary{
 	 * 用于存放本文件中的基本块摘要
 	 * @var Array
 	 */
-	private $summaryMap = array() ;
+	private $flowsMap = array() ;
 	
 	/**
 	 * 用于记录该文件摘要对应的文件路径
 	 * @var string
 	*/
 	private $path = '' ;
+
 	public function setPath($path) {
 	    $this->path = $path ;
 	}
@@ -57,7 +58,9 @@ class FileSummary{
 		return $this->includeMap ;
 	}
 	
-
+	public function getFlowsMap() {
+		return $this->flowsMap;
+	}
 	
 }
 
