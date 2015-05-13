@@ -39,44 +39,65 @@ class UserDefinedSinkContext {
 		
 		switch ($type) {
 			case 'XSS':
-				if(array_key_exists($item[0], $this->F_XSS)) break ;
-				$this->F_XSS[$item[0]] = $item[1] ;
+			    //这个函数已经存在，则增加函数的危险位置
+				if(array_key_exists($item[0], $this->F_XSS)) 
+				    $this->F_XSS[$item[0]] = array_merge($this->F_XSS[$item[0]], $item[1]);
+				else
+				    $this->F_XSS[$item[0]] = $item[1] ;
 				break;
 			case 'SQLI':
-				if(array_key_exists($item[0], $this->F_DATABASE)) break ;
-				$this->F_DATABASE[$item[0]] = $item[1] ;
+				if(array_key_exists($item[0], $this->F_DATABASE)) 
+				    $this->F_DATABASE[$item[0]] = array_merge($this->F_DATABASE[$item[0]], $item[1]);
+				else 
+				    $this->F_DATABASE[$item[0]] = $item[1] ;
 				break;
 			case 'HTTP':
-				if(array_key_exists($item[0], $this->F_HTTP_HEADER)) break ;
-				$this->F_HTTP_HEADER[$item[0]] = $item[1] ;
+				if(array_key_exists($item[0], $this->F_HTTP_HEADER)) 
+				    $this->F_HTTP_HEADER[$item[0]] = array_merge($this->F_HTTP_HEADER[$item[0]], $item[1]);
+				else
+				    $this->F_HTTP_HEADER[$item[0]] = $item[1] ;
 				break ;
 			case 'CODE':
-				if(array_key_exists($item[0], $this->F_CODE)) break ;
-				$this->F_CODE[$item[0]] = $item[1] ;
+				if(array_key_exists($item[0], $this->F_CODE))
+				    $this->F_CODE[$item[0]] = array_merge($this->F_CODE[$item[0]], $item[1]);
+				else
+				    $this->F_CODE[$item[0]] = $item[1] ;
 				break;
 			case 'EXEC':
-				if(array_key_exists($item[0], $this->F_EXEC)) break ;
-				$this->F_EXEC[$item[0]] = $item[1] ;
+				if(array_key_exists($item[0], $this->F_EXEC)) 
+				    $this->F_EXEC[$item[0]] = array_merge($this->F_EXEC[$item[0]], $item[1]);
+				else
+				    $this->F_EXEC[$item[0]] = $item[1] ;
 				break;
 			case 'LDAP':
-				if(array_key_exists($item[0], $this->F_LDAP)) break ;
-				$this->F_LDAP[$item[0]] = $item[1] ;
+				if(array_key_exists($item[0], $this->F_LDAP)) 
+				    $this->F_LDAP[$item[0]] = array_merge($this->F_LDAP[$item[0]], $item[1]);
+				else
+				    $this->F_LDAP[$item[0]] = $item[1] ;
 				break;
 			case 'INCLUDE':
-				if(array_key_exists($item[0], $this->F_FILE_INCLUDE)) break ;
-				$this->F_FILE_INCLUDE[$item[0]] = $item[1] ;
+				if(array_key_exists($item[0], $this->F_FILE_INCLUDE)) 
+				    $this->F_FILE_INCLUDE[$item[0]] = array_merge($this->F_FILE_INCLUDE[$item[0]], $item[1]);
+				else
+				    $this->F_FILE_INCLUDE[$item[0]] = $item[1] ;
 				break;
 			case 'FILE':
-				if(array_key_exists($item[0], $this->F_FILE_READ)) break ;
-				$this->F_FILE_READ[$item[0]] = $item[1] ;
+				if(array_key_exists($item[0], $this->F_FILE_READ))
+				    $this->F_FILE_READ[$item[0]] = array_merge($this->F_FILE_READ[$item[0]], $item[1]);
+			    else
+				    $this->F_FILE_READ[$item[0]] = $item[1] ;
 				break;
 			case 'XPATH':
-				if(array_key_exists($item[0], $this->F_XPATH)) break ;
-				$this->F_XPATH[$item[0]] = $item[1] ;
+				if(array_key_exists($item[0], $this->F_XPATH)) 
+				    $this->F_XPATH[$item[0]] = array_merge($this->F_XPATH[$item[0]], $item[1]);
+			    else
+				    $this->F_XPATH[$item[0]] = $item[1] ;
 				break;
 			case 'FILEAFFECT':
-				if(array_key_exists($item[0], $this->F_FILE_AFFECT)) break ;
-				$this->F_FILE_AFFECT[$item[0]] = $item[1] ;
+				if(array_key_exists($item[0], $this->F_FILE_AFFECT)) 
+				    $this->F_FILE_AFFECT[$item[0]] = array_merge($this->F_FILE_AFFECT[$item[0]], $item[1]);
+			    else
+				    $this->F_FILE_AFFECT[$item[0]] = $item[1] ;
 				break;
 		}
 	}

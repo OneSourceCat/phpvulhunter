@@ -90,7 +90,7 @@ class AnalyseUtils {
 	 * @param array $encodingArr
 	 * @return bool
 	 */
-	public function check_encoding($encodingArr){
+	public static function check_encoding($encodingArr){
 		if(count($encodingArr) == 0){
 			return -1 ;
 		}

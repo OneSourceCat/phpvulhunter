@@ -55,21 +55,22 @@ class SanitizationHandler {
 	public static function sanitiSameVarMultiBlockHandler($varName, $block, $dataFlows){
 	    //print_r("enter sanitiSameVarMultiBlock<br/>");
         $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
-        $block_list = $mulitBlockHandlerUtils->getPathArr();
-	    if($block_list == null || count($block_list) == 0){
-	        $flows = $block->getBlockSummary()->getDataFlowMap();
-	        if(count($dataFlows) == 0)
-	            return  array(false);
-	        else
-	            //查找到第一块，但是flows没有遍历完
-	            return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+        $blockList = $mulitBlockHandlerUtils->getPathArr();
+        
+        
+        //当前块flows没有遍历完
+        if(count($dataFlows) != 0)
+            return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+            
+	    if($blockList == null || count($blockList) == 0){
+            return  array(false);
 	    }
 	    
-	    if(!is_array($block_list[0])){
+	    if(!is_array($blockList[0])){
 	        //如果不是平行结构
 	        if(count($dataFlows) == 0){
 	            //当前块回溯完毕，回溯上一块
-	            $block = $block_list[0];
+	            $block = $blockList[0];
 	            $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	            $dataFlows = array_reverse($dataFlows);
 	            return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
@@ -77,9 +78,44 @@ class SanitizationHandler {
 	        return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
 	    }else{
 	        //平行结构
+	        //向上找相关变量的净化信息，只有平行块间的变量净化信息相同，才保存
+            $retarr = array();
+	        foreach ($blockList[0] as $key=>$block){
+	            if(count($dataFlows) == 0){
+	                //当前块回溯完毕，回溯上一块
+	                $dataFlows = $block->getBlockSummary()->getDataFlowMap();
+	                $dataFlows = array_reverse($dataFlows);
+	                $ret = self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+	                $dataFlows = array();
+	            }else
+                    $ret = self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+	            //得到各个平行结构中的相同函数
+	            if ($key == 0){
+	                if ($ret[0])
+	                    $retarr = $ret['funcs'];
+	                else
+	                    return array(false);
+	            }
+	            if ($ret[0]){
+	                $temp = array();
+	                foreach ($retarr as $function){
+	                    foreach ($ret['funcs'] as $otherfunction){
+	                        if ($function == $otherfunction){
+	                            array_push($temp, $function);
+	                        }
+	                    }
+	                }
+	                $retarr = $temp;
+	            }
+	            else 
+	                return array(false);
+	        }
+            return array(true, 'funcs'=>$retarr);
+	        
 	    }
 	    
 	}
+	
 	/**
 	 * 相同变量块内回溯
 	 * @param 净化变量 $var
@@ -375,21 +411,23 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
     public function sanitiMultiBlockHandler($arg, $block, $flowsNum=0){
         //print_r("enter sanitiMultiBlock<br/>");
         $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
-        $block_list = $mulitBlockHandlerUtils->getPathArr();
-        if($block_list == null || count($block_list) == 0){
-            $flows = $block->getBlockSummary()->getDataFlowMap();
-            if(count($flows) == $flowsNum)
+        $blockList = $mulitBlockHandlerUtils->getPathArr();
+        
+        
+        $flows = $block->getBlockSummary()->getDataFlowMap();
+        //当前块flows没有遍历完
+        if(count($flows) != $flowsNum)
+            return $this->sanitiTracebackBlock($arg, $block, $flowsNum);
+        
+        if($blockList == null || count($blockList) == 0){
                 return  ;
-            else
-                //查找到第一块，但是flows没有遍历完
-                return $this->sanitiTracebackBlock($arg, $block, $flowsNum);
         }
         
-        if(!is_array($block_list[0])){
+        if(!is_array($blockList[0])){
             //如果不是平行结构
             $flows = $block->getBlockSummary()->getDataFlowMap();
             if(count($flows) == $flowsNum){
-                $block = $block_list[0];
+                $block = $blockList[0];
                 $ret = $this->sanitiTracebackBlock($arg, $block, 0);
                 return $ret;
             }
@@ -397,10 +435,33 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
             return $ret;
         }else{
             //平行结构
+            //分别遍历每一个平行基本块及其以上，对得到的净化信息，合并共有的，返回
+            global $SECURES_TYPE_ALL;
+            $retarr = $SECURES_TYPE_ALL;
+            foreach ($blockList[0] as $block){
+                $flows = $block->getBlockSummary()->getDataFlowMap();
+                if(count($flows) == $flowsNum){
+                    $ret = $this->sanitiTracebackBlock($arg, $block, 0);
+                    if ($ret[0])
+                        $retarr = array_intersect($ret, $retarr);
+                    else 
+                        return array(false); 
+                }else{
+                    $ret = $this->sanitiTracebackBlock($arg, $block, $flowsNum);
+                    if ($ret[0]){
+                        $retarr = array_intersect($ret['type'], $retarr);
+                    }
+                    else
+                        return array(false);
+                }
+            }
+            return array(true,'type'=>$retarr);
+            
         }
         
-        
     }
+    
+    
     /**
      * return变量块内回溯
      * @param 变量对象 $arg
