@@ -4,6 +4,11 @@ require_once 'global.php';
 
 header("Content-type:text/html;charset=utf-8") ;
 
+/**
+ * 处理单个文件的静态检测
+ * 输入PHP文件
+ * @param string $path
+ */
 function load_file($path){
 	$cfg = new CFGGenerator() ;
 	$cfg->getFileSummary()->setPath($path);
@@ -21,16 +26,21 @@ function load_file($path){
 	$pEntryBlock = new BasicBlock() ;
 	$pEntryBlock->is_entry = true ;
 	$endLine = $cfg->getEndLine($nodes);
-	$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
+	
+	//开始分析
+	$cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 }
-
 
 //1、从web ui中获取并加载项目工程
 $project_path = $_POST['path'] ;
 $scan_type = $_POST['type'] ;
 
 
-//2、循环每个文件  进行分析工作
+//2、初始化模块
+$initModule = new InitModule() ;
+$initModule->init() ;
+
+//3、循环每个文件  进行分析工作
 if(is_file($project_path)){
 	load_file($project_path) ;
 }elseif (is_dir($project_path)){
@@ -41,10 +51,14 @@ if(is_file($project_path)){
 			load_file($path) ;
 		}
 	}
+}else{
+	//请求不合法
+	echo "<script>alert('工程不存在！');</script>" ;
+	exit() ;
 }
 
 
-//3、获取ResultContext  传给template
+//4、获取ResultContext  传给template
 $results = ResultContext::getInstance() ;
 
 

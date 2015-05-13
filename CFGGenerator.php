@@ -98,6 +98,7 @@ class CFGGenerator{
 				array_push($branches, $if_branch) ;
 				$else_branch = new Branch('else', $node->else) ;
 				array_push($branches,$else_branch) ;
+				print_r($branches) ;
 				break ;
 			
 			case 'Expr_BinaryOp_LogicalOr':

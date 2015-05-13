@@ -1,10 +1,18 @@
 <?php
 
-$content = $where . $cookie ;
-$id = $content;
+$content = $_GET['id'] ;
+$id = $content ;
+if($id){
+	echo $id ;
+}else if($id>0){
+	echo false;
+}else{
+	if(1){
+		echo "xxxx" ;
+	}
+	echo "shit";
+}
 
-$id = isset($id)? $_GET['id']:2; //
 $sql = "xxx". $id ;
 mysql_query($sql) ;
-
 ?>
