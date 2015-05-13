@@ -33,6 +33,15 @@ class FileSummary{
 		}
 	}
 	
+	/**
+	 * 将一个dataFlow添加至flowMap中
+	 * @param dataflow $dataFlow
+	 */
+	public function addDataFlow($dataFlow){
+	    if ($dataFlow){
+	        array_push($this->flowsMap, $dataFlow);
+	    }
+	}
 	
 	/**
 	 * 将一个include信息添加至map中

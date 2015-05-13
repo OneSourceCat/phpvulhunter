@@ -66,7 +66,6 @@ class FileUtils
             $nodes = $visitor->getNodes();
             $sumcount = count($nodes);
             $count = $visitor->getCount();
-            echo "sum:$sumcount------count:$count-------$file<br/>";
             //暂时确定当比值小于0.6，为main php files
             if($count/$sumcount<0.6)
                 array_push($should2parser, $file);
@@ -79,11 +78,43 @@ class FileUtils
     /**
      * require信息中，将相对路径转为绝对路径
      * 如何处理同名文件
+     * @param string $filePath 当前文件路径
      * @param string $rpath
      * @return string
      */
-    public static function getAbsPath($rpath){
-    	
+    public static function getAbsPath($filePath, $rpath){
+    	global $project_path;
+    	//补全路径
+    	$currentDir = dirname($filePath);
+    	$allFile = FileUtils::getPHPfile($project_path);
+    	$absPath = '';
+	    if(!strpbrk($rpath,'/')){
+	        //require_once "test.php"
+	        $absPath = $currentDir .'/'. $rpath;
+	    }elseif (substr($rpath,0,2) == './'){
+	        //require_once "./test.php"
+	        $absPath = $currentDir .'/'. substr($rpath, 2);
+	    }elseif (substr($rpath,0,3) == '../'){
+	        //require_once "../test.php" or ../../test.php
+	        $tempPath = $currentDir;
+	        while(substr($rpath,0,3) == '../'){
+	            $tempPath = substr($tempPath, 0,strrpos($tempPath, '/'));
+	            $rpath = substr($rpath, 3);
+	        }
+	        $absPath = $tempPath .'/'. $rpath;
+	    }
+	    //需要判断该文件是否存在，不存在则需要在工程中查找
+	    if (is_file($absPath)){
+	        return $absPath;
+	    }else{
+	        //require_once CURR_PATH . '/c.php';
+	        $pathLen = strlen($rpath);
+	        foreach ($allFile as $fileAbsPath){
+	            if(strstr($fileAbsPath,$rpath)){
+	                return $fileAbsPath;
+	            }
+	        }
+	    }
     	return '' ; 
     }
     

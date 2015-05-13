@@ -30,7 +30,7 @@ class FileSummaryContext{
 	 */
 	public function findSummaryByPath($path){
 		foreach ($this->fileSummaryMap as $item){
-			if($item->getPath === $path){
+			if($item->getPath() === $path){
 				return $item ;
 			}
 		}
@@ -43,7 +43,9 @@ class FileSummaryContext{
 		return $this->fileSummaryMap;
 	}
 	
-	
+	public function setFileSummaryMap($fileSummaryMap) {
+	    $this->fileSummaryMap = $fileSummaryMap;
+	}
 
 	//单例模式代码
 	private function __construct(){}

@@ -144,40 +144,17 @@ class Context {
      * @return 返回当前文件包含文件的函数集合
      */
     public function getRequireFileFuncs($path,$require_array){
+        
         $tempRequireFile = array();
         //将文件自身添加
         array_push($tempRequireFile, $path);
         //补全路径
         $currentDir = dirname($path);
-        global $rootPath;
-        $allfile = FileUtils::getPHPfile($rootPath);
+        global $project_path;
+        $allfile = FileUtils::getPHPfile($project_path);
         foreach ($require_array as $filepath){
-            if(!strpbrk($filepath,'/')){
-                //require_once "test.php"
-                $filepath = $currentDir .'/'. $filepath;
-                array_push($tempRequireFile, $filepath);
-            }elseif (substr($filepath,0,2) == './'){
-                //require_once "./test.php"
-                $filepath = $currentDir .'/'. substr($filepath, 2);
-                array_push($tempRequireFile, $filepath);
-            }elseif (substr($filepath,0,3) == '../'){
-                //require_once "../test.php" or ../../test.php
-                $tempPath = $currentDir;
-                while(substr($filepath,0,3) == '../'){
-                    $tempPath = substr($tempPath, 0,strrpos($tempPath, '/'));
-                    $filepath = substr($filepath, 3);
-                }
-                $filepath = $tempPath .'/'. $filepath;
-                array_push($tempRequireFile, $filepath);
-            }else{
-                //require_once CURR_PATH . '/c.php';
-                $pathLen = strlen($filepath);
-                foreach ($allfile as $fileAbsolutePath){
-                    if(strstr($fileAbsolutePath,$filepath)){
-                        array_push($tempRequireFile, $fileAbsolutePath);
-                    }
-                }
-            }
+            $absPath = FileUtils::getAbsPath($path, $filepath);
+            array_push($tempRequireFile, $absPath);
         }
         $records = array();
         //不能定义同名类和函数，不同类方法可以相同
@@ -486,20 +463,10 @@ class ClassFinder{
 
 }
 
-
 //具体使用方法
-//$path = "E:/School_of_software/information_security/PHPVulScanner_project/CMS/chengshiCMS/Cscmsv3.5.6/upload" ;
-//$path = "source.class.php" ;
-//$path = "./test" ;
-// $path = CURR_PATH . '/test/simple_demo.php';
-$path = CURR_PATH . '/test';
-$finder = new  ClassFinder($path) ;
-$finder->getContext() ;
-$context = Context::getInstance() ;
-echo "<pre>" ;
-// print_r($context->records) ;
-
-//$node = $context->getFunctionBody("ClassBase:c");
-// print_r($node);
+// $path = CURR_PATH . '/test';
+// $finder = new  ClassFinder($path) ;
+// $finder->getContext() ;
+// $context = Context::getInstance() ;
 
 ?>

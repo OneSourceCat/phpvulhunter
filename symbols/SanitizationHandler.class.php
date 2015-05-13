@@ -15,9 +15,9 @@ class SanitizationHandler {
 	 * @param Node $node
 	 * @param 数据流 $dataFlow
 	 */
-	public static function setSanitiInfo($node,$dataFlow,$block,$fileSummary){
+	public static function setSanitiInfo($node,$dataFlow,$block, $fileSummary ){
 	    $dataFlows = $block->getBlockSummary()->getDataFlowMap();
-	    $sanitiInfo = self::SantiniFuncHandler($node,$fileSummary);
+	    $sanitiInfo = self::SantiniFuncHandler($node, $fileSummary);
 	    //print_r($sanitiInfo);
 	    if($sanitiInfo){
 	        //向上追踪变量，相同变量的净化信息，全部添加
@@ -197,6 +197,7 @@ class SanitizationHandler {
 	        $traverser = new PhpParser\NodeTraverser ;
 	        $traverser->addVisitor($visitor) ;
 	        $visitor->funcName = $funcName;
+	        $visitor->fileSummary = $fileSummary;
 	        $traverser->traverse($funcBody->stmts) ;
 	        
 	        //var_dump($visitor->sanitiInfo);
@@ -238,7 +239,7 @@ class SanitizationHandler {
 	        $sanitiFuncContext = UserSanitizeFuncConetxt::getInstance();
 	        $ret = $sanitiFuncContext->getFuncSanitizeInfo($funcName);
 	        if($ret){
-	            return array(true,'type'=>$ret['type']);
+	            return array(true,'type'=>$ret->getSanitiType());
 	        }else
 	           return array(false);
 	    }
@@ -302,7 +303,7 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
     //函数净化信息
     public $sanitiInfo = null;
     public $funcName = null;
-    
+    public $fileSummary = null;
     public function beforeTraverse(array $nodes){
         global $SECURES_TYPE_ALL;
         $this->sanitiInfo = array(false,'type'=>$SECURES_TYPE_ALL);
@@ -384,7 +385,7 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
             }else{
                 //处理函数调用
                 if (($part->getType() == 'Expr_FuncCall') || ($part->getType() == 'Expr_MethodCall') ){
-                    $ret = SanitizationHandler::SantiniFuncHandler($part);
+                    $ret = SanitizationHandler::SantiniFuncHandler($part, $this->fileSummary);
                     if($ret){
                         $type = array_intersect($this->sanitiInfo['type'], $ret->getSanitiType());
                         $this->sanitiInfo = array(true,'type'=>$type);

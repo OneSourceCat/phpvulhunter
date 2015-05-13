@@ -31,7 +31,7 @@ class UserSanitizeFuncConetxt{
     //得到某函数的净化信息，未净化，返回null
     public function getFuncSanitizeInfo($funcName){
         foreach ($this->sanitizeFunctions as $oneFunction){
-            if ($funcName == $oneFunction->funcName)
+            if ($funcName == $oneFunction->getFuncName())
                 return $oneFunction;
             else 
                 return null;
@@ -71,7 +71,9 @@ class OneFunction{
     public function getSanitiType(){
         return $this->sanitiType;
     }
-    
+    public function getFuncName(){
+        return $this->funcName;
+    }
 }
 
 
