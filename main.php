@@ -25,28 +25,27 @@ function load_file($path){
 }
 
 
-
-$path = "D:/MySoftware/wamp-php-5.3/www/qibocms" ;
-$ret = FileUtils::getDir($path) ;
-print_r($ret) ;
-
-		
 //1、从web ui中获取并加载项目工程
-// $project_path = $_POST['path'] ;
-// $scan_type = $_POST['type'] ;
-
-// if(is_file($project_path)){
-// 	load_file($project_path) ;
-// }elseif (is_dir($project_path)){
-	
-// }
+$project_path = $_POST['path'] ;
+$scan_type = $_POST['type'] ;
 
 
 //2、循环每个文件  进行分析工作
+if(is_file($project_path)){
+	load_file($project_path) ;
+}elseif (is_dir($project_path)){
+	$dirs = FileUtils::getDir($project_path) ;
+	foreach ($dirs as $dir){
+		$path_list = FileUtils::getPHPfile($dir) ;
+		foreach ($path_list as $path){
+			load_file($path) ;
+		}
+	}
+}
 
 
 //3、获取ResultContext  传给template
-
+$results = ResultContext::getInstance() ;
 
 
 
