@@ -466,6 +466,7 @@ class TaintAnalyser {
 	 * @param array $encodingArr 危险参数的编码信息栈
 	 */
 	public function isSanitization($type,$var,$saniArr,$encodingArr){
+		$is_clean = null ; 
 		switch ($type){
 			case 'SQLI':
 				$sql_analyser = new SqliAnalyser() ;
@@ -476,20 +477,36 @@ class TaintAnalyser {
 				$is_clean = $xss_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 			case 'HTTP':
+				$http_analyser = new HeaderAnalyser() ;
+				$is_clean = $http_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 			case 'CODE':
+				$code_analyser = new CodeAnalyser() ;
+				$is_clean = $code_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 			case 'EXEC':
+				$exec_analyser = new ExecAnalyser() ;
+				$is_clean = $exec_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 			case 'LDAP':
+				$ldap_analyser = new LDPAAnalyser() ;
+				$is_clean = $ldap_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 			case 'INCLUDE':
+				$include_analyser = new IncludeAnalyser() ;
+				$is_clean = $include_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 			case 'FILE':
+				$file_analyser = new FileAnalyser() ;
+				$is_clean = $file_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 			case 'XPATH':
+				$xpath_analyser = new XPathAnalyser() ;
+				$is_clean = $xpath_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 			case 'FILEAFFECT':
+				$file_affect_analyser = new FileAffectAnalyser() ;
+				$is_clean = $file_affect_analyser->analyse($var, $saniArr, $encodingArr) ;
 				break ;
 		}
 		return $is_clean ;

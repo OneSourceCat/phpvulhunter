@@ -14,5 +14,5 @@ if($id){
 }
 
 $sql = "xxx". $id ;
-print_r($sql) ;
+exec($sql) ;
 ?>

@@ -1,5 +1,5 @@
 <?php
-class ExecAnalyser {
+class IncludeAnalyser {
 	/**
 	 * 判断变量的净化情况
 	 * 返回:
@@ -14,7 +14,7 @@ class ExecAnalyser {
 		//如果数组为空，说明没有进行任何净化
 		if(count($saniArr) == 0){
 			return false ;
-		}else if (SecureUtils::checkSanitiByArr("EXEC", $saniArr)) {
+		}else if (SecureUtils::checkSanitiByArr("INCLUDE", $saniArr)) {
 			//如果判别为真,则说明有效净化过
 			return true;
 		}else{

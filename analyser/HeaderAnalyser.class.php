@@ -8,24 +8,34 @@ class HeaderAnalyser {
 	 * 		(3)如果净化数组为null,返回false
 	 * @param symbol $var  判断的变量
 	 * @param array $saniArr  判断的净化数组
-	 * @return bool
+	 * @return bool true
 	 */
 	private function check_sanitization($var,$saniArr){
 		//如果数组为空，说明没有进行任何净化
 		if(count($saniArr) == 0){
 			return false ;
+		}else if (SecureUtils::checkSanitiByArr("HTTP", $saniArr)) {
+			//如果判别为真,则说明有效净化过
+			return true;
+		}else{
+			return false ;
 		}
-		return true ;
+	
 	}
 	
 	/**
 	 * 分析方法
-	 * @param Symbol $var
-	 * @param array $saniArr
-	 * @param array $encodingArr
+	 * @param string $func_name 方法名
+	 * @param Symbol $var 敏感变量节点
+	 * @param array $saniArr 净化信息栈
+	 * @param array $encodingArr 编码信息栈
 	 * @return boolean
 	 */
-	public function analyse($var,$saniArr,$encodingArr){
+	public function analyse($var, $saniArr, $encodingArr){
+		if(!empty($saniArr) && !empty($encodingArr)){
+			return false ;
+		}
+	
 		//处理编码
 		AnalyseUtils::initSaniti($saniArr) ;
 		AnalyseUtils::initEncodeList($encodingArr) ;
