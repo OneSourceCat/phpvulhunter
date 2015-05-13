@@ -15,9 +15,9 @@ class SanitizationHandler {
 	 * @param Node $node
 	 * @param 数据流 $dataFlow
 	 */
-	public static function setSanitiInfo($node,$dataFlow,$block){
+	public static function setSanitiInfo($node,$dataFlow,$block,$fileSummary){
 	    $dataFlows = $block->getBlockSummary()->getDataFlowMap();
-	    $sanitiInfo = self::SantiniFuncHandler($node);
+	    $sanitiInfo = self::SantiniFuncHandler($node,$fileSummary);
 	    //print_r($sanitiInfo);
 	    if($sanitiInfo){
 	        //向上追踪变量，相同变量的净化信息，全部添加
@@ -174,7 +174,7 @@ class SanitizationHandler {
 	 * @param funcNode $node
 	 * @return null | array(funcName,type)
 	 */
-	public static function SantiniFuncHandler($node){
+	public static function SantiniFuncHandler($node, $fileSummary){
 	    global $F_SECURES_ALL ;
 	    $funcName = NodeUtils::getNodeFunctionName($node) ;
 	    //查看系统净化函数及已查找函数的信息
@@ -186,7 +186,6 @@ class SanitizationHandler {
 	    }else{
 	        //未查找过函数
 	        $context = Context::getInstance() ;
-	        global $fileSummary;
 	        $require_array = $fileSummary->getIncludeMap();
 	        $path = $fileSummary->getPath();
 	        

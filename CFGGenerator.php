@@ -52,15 +52,15 @@ class CFGGenerator{
 				$elseifs = $node->elseifs ;
 				if($elseifs){
 					foreach($elseifs as $if){
-						$if_branch = new Branch($if->cond, $if->stmts) ;
-						array_push($branches,$if_branch) ;
+						$else_if = new Branch($if->cond, $if->stmts) ;
+						array_push($branches,$else_if) ;
 					}	
 				}
 				
 				//处理else分支，由stmts组成，没有cond，这里的cond填为"else"
 				if($node->else){
-					$if_branch = new Branch('else', $node->else->stmts) ;
-					array_push($branches,$if_branch) ;
+					$else_branch = new Branch('else', $node->else->stmts) ;
+					array_push($branches,$else_branch) ;
 				}
 				break ;
 				
@@ -248,22 +248,32 @@ class CFGGenerator{
 				$funcName = NodeUtils::getNodeFunctionName($part) ;
 
 				if(!SymbolUtils::isValue($part)){
+					$single_func = array('urldecode','urlencode','intval','is_numeric','is_float') ;
 					$vars = SymbolUtils::getSymbolByNode($part->args[0]->value) ;
-					if($type == "right" && in_array($funcName, array('urldecode','urlencode'))){
+					if($type == "right" && in_array($funcName, $single_func)){
 						$dataFlow->setValue($vars) ;
 					}
 				}
 				
 				
 				if($type == 'right'){
-				    global $fileSummary;
 				    //检查是否为sink函数
-				    $this->functionHandler($part, $block, $fileSummary);
+				    $this->functionHandler($part, $block, $this->fileSummary);
 					//处理净化信息和编码信息
-					SanitizationHandler::setSanitiInfo($part,$dataFlow, $block) ;
+					SanitizationHandler::setSanitiInfo($part,$dataFlow, $block, $this->fileSummary) ;
 					EncodingHandler::setEncodeInfo($part, $dataFlow, $block) ;
 				}
 				
+			}
+			
+			
+			//处理三元表达式
+			if($part && $part->getType() == "Expr_Ternary"){
+				$ter_symbol = new MutipleSymbol() ;
+				$ter_symbol->setItemByNode($part) ;
+				if($type == 'right'){
+					$dataFlow->setValue($ter_symbol) ;
+				}
 			}
 			
 		}
@@ -492,10 +502,10 @@ class CFGGenerator{
 	            foreach ($argArr as $item){
 	                if(is_array($item)){
 	                    foreach ($item as $v){
-	                        $analyser->analysis($block, $node, $v, $fileSummary) ;
+	                        $analyser->analysis($block, $node, $v, $this->fileSummary) ;
 	                    }
 	                }else{
-	                    $analyser->analysis($block, $node, $item, $fileSummary) ;
+	                    $analyser->analysis($block, $node, $item, $this->fileSummary) ;
 	                }
 	    
 	            }
@@ -505,7 +515,7 @@ class CFGGenerator{
 	    }else{
 	        //如果不是sink调用，启动过程间分析
 	        $context = Context::getInstance() ;
-	        $funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$fileSummary->getIncludeMap());
+	        $funcBody = $context->getClassMethodBody($funcName,$this->fileSummary->getPath(),$this->fileSummary->getIncludeMap());
 	        if(!$funcBody) return ;
 	    
 	        $nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
@@ -772,7 +782,7 @@ class Branch{
 	 * @param $cond  跳转的条件
 	 * @param $nodes 分支中携带的所有nodes
 	 */
-	public function __construct($cond,$nodes){
+	public function __construct($cond, $nodes){
 		$this->condition = array($cond) ;
 		if(is_array($nodes)){
 			$this->nodes = $nodes ;
@@ -1033,6 +1043,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	}
 }
 
+
 echo "<pre>" ;
 //从用户那接受项目路径
 $rootPath = 'F:/wamp/www/phpvulhunter/test';
@@ -1047,6 +1058,8 @@ $stmts = $parser->parse($code) ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 $nodes = $visitor->getNodes() ;
+
+//print_r($stmts) ;
 
 $pEntryBlock = new BasicBlock() ;
 $pEntryBlock->is_entry = true ;

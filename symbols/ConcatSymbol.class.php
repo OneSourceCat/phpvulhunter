@@ -58,7 +58,6 @@ class ConcatSymbol extends Symbol{
  *			$this->concat = $node ;
  *			return ;
  *		}
- *		//print_r($node) ;
  *	}
  * 
  */

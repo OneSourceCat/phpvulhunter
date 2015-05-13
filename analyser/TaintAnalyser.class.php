@@ -101,6 +101,8 @@ class TaintAnalyser {
 		//获取flow中的变量数组
 		if($flow->getValue() instanceof ConcatSymbol){
 			$vars = $flow->getValue()->getItems();
+		}elseif($flow->getValue() instanceof MutipleSymbol){
+			$vars = $flow->getValue()->getSymbols() ;
 		}else{
 			$vars = array($flow->getValue()) ;
 		}
@@ -121,7 +123,6 @@ class TaintAnalyser {
 		if($currBlock != null){
 			$blocks = array() ;
 			$edges = $currBlock->getInEdges();
-			
 			//如果到达了第一个基本块则返回
 			if(!$edges) return $this->pathArr;
 			
@@ -252,7 +253,9 @@ class TaintAnalyser {
 				//找到新的argName
 				foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
 					if($flow->getName() == $argName){
+						
 						$argArr[$argName] == false && $argArr[$argName] = true ;
+						
 						$vars = $this->getVarsByFlow($flow) ;
 						foreach ($vars as $var){
 							$varName = $this->getVarName($var) ;
@@ -298,9 +301,7 @@ class TaintAnalyser {
 						//得到flow->getValue()的变量node
 						//$sql = $a . $b ;  =>  array($a,$b)
 						$vars = $this->getVarsByFlow($flow) ;
-				
-						$retarr = array();
-				
+
 						foreach($vars as $var){
 							$varName = $this->getVarName($var) ;
 							
@@ -322,6 +323,7 @@ class TaintAnalyser {
 		}else if(is_array($block_list[0]) && count($block_list) > 0){
 			//是平行结构
 			foreach ($block_list[0] as $block_item){
+				echo "*********<br/>" ;
 				$flows = $block_item->getBlockSummary()->getDataFlowMap() ;
 				$flows = array_reverse($flows) ;
 				//如果flow中没有信息，则换下一个基本块
