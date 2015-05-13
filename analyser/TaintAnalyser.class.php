@@ -225,9 +225,6 @@ class TaintAnalyser {
 	 * 						转为多文件间的分析
 	 */
 	public function multiBlockHandler($block, $argName, $node, &$argArr){
-		
-		echo $argName."<br/>" ;
-		
 		if($this->pathArr){
 			$this->pathArr = array() ;
 		}
