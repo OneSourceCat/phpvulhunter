@@ -50,6 +50,7 @@ class FileSummary{
 	public function addIncludeToMap($include){
 		if($include){
 			array_push($this->includeMap,$include) ;
+			$this->includeMap = array_unique($this->includeMap);
 		}
 	}
 	

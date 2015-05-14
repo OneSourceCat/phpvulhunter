@@ -470,16 +470,19 @@ class CFGGenerator{
 	
 	
 	/**
-	 * 检测是否为sink函数
+	 * 处理函数调用
 	 * @param node $node
 	 * @param BasicBlock $block
 	 * @param fileSummary $fileSummary
 	 */
 	private function functionHandler($node,$block, $fileSummary){
+	    //根据用户指定的扫描类型，查找相类型的sink函数
+	    global $scan_type;
+	    
 	    //获取调用的函数名判断是否是sink调用
 	    $funcName = NodeUtils::getNodeFunctionName($node);
 	    //判断是否为sink函数,返回格式为array(true,funcname) or array(false)
-	    $ret = NodeUtils::isSinkFunction($funcName);
+	    $ret = NodeUtils::isSinkFunction($funcName, $scan_type);
 	    if($ret[0]){
 	        //如果发现了sink调用，启动污点分析
 	        $analyser = new TaintAnalyser() ;
@@ -607,63 +610,6 @@ class CFGGenerator{
 				case 'Expr_Print':
 				case 'Expr_FuncCall':
 					echo "<pre>";
-					//获取调用的函数名判断是否是sink调用
-					$funcName = NodeUtils::getNodeFunctionName($node);
-					//判断是否为sink函数,返回格式为array(true,funcname) or array(false)
-					$ret = NodeUtils::isSinkFunction($funcName);
-					if($ret[0]){
-						//如果发现了sink调用，启动污点分析
-						$analyser = new TaintAnalyser() ;
-						
-						//获取危险参数的位置
-						$argPosition = NodeUtils::getVulArgs($node) ;
-						if(count($argPosition) == 0){
-							break ;
-						}
-						
-						//获取到危险参数位置的变量
-						$argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);		
-
-						//遍历危险参数名，调用污点分析函数
-						if(count($argArr) > 0){
-							foreach ($argArr as $item){
-								if(is_array($item)){
-									foreach ($item as $v){
-										$analyser->analysis($block, $node, $v, $this->fileSummary) ;
-									}
-								}else{
-									$analyser->analysis($block, $node, $item, $this->fileSummary) ;
-								}
-								
-							}
-							
-						}
-						
-					}else{
-						//如果不是sink调用，启动过程间分析
-						$context = Context::getInstance() ;
-						$funcBody = $context->getClassMethodBody($funcName,$this->fileSummary->getPath(),$this->fileSummary->getIncludeMap());
-						if(!$funcBody) break ;
-						
-						$nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
-						//ret危险参数的位置比如：array(0)
-						$ret = $this->functionHandler($funcBody, $nextblock, $block);
-						if(!$ret){
-							break;
-						}
-						
-						//找到了array('del',array(0)) ;
-						$userDefinedSink = UserDefinedSinkContext::getInstance() ;
-							
-						//$type应该从visitor中获取，使用$ret返回
-						$type = $ret['type'] ;
-						unset($ret['type']) ;
-						
-						//加入用户sink上下文
-						$item = array($funcName,$ret) ;
-						$userDefinedSink->addByTagName($item, $type) ;
-					}
-					
 					$this->functionHandler($node, $block, $this->fileSummary);
 					break ;
 			}
@@ -1042,7 +988,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	}
 }
 
-
+$scan_type = 'XSS';
 echo "<pre>" ;
 //从用户那接受项目路径
 $project_path = 'F:/wamp/www/phpvulhunter/test';
@@ -1050,11 +996,12 @@ $project_path = 'F:/wamp/www/phpvulhunter/test';
 $initModule = new InitModule() ;
 $initModule->init($project_path) ;
 
-//$path = 'F:/wamp/www/phpvulhunter/test/simple_demo.php';
-//$absPath = $path;
-//$ret = FileSummaryGenerator::getFileSummary($absPath);
-//print_r($ret);
-//FileSummaryGenerator::getIncludeFilesDataFlows($ret);
+// $path = 'F:/wamp/www/phpvulhunter/test/simple_demo.php';
+// $absPath = $path;
+// $ret = FileSummaryGenerator::getFileSummary($absPath);
+// print_r($ret);
+// $retFlows = FileSummaryGenerator::getIncludeFilesDataFlows($ret);
+// print_r($retFlows);
 
 $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;

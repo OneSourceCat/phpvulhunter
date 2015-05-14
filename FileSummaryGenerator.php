@@ -54,7 +54,7 @@ class FileSummaryGenerator {
 	    foreach ($nodes as $node){
 	        //搜集节点中的require include require_once include_once的PHP文件名称
 	        $fileSummary->addIncludeToMap(NodeUtils::getNodeIncludeInfo($node)) ;
-	        	
+	        
 	        if(!is_object($node)) continue ;
 	        	
 	        //不分析函数定义

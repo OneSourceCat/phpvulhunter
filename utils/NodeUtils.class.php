@@ -332,33 +332,155 @@ class NodeUtils{
 	 * @param string $funcName
 	 * @return array(is_sink,args_position)
 	 */
-    public static function isSinkFunction($funcName){
-    	global $F_SINK_ALL,$F_SINK_ARRAY ;
+    public static function isSinkFunction($funcName, $scanType){
+    	global $F_SINK_ALL, $F_SINK_ARRAY ;
     	$nameNum = count($F_SINK_ARRAY);
     	$userDefinedSink = UserDefinedSinkContext::getInstance() ;
     	$U_SINK_ALL = $userDefinedSink->getAllSinks() ;
     	
-    	//如果是系统的sink
-    	if(key_exists($funcName, $F_SINK_ALL)){
-    		for($i = 0;$i < $nameNum; $i++){
-		    	if(key_exists($funcName, $F_SINK_ARRAY[$i])){
-		    		return array(true,$F_SINK_ARRAY[$i][$funcName][0]);
-		    	}
-	    	}
-    		return array(false);
+    	//根据scanType,查找sink函数
+    	switch ($scanType){
+    	    case 'ALL':
+            	//如果是系统的sink
+            	if(key_exists($funcName, $F_SINK_ALL)){
+            		for($i = 0;$i < $nameNum; $i++){
+        		    	if(key_exists($funcName, $F_SINK_ARRAY[$i])){
+        		    		return array(true,$F_SINK_ARRAY[$i][$funcName][0]);
+        		    	}
+        	    	}
+            		return array(false);
+            	}
+            	
+            	//如果是用户的sink
+            	if(key_exists($funcName, $U_SINK_ALL)){
+            		foreach ($userDefinedSink->getAllSinkArray() as $value){
+            			if(key_exists($funcName, $value)){
+            				return array(true,$U_SINK_ALL[$funcName]) ;
+            			}
+            		}
+            		return array(false) ;
+            	}
+	        case 'XSS':
+	            global $F_XSS;
+	            //如果是系统的sink
+	            if (key_exists($funcName, $F_XSS)){
+	                return array(true, $F_XSS[$funcName][0]);
+	            }
+	            //如果是用户的sink
+	            if (key_exists($funcName, $userDefinedSink->getF_XSS())){
+	                return array(true,$U_SINK_ALL[$funcName]) ;
+	            }
+	            return array(false) ;
+	            break;
+            case 'SQLI':
+                global $F_DATABASE;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_DATABASE)){
+                    return array(true, $F_DATABASE[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_DATABASE())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
+            case 'HTTP':
+                global $F_HTTP_HEADER;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_HTTP_HEADER)){
+                    return array(true, $F_HTTP_HEADER[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_HTTP_HEADER())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
+            case 'CODE':
+                global $F_CODE;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_CODE)){
+                    return array(true, $F_CODE[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_CODE())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
+            case 'EXEC':
+                global $F_EXEC;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_EXEC)){
+                    return array(true, $F_EXEC[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_EXEC())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
+            case 'LDAP':
+                global $F_LDAP;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_LDAP)){
+                    return array(true, $F_LDAP[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_LDAP())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
+            case 'INCLUDE':
+                global $F_FILE_INCLUDE;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_FILE_INCLUDE)){
+                    return array(true, $F_FILE_INCLUDE[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_FILE_INCLUDE())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
+            case 'FILE':
+                global $F_FILE_READ;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_FILE_READ)){
+                    return array(true, $F_FILE_READ[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_FILE_READ())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
+            case 'XPATH':
+                global $F_XPATH;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_XPATH)){
+                    return array(true, $F_XPATH[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_XPATH())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
+            case 'FILEAFFECT':
+                global $F_FILE_AFFECT;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_FILE_AFFECT)){
+                    return array(true, $F_FILE_AFFECT[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_FILE_AFFECT())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
     	}
-    	
-    	//如果是用户的sink
-    	if(key_exists($funcName, $U_SINK_ALL)){
-    		foreach ($userDefinedSink->getAllSinkArray() as $value){
-    			if(key_exists($funcName, $value)){
-    				return array(true,$U_SINK_ALL[$funcName]) ;
-    			}
-    		}
-    		
-    		return array(false) ;
-    	}
-    	
     	return array(false);
     	
     }
