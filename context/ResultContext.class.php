@@ -21,10 +21,22 @@ class ResultContext {
 		}
 	}
 	
-	
 	/**
-	 * getter
+	 * 查看一条记录是否在结果集中存在
+	 * @param Result $record
+	 * @return boolean
 	 */
+	public function isRecordExists($record){
+		foreach ($this->resArr as $value){
+			if($value == $record){
+				return true ;
+			}
+		}
+		return false ;
+	}
+	
+	
+	//getter
 	public function getResArr() {
 		return $this->resArr;
 	}

@@ -205,7 +205,8 @@ class TaintAnalyser {
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
 						//报告漏洞
-						$this->report($node, $flow->getLocation(), $type) ;
+						$path = $fileSummary->getPath() ;
+						$this->report($path, $node, $flow->getLocation(), $type) ;
 						return true ;
 					}else{
 						//首先进行文件夹的分析
@@ -303,7 +304,8 @@ class TaintAnalyser {
 							//如果var右边有source项
 							if(in_array($varName, $this->sourcesArr)){
 								//报告漏洞
-								$this->report($node, $flow->getLocation(), $type) ;
+								$path = $fileSummary->getPath() ;
+								$this->report($path, $node, $flow->getLocation(), $type) ;
 							}else{
 								//首先进行文件夹的分析
 								//首先根据fileSummary获取到fileSummaryMap
@@ -376,7 +378,8 @@ class TaintAnalyser {
 								//如果var右边有source项,直接报告漏洞
 								if(in_array($varName, $this->sourcesArr)){
 									//报告漏洞
-									$this->report($node, $flow->getLocation(),$type) ;
+									$path = $fileSummary->getPath() ;
+									$this->report($path, $node, $flow->getLocation(),$type) ;
 									return true ;
 								}else{
 									//首先进行文件夹的分析
@@ -443,7 +446,8 @@ class TaintAnalyser {
 							//如果var右边有source项
 							if(in_array($varName, $this->sourcesArr)){
 								//报告漏洞
-								$this->report($node, $flow->getLocation(),$type) ;
+								$path = $fsummary->getPath() ;
+								$this->report($path, $node, $flow->getLocation(),$type) ;
 							}	
 						}
 					
@@ -540,17 +544,32 @@ class TaintAnalyser {
 	
 	/**
 	 * 报告漏洞的函数
+	 * @param string $path 出现漏洞的文件路径
 	 * @param Node $node 出现漏洞的node
 	 * @param Node $var  出现漏洞的变量node
+	 * @param string 漏洞的类型
 	 */
-	public function report($node, $var, $type){
+	public function report($path, $node, $var, $type){
 		echo "<pre>" ;
 		echo "有漏洞=====>". $type ."<br/>" ;
 		echo "漏洞变量：<br/>" ;
 		print_r($var) ;
 		echo "漏洞节点：<br/>" ;
 		print_r($node) ;
-		return  ;
+		
+		//获取结果集上下文
+		$resultContext = ResultContext::getInstance() ;
+		
+		//加入至上下文中
+		$record = new Result($path, $type, $node, $var) ;
+		
+		//如果存在记录则不添加，反之才添加
+		if($resultContext->isRecordExists($record)){
+			return ;
+		}else{
+			$resultContext->addResElement($record) ;
+		}
+
 	}
 	
 	
