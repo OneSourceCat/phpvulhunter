@@ -13,7 +13,9 @@ class XssAnalyser {
 	 * 		(3)如果净化数组为null,返回false
 	 * @param symbol $var  判断的变量
 	 * @param array $saniArr  判断的净化数组
+	 * @param string $funcName 需要单独判断echo和print的情况
 	 * @return bool true
+	 * 
 	 */
 	private function check_sanitization($var,$saniArr){
 		//如果数组为空，说明没有进行任何净化

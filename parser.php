@@ -63,6 +63,7 @@ use PhpParser\Node ;
 class MyVisitor extends PhpParser\NodeVisitorAbstract{	
 	public $strings = array(); 
 	public function leaveNode(Node $node){
+		echo $node->getType() ."<br/>";
 		array_push($this->strings, $node) ;
 	}
 
@@ -73,7 +74,7 @@ $traverser = new PhpParser\NodeTraverser ;
 
 //$code = file_get_contents('source.class2.php') ;
 //$code = file_get_contents('./test/sub.php') ;
-$code = file_get_contents('./test/simple_demo.php') ;
+$code = file_get_contents('./test/test.php') ;
 
 $stmts = $parser->parse($code) ;
 echo "<pre>" ;
@@ -82,7 +83,7 @@ $visitor = new MyVisitor() ;
 $traverser->addVisitor($visitor) ;
 $traverser->traverse($stmts) ;
 
-//print_r($stmts) ;
+print_r($stmts) ;
 //print_r($visitor->strings) ;
 
 

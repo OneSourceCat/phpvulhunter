@@ -595,6 +595,7 @@ class CFGGenerator{
 				case 'Expr_FuncCall' && (NodeUtils::getNodeFunctionName($node) == "import_request_variables" || NodeUtils::getNodeFunctionName($node) == "extract") :
 					$this->registerGlobalHandler($node, $block) ;
 					break ;
+					
 				//如果$GLOBALS['name'] = 'xxxx' ;  则并入registerGlobal中
 				case 'Expr_ArrayDimFetch' && (substr(NodeUtils::getNodeStringName($node),0,7)=="GLOBALS"):
 				    $this->registerGLOBALSHandler($node, $block);
@@ -603,6 +604,8 @@ class CFGGenerator{
 				//处理函数调用以及类方法的调用
 				//过程间分析以及污点分析
 				case 'Expr_MethodCall':
+				case 'Stmt_Echo':
+				case 'Expr_Print':
 				case 'Expr_FuncCall':
 					echo "<pre>";
 					//获取调用的函数名判断是否是sink调用

@@ -14,7 +14,7 @@ class SymbolUtils {
 	 */
 	public static function isValue($node){
 		$type = $node->getType() ;
-		if($type == "Scalar_String" or $type == "Scalar_LNumber" or $type == "Scalar_DNumber"){
+		if(in_array($type, array("Scalar_String","Scalar_LNumber","Scalar_DNumber","Name","Expr_ConstFetch"))){
 			return true ;
 		}else{
 			return false ;

@@ -143,6 +143,13 @@ class NodeUtils{
             case "Expr_Closure":
                 return "";
                 break;
+            //echo和print比较特殊，单独处理
+            case "Stmt_Echo":
+            	return "echo" ;
+            	break;
+            case "Expr_Print":
+            	return "print";
+            	break;
             default:
                 return "";
                 break;
@@ -206,7 +213,42 @@ class NodeUtils{
     	if (!$node instanceof Node){
     		return null;
     	}
+		
+    	//支持echo和print
+    	$funcName = self::getNodeFunctionName($node) ;
+    	if($funcName == "echo"){
+    		$ret = array() ;
+    		if($node->exprs[0]->getType() == "Expr_BinaryOp_Concat"){
+    			$ret = self::getConcatParams($node->exprs[0]) ;
+    		}else{
+    			if(SymbolUtils::isValue($node->exprs[0])){
+    				return array() ;
+    			}else{
+    				$res = self::getNodeStringName($node->exprs[0]) ;
+    				if(is_array($res)){
+    					array_merge($ret,$res) ;
+    				}else{
+    					array_push($ret, $res) ;
+    				}
+    			}
+    		}
 
+    		return $ret ;
+    	}else if($funcName == "print"){
+    		$ret = array() ;
+    		if($node->expr->getType() == "Expr_BinaryOp_Concat"){
+    			$ret = self::getConcatParams($node->expr) ;
+    		}else{
+    			if(SymbolUtils::isValue($node->expr)){
+    				return array() ;
+    			}else{
+    				$ret = self::getNodeStringName($node->expr) ;
+    			}
+    		}
+    		return $ret ;
+    	}
+    	
+    	//处理其他的函数
     	$argsArr = array();
     	if ($node->args){
     	    foreach ($node->args as $arg){
@@ -246,7 +288,10 @@ class NodeUtils{
     	if(count($argsNameArr) > 0){
     		foreach ($argsPos as $value){
     			//sink是从索引1开始的
-    			$value -= 1 ;
+    			//如果参数位置为0，如echo，则不做处理
+    			if($value != 0){
+    				$value -= 1 ;
+    			}
     			array_push($retArr,$argsNameArr[$value]) ;
     		}
     	}
