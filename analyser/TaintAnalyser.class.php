@@ -212,7 +212,7 @@ class TaintAnalyser {
 						//首先进行文件夹的分析
 						//首先根据fileSummary获取到fileSummaryMap
 						$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-						$this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
+						$fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
 						
 						//文件间分析失败，递归
 						$this->currBlockTaintHandler($block, $node, $varName, $fileSummary) ;
@@ -270,6 +270,8 @@ class TaintAnalyser {
 			}else{
 				//对于每个flow,寻找变量argName
 				foreach ($flows as $flow){
+					echo "========";
+					print_r($flow) ;
 					if($flow->getName() == $argName){
 						//处理净化信息,如果被编码或者净化则返回safe
 						//被isSanitization函数取代
@@ -292,7 +294,7 @@ class TaintAnalyser {
 							}
 							
 						}
-				
+
 						//获取flow中的右边赋值变量
 						//得到flow->getValue()的变量node
 						//$sql = $a . $b ;  =>  array($a,$b)
@@ -300,7 +302,7 @@ class TaintAnalyser {
 
 						foreach($vars as $var){
 							$varName = $this->getVarName($var) ;
-							
+							//print_r($var) ;
 							//如果var右边有source项
 							if(in_array($varName, $this->sourcesArr)){
 								//报告漏洞
@@ -310,7 +312,7 @@ class TaintAnalyser {
 								//首先进行文件夹的分析
 								//首先根据fileSummary获取到fileSummaryMap
 								$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-								$this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
+								$fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
 								
 								//文件间分析失败，递归
 								!empty($block_list) && $this->multiBlockHandler($block_list[0],$varName,$node,$fileSummary) ;
@@ -385,7 +387,7 @@ class TaintAnalyser {
 									//首先进行文件夹的分析
 									//首先根据fileSummary获取到fileSummaryMap
 									$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-									$this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
+									$fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
 									
 									//文件间分析失败，递归
 									$ret = $this->multiBlockHandler($block_item, $varName, $node, $fileSummary) ;
@@ -414,7 +416,6 @@ class TaintAnalyser {
 			if($fsummary instanceof FileSummary){
 				$flows = $fsummary->getFlowsMap() ;
 				foreach ($flows as $flow){
-					print_r($flow) ;
 					if($flow->getName() == $argName){
 						//处理净化信息,如果被编码或者净化则返回safe
 						//被isSanitization函数取代

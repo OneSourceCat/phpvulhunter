@@ -1,22 +1,16 @@
 <?php
 
-require 'source.php';
-
-$content = $where ;
-$id = $content ;
-if($id){
-	echo 111 ;
-}else if($id>0){
-	echo false;
-}else{
-	if(1){
-		echo "xxxx" ;
-	}
-	echo "shit";
+$key=trim($_GET['key']);
+$key = addslashes($key) ;
+if (!empty($key)){
+    if (strcasecmp(QISHI_DBCHARSET,"utf8")!=0) $key=iconv("utf-8",QISHI_DBCHARSET,$key);
+    $result = mysql_query("select * from ".table('category')." where c_alias='QS_street' AND c_name LIKE '%{$key}%' ");
+    while($row = $db->fetch_array($result)){
+        if ($listtype=="li"){
+        	echo "alert" ;
+        }
+    }
 }
 
-$sql = "xxx". $id ;
-
-mysql_query($sql) ;
-
+mysql_query($key);
 ?>

@@ -244,34 +244,35 @@ class CFGGenerator{
 			//不属于已有的任何一个symbol类型,如函数调用
 			if($part && $part->getType() == "Expr_FuncCall"){
 				//处理 id = urlencode($_GET['id']) ;
-				$funcName = NodeUtils::getNodeFunctionName($part) ;
-
 				if(!SymbolUtils::isValue($part)){
-					$single_func = array('urldecode','urlencode','intval','is_numeric','is_float') ;
-					$vars = SymbolUtils::getSymbolByNode($part->args[0]->value) ;
-					if($type == "right" && in_array($funcName, $single_func)){
-						$dataFlow->setValue($vars) ;
-					}
+					$funcName = NodeUtils::getNodeFunctionName($part) ;
+					BIFuncUtils::assignFuncHandler($part, $type, $dataFlow, $funcName) ;
 				}
 				
-				
+				//处理sink函数
 				if($type == 'right'){
-				    //检查是否为sink函数
-				    $this->functionHandler($part, $block, $this->fileSummary);
+					//检查是否为sink函数
+ 					$this->functionHandler($part, $block, $this->fileSummary);
+ 					
 					//处理净化信息和编码信息
 					SanitizationHandler::setSanitiInfo($part,$dataFlow, $block, $this->fileSummary) ;
 					EncodingHandler::setEncodeInfo($part, $dataFlow, $block) ;
+					
 				}
 				
+				
+				
+				//处理内置函数
+				
 			}
+			
+			
 			//处理三元表达式
 			if($part && $part->getType() == "Expr_Ternary"){
-				$ter_symbol = new MutipleSymbol() ;
-				$ter_symbol->setItemByNode($part) ;
-				if($type == 'right'){
-					$dataFlow->setValue($ter_symbol) ;
-				}
+				BIFuncUtils::ternaryHandler($type, $part, $dataFlow) ;
 			}
+			
+			
 			
 		}
 		
@@ -475,7 +476,7 @@ class CFGGenerator{
 	 * @param BasicBlock $block
 	 * @param fileSummary $fileSummary
 	 */
-	private function functionHandler($node,$block, $fileSummary){
+	private function functionHandler($node, $block, $fileSummary){
 	    //根据用户指定的扫描类型，查找相类型的sink函数
 	    global $scan_type;
 	    

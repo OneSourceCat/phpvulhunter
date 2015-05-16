@@ -13,6 +13,7 @@ require_once CURR_PATH . '/utils/NodeUtils.class.php';
 require_once CURR_PATH . '/utils/TypeUtils.class.php';
 require_once CURR_PATH . '/utils/multiBlockHandlerUtils.class.php';
 require_once CURR_PATH . '/utils/SecureUtils.class.php';
+require_once CURR_PATH . '/utils/BIFuncUtils.class.php';
 
 require_once CURR_PATH . '/symbols/Symbol.class.php' ;
 require_once CURR_PATH . '/symbols/ValueSymbol.class.php';
@@ -44,6 +45,7 @@ require_once CURR_PATH . '/libs/Smarty.class.php';
 require_once CURR_PATH . '/CFGGenerator.php';
 header("Content-type:text/html;charset=utf-8") ;
 ini_set('xdebug.max_nesting_level', 2000);
+ini_set("max_execution_time", "3600*4");
 
 
 ?>
