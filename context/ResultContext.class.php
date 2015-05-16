@@ -9,6 +9,7 @@ class ResultContext {
 	//单例
 	private static $instance ;  
 	
+	//结果集数组
 	private $resArr = array() ;
 	
 	/**
@@ -35,6 +36,13 @@ class ResultContext {
 		return false ;
 	}
 	
+	/**
+	 * 获取结果集数据的条数
+	 * @return number
+	 */
+	public function getCount(){
+		return count($this->resArr) ;	
+	}
 	
 	//getter
 	public function getResArr() {

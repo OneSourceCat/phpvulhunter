@@ -211,8 +211,8 @@ class TaintAnalyser {
 					}else{
 						//首先进行文件夹的分析
 						//首先根据fileSummary获取到fileSummaryMap
-						//$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-						//$this->multiFileHandler($block, $argName, $node, $fileSummaryMap) ;
+						$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
+						$this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
 						
 						//文件间分析失败，递归
 						$this->currBlockTaintHandler($block, $node, $varName, $fileSummary) ;
@@ -309,8 +309,8 @@ class TaintAnalyser {
 							}else{
 								//首先进行文件夹的分析
 								//首先根据fileSummary获取到fileSummaryMap
-								//$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-								//$this->multiFileHandler($block, $argName, $node, $fileSummaryMap) ;
+								$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
+								$this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
 								
 								//文件间分析失败，递归
 								!empty($block_list) && $this->multiBlockHandler($block_list[0],$varName,$node,$fileSummary) ;
@@ -384,8 +384,8 @@ class TaintAnalyser {
 								}else{
 									//首先进行文件夹的分析
 									//首先根据fileSummary获取到fileSummaryMap
-									//$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-									//$this->multiFileHandler($block, $argName, $node, $fileSummaryMap) ;
+									$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
+									$this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
 									
 									//文件间分析失败，递归
 									$ret = $this->multiBlockHandler($block_item, $varName, $node, $fileSummary) ;
@@ -410,11 +410,11 @@ class TaintAnalyser {
 	 * @param array $fileSummaryMap 要分析的require文件的summary的list
 	 */
 	public function multiFileHandler($block, $argName, $node, $fileSummaryMap){
-		
 		foreach ($fileSummaryMap as $fsummary){
 			if($fsummary instanceof FileSummary){
 				$flows = $fsummary->getFlowsMap() ;
 				foreach ($flows as $flow){
+					print_r($flow) ;
 					if($flow->getName() == $argName){
 						//处理净化信息,如果被编码或者净化则返回safe
 						//被isSanitization函数取代
@@ -525,6 +525,7 @@ class TaintAnalyser {
 	 * @param FileSummary 当前文件摘要
 	 */
 	public function analysis($block,$node,$argName,$fileSummary){
+		echo "start<br/>" ;
 		$path = $fileSummary->getPath() ;
 		//获取前驱基本块集合并将当前基本量添加至列表
 		$this->getPrevBlocks($block) ;
@@ -536,7 +537,7 @@ class TaintAnalyser {
 		//多个基本块的处理
 		$this->pathArr = array() ;
 		$this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
-
+		echo "end" ;
 	}
 	
 	

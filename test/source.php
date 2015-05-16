@@ -1,7 +1,8 @@
 <?php 
 
-echo "xx";
 
-print("xxxx") ;
+$where = $_GET['where'] ;
+$where = addslashes($where) ;
+
 
 ?>

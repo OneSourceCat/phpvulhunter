@@ -6,12 +6,20 @@
  */
 class InitModule {
 	
-    
+    /**
+     * init模块方法
+     * 用于对工程进行初始化
+     * @param string $project_path
+     */
     public function init($project_path){
         $this->initContext($project_path);
         $this->initFileSummaryContext($project_path) ;
     }
     
+    /**
+     * 初始化class finder上下文
+     * @param string $project_path
+     */
     private function initContext($project_path){
         $finder = new  ClassFinder($project_path) ;
         $finder->getContext() ;
@@ -45,6 +53,11 @@ class InitModule {
 		$this->serializeContext($serialPath, $fileSummaryContext->getFileSummaryMap()) ;
 	}
 	
+	/**
+	 * 序列化方法
+	 * @param string $path
+	 * @param multitype $context
+	 */
 	public function serializeContext($path, $context){
 	    file_put_contents(CURR_PATH . $path, serialize($context)) ;
 	}

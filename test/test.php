@@ -1,9 +1,11 @@
 <?php
 
-$content = $_GET['id'] ;
+require 'source.php';
+
+$content = $where ;
 $id = $content ;
 if($id){
-	echo $id ;
+	echo 111 ;
 }else if($id>0){
 	echo false;
 }else{
@@ -15,6 +17,6 @@ if($id){
 
 $sql = "xxx". $id ;
 
-print $sql ;
+mysql_query($sql) ;
 
 ?>

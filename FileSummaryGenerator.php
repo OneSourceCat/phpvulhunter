@@ -23,7 +23,7 @@ class FileSummaryGenerator {
             }else{
                 $includeFileSummary = self::getFileSummary($absPath);
                 if ($includeFileSummary)
-                    $retFileSummary = array_merge($includeFileSummary, $retFileSummary);
+                    $retFileSummary = array_merge(array($includeFileSummary), $retFileSummary);
             }
         }
         //return all files summary

@@ -25,25 +25,22 @@ function load_file($path){
 	
 	$pEntryBlock = new BasicBlock() ;
 	$pEntryBlock->is_entry = true ;
-	$endLine = $cfg->getEndLine($nodes);
 	
 	//开始分析
-	$cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
+	$cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 }
 
 //1、从web ui中获取并加载项目工程
-$project_path = $_POST['path'] ;
-$scan_type = $_POST['type'] ;
+// $project_path = $_POST['path'] ;
+// $scan_type = $_POST['type'] ;
+$project_path = "D:/MySoftware/wamp-php-5.3/www/ecshop/upload/respond.php" ;
 
 
 //2、初始化模块
 // $project_path = 'F:/wamp/www/phpvulhunter/test';
 $initModule = new InitModule() ;
 $initModule->init($project_path) ;
-// $path = 'F:/wamp/www/phpvulhunter/test/simple_demo.php';
-// $absPath = $path;
-// $ret = FileSummaryGenerator::getFileSummary($absPath);
-// FileSummaryGenerator::getIncludeFilesDataFlows($ret);
+
 
 //3、循环每个文件  进行分析工作
 if(is_file($project_path)){

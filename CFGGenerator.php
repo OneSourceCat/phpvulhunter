@@ -988,7 +988,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	}
 }
 
-$scan_type = 'XSS';
+$scan_type = 'ALL';
 echo "<pre>" ;
 //从用户那接受项目路径
 $project_path = 'F:/wamp/www/phpvulhunter/test';
