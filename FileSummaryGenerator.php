@@ -7,7 +7,7 @@ class FileSummaryGenerator {
         $includeFiles = $fileSummary->getIncludeMap();
         $currentFilePath = $fileSummary->getPath();
         //2.foreach() files
-        $retFlows = array();
+        $retFileSummary = array();
         foreach ($includeFiles as $rpath){
             $absPath = FileUtils::getAbsPath($currentFilePath, $rpath);
             //  查看是否在fileSummaryContext中
@@ -16,19 +16,18 @@ class FileSummaryGenerator {
             $ret = $fileSummaryContext->findSummaryByPath($absPath);
             if ($ret){
                 //查看此文件是否有include文件
-                $pRetFlows = self::getIncludeFilesDataFlows($ret);
-                $retFlows = array_merge($pRetFlows, $retFlows);
+                $pRetFiles = self::getIncludeFilesDataFlows($ret);
+                $retFileSummary = array_merge($pRetFiles, $retFileSummary);
                 
-                $dataFlows = $ret->getFlowsMap();
-                $retFlows = array_merge($dataFlows, $retFlows);
+                $retFileSummary = array_merge($ret, $retFileSummary);
             }else{
                 $includeFileSummary = self::getFileSummary($absPath);
                 if ($includeFileSummary)
-                    $retFlows = array_merge($includeFileSummary->getFlowsMap(), $retFlows);
+                    $retFileSummary = array_merge($includeFileSummary, $retFileSummary);
             }
         }
-        //return all files dataFlows
-        return $retFlows;
+        //return all files summary
+        return $retFileSummary;
     }
     
     /**
