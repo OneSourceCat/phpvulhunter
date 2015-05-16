@@ -31,9 +31,10 @@ function load_file($path){
 }
 
 //1、从web ui中获取并加载项目工程
-// $project_path = $_POST['path'] ;
-// $scan_type = $_POST['type'] ;
-$project_path = "D:/MySoftware/wamp-php-5.3/www/ecshop/upload/respond.php" ;
+$count = 0 ;
+$project_path = $_POST['path'] ;  //扫描的工程路径
+$scan_type = $_POST['type'] ;     //扫描的类型
+$encoding = $_POST['encoding'] ;  //CMS的编码   UTF-8 或者  GBK
 
 
 //2、初始化模块
@@ -51,6 +52,8 @@ if(is_file($project_path)){
 		$path_list = FileUtils::getPHPfile($dir) ;
 		foreach ($path_list as $path){
 			load_file($path) ;
+			$count ++ ;
+			//传给templates
 		}
 	}
 }else{
