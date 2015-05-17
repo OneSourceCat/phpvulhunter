@@ -270,8 +270,6 @@ class TaintAnalyser {
 			}else{
 				//对于每个flow,寻找变量argName
 				foreach ($flows as $flow){
-					echo "========";
-					print_r($flow) ;
 					if($flow->getName() == $argName){
 						//处理净化信息,如果被编码或者净化则返回safe
 						//被isSanitization函数取代

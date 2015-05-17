@@ -30,6 +30,8 @@ class SymbolUtils {
 		$type = $node->getType() ;
 		if($type == "Expr_Variable"){
 			return true ;
+		}elseif ($type == "Expr_PropertyFetch"){
+		    return true;
 		}else{
 			return false ;
 		}

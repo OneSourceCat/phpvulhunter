@@ -989,20 +989,16 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	}
 }
 
+//扫描漏洞类型
 $scan_type = 'ALL';
 echo "<pre>" ;
 //从用户那接受项目路径
-$project_path = 'F:/wamp/www/phpvulhunter/test';
+$project_path = 'C:\Users\xyw55\Desktop\test\niubicms\NiubiCMS v1.3\upload';
+$allFiles = FileUtils::getPHPfile($project_path);
 //初始化
 $initModule = new InitModule() ;
 $initModule->init($project_path) ;
 
-// $path = 'F:/wamp/www/phpvulhunter/test/simple_demo.php';
-// $absPath = $path;
-// $ret = FileSummaryGenerator::getFileSummary($absPath);
-// print_r($ret);
-// $retFlows = FileSummaryGenerator::getIncludeFilesDataFlows($ret);
-// print_r($retFlows);
 
 $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;
@@ -1023,11 +1019,8 @@ $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
 
 //print_r($pEntryBlock) ;
 $sanitiFuncContext = UserSanitizeFuncConetxt::getInstance();
-// print_r($sanitiFuncContext);
+//print_r($sanitiFuncContext);
 $sinkContext = UserDefinedSinkContext::getInstance();
 // print_r($sinkContext);
-// $context = Context::getInstance() ;
-// $funcName = "goods:buy";
-// $funcBody = $context->getClassMethodBody($funcName,$path,$fileSummary->getIncludeMap());
-// print_r($funcBody);
+
 ?>
