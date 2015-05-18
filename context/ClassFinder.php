@@ -109,20 +109,31 @@ class Context {
 	    }else{
 	        $funcName = $funcInfo[0];
 	    }
+	   
+	    
 	    //寻找相应的method
 	    for($i=0;$i<count($records);$i++) {
 	        if($records[$i]->class_name == $className){
-    	        foreach($records[$i]->class_methods as $k => $item){
+    	        foreach($records[$i]->class_methods as $item){
     	            if($item['name'] ==  $funcName ){
     	                $method = $item ;
     	                $path = $records[$i]->path;
     	                break;
     	            }
     	        }
+	        }else{
+	        	foreach ($records[$i]->class_methods as $value){
+	        		if($value['name'] == $funcName){
+	        			$method = $value ;
+	        			$path = $records[$i]->path ;
+	        			break ;
+	        		}
+	        	}
 	        }
 	    }
+	    
+	    //在包含的文件中找不到相应函数，只能去全部的函数集合中寻找
 	    if(($path == '') && ($method = null)){
-	        //在包含的文件中找不到相应函数，只能去全部的函数集合中寻找
 	        for($i=0;$i<count($this->records);$i++) {
 	            if($this->records[$i]->class_name == $className){
 	                foreach($this->records[$i]->class_methods as $k => $item){
@@ -135,6 +146,7 @@ class Context {
 	            }
 	        }
 	    }
+	    
 	    return $this->getFunction($path, $method);
 	}
 	
@@ -391,6 +403,7 @@ class ClassFinder{
 	*/
 	private function getAllSourceFiles(){
 		//return $this->fileUtil->getPHPfile($this->path) ;
+		var_dump($this->path) ;
 		return FileUtils::getPHPfile($this->path);
 	}
 

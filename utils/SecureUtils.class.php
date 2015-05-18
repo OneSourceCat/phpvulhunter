@@ -65,7 +65,13 @@ class SecureUtils {
 		
 		//判断宽字节注入
 		//encoding为GBK，并且调用顺序为addslashes => iconv
-		if(in_array('iconv', $sanitiArr) && $encoding == 'GBK'){
+		$flag = false ;
+		foreach ($sanitiArr as $value){
+			if($value->funcName == 'iconv'){
+				$flag = true ;
+			}
+		}
+		if($flag && $encoding == 'GBK'){
 			$iconv_pos = array_search('iconv', $sanitiArr) ;
 			$slashes_list = array('addslashes','mysql_escape_string') ;
 			$position = self::findFirstPosition($sanitiArr, $slashes_list) ;
@@ -80,7 +86,7 @@ class SecureUtils {
 		$combine_list = array_merge($userDefSinkSaniti,$confDefSinkSaniti) ;
 		
 		foreach ($sanitiArr as $value){
-			if(in_array($value, $combine_list)){
+			if(in_array($value->funcName, $combine_list)){
 				return true ;
 			}
 		}

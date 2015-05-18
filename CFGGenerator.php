@@ -243,13 +243,14 @@ class CFGGenerator{
 		}else{
 			//不属于已有的任何一个symbol类型,如函数调用
 			if($part && $part->getType() == "Expr_FuncCall"){
+				
 				//处理 id = urlencode($_GET['id']) ;
 				if(!SymbolUtils::isValue($part)){
 					$funcName = NodeUtils::getNodeFunctionName($part) ;
 					BIFuncUtils::assignFuncHandler($part, $type, $dataFlow, $funcName) ;
 				}
 				
-				//处理sink函数
+				//处理编码和净化信息
 				if($type == 'right'){
 					//检查是否为sink函数
  					$this->functionHandler($part, $block, $this->fileSummary);
@@ -257,7 +258,7 @@ class CFGGenerator{
 					//处理净化信息和编码信息
 					SanitizationHandler::setSanitiInfo($part,$dataFlow, $block, $this->fileSummary) ;
 					EncodingHandler::setEncodeInfo($part, $dataFlow, $block) ;
-					
+
 				}
 				
 				
@@ -482,8 +483,10 @@ class CFGGenerator{
 	    
 	    //获取调用的函数名判断是否是sink调用
 	    $funcName = NodeUtils::getNodeFunctionName($node);
+	    
 	    //判断是否为sink函数,返回格式为array(true,funcname) or array(false)
 	    $ret = NodeUtils::isSinkFunction($funcName, $scan_type);
+	    
 	    if($ret[0]){
 	        //如果发现了sink调用，启动污点分析
 	        $analyser = new TaintAnalyser() ;
@@ -515,19 +518,26 @@ class CFGGenerator{
 	    }else{
 	        //如果不是sink调用，启动过程间分析
 	        $context = Context::getInstance() ;
-	        $funcBody = $context->getClassMethodBody($funcName,$this->fileSummary->getPath(),$this->fileSummary->getIncludeMap());
+	        $funcBody = $context->getClassMethodBody($funcName,$this->fileSummary->getPath(),
+	        		$this->fileSummary->getIncludeMap());
+	        
+	        if($funcBody->getType() == "Stmt_ClassMethod"){
+	        	$funcBody->stmts = $funcBody->stmts[0] ;
+	        }
+	        
 	        if(!$funcBody) return ;
-	    
+			
 	        $nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
 	        //ret危险参数的位置比如：array(0)
 	        $ret = $this->sinkFunctionHandler($funcBody, $nextblock, $block);
+
 	        if(!$ret){
 	            return ;
 	        }
 	    
 	        //找到了array('del',array(0)) ;
 	        $userDefinedSink = UserDefinedSinkContext::getInstance() ;
-	        	
+	        
 	        //$type应该从visitor中获取，使用$ret返回
 	        $type = $ret['type'] ;
 	        unset($ret['type']) ;
@@ -535,6 +545,25 @@ class CFGGenerator{
 	        //加入用户sink上下文
 	        $item = array($funcName,$ret) ;
 	        $userDefinedSink->addByTagName($item, $type) ;
+	        
+	        //开始污点分析
+	        $argPosition = NodeUtils::getVulArgs($node) ;
+	        $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
+	       
+	        if(count($argArr) > 0){
+	        	$analyser = new TaintAnalyser() ;
+	        	foreach ($argArr as $item){
+	        		if(is_array($item)){
+	        			foreach ($item as $v){
+	        				$analyser->analysis($block, $node, $v, $this->fileSummary) ;
+	        			}
+	        		}else{
+	        			$analyser->analysis($block, $node, $item, $this->fileSummary) ;
+	        		}
+	        	  
+	        	}
+	        
+	        }
 	    }
 	}
 	/**
@@ -813,11 +842,12 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	public $fileSummary ;
 	
 	public function leaveNode(Node $node){
+		global $scan_type ;
 		//处理过程间代码，即调用的方法定义中的源码
 		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
 			//获取到方法的名称
 			$nodeName = NodeUtils::getNodeFunctionName($node);
-			$ret = NodeUtils::isSinkFunction($nodeName);
+			$ret = NodeUtils::isSinkFunction($nodeName, $scan_type);
 			//进行危险参数的辨别
 			if($ret[0] == true){
 				//处理系统内置的sink
@@ -874,7 +904,6 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 	 * @return array
 	 */
 	public function sinkMultiBlockTraceback($argName,$block,$flowsNum=0){
-	    //print_r("enter sinkMultiBlockTraceback<br/>");
 	    $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
 	    $blockList = $mulitBlockHandlerUtils->getPathArr();
 	    
@@ -992,7 +1021,7 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 $scan_type = 'ALL';
 echo "<pre>" ;
 //从用户那接受项目路径
-$project_path = 'F:/wamp/www/phpvulhunter/test';
+$project_path = CURR_PATH . '/test';
 //初始化
 $initModule = new InitModule() ;
 $initModule->init($project_path) ;

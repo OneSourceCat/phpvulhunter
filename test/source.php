@@ -1,8 +1,10 @@
 <?php 
 
-
-$where = $_GET['where'] ;
-$where = addslashes($where) ;
+class MYSQLDB{
+	function query($sql){
+		mysql_query($sql) ;
+	}
+}
 
 
 ?>

@@ -286,7 +286,7 @@ class NodeUtils{
     	$argsNameArr = self::getNodeFuncParams($node) ;	
     	$retArr = array() ;
     	if(count($argsNameArr) > 0){
-    		foreach ($argsPos as $value){
+    		foreach ($argsPos[0] as $value){
     			//sink是从索引1开始的
     			//如果参数位置为0，如echo，则不做处理
     			if($value != 0){

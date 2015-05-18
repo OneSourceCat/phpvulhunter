@@ -171,16 +171,15 @@ class TaintAnalyser {
 		
 		foreach ($flows as $flow){
 			if($flow->getName() == $argName){
-
 				//处理净化信息,如果被编码或者净化则返回safe
 				//被isSanitization函数取代
 				$variable = $this->getVarsByFlow($flow) ;
 				
-				$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-				$encodingArr = $flow->getLocation()->getEncoding() ;
-				$saniArr =  $flow->getLocation()->getSanitization() ;
-				
 				if ($flow && (count($variable) > 0)){
+					$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+					$encodingArr = $flow->getLocation()->getEncoding() ;
+					$saniArr =  $flow->getLocation()->getSanitization() ;
+					
 					foreach($variable as $var){
 						if(is_object($var)){ 
 							$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
@@ -270,8 +269,6 @@ class TaintAnalyser {
 			}else{
 				//对于每个flow,寻找变量argName
 				foreach ($flows as $flow){
-					echo "========";
-					print_r($flow) ;
 					if($flow->getName() == $argName){
 						//处理净化信息,如果被编码或者净化则返回safe
 						//被isSanitization函数取代
@@ -422,7 +419,7 @@ class TaintAnalyser {
 						$variable = $this->getVarsByFlow($flow) ;
 						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 						$encodingArr = $flow->getLocation()->getEncoding() ;
-						$saniArr =  $flow->getLocation()->getSanitization() ;
+						$saniArr = $flow->getLocation()->getSanitization() ;
 						
 						if ($flow && (count($variable) > 0)){
 							foreach($variable as $var){
@@ -526,7 +523,6 @@ class TaintAnalyser {
 	 * @param FileSummary 当前文件摘要
 	 */
 	public function analysis($block,$node,$argName,$fileSummary){
-		echo "start<br/>" ;
 		$path = $fileSummary->getPath() ;
 		//获取前驱基本块集合并将当前基本量添加至列表
 		$this->getPrevBlocks($block) ;
@@ -538,7 +534,6 @@ class TaintAnalyser {
 		//多个基本块的处理
 		$this->pathArr = array() ;
 		$this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
-		echo "end" ;
 	}
 	
 	
