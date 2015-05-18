@@ -79,7 +79,16 @@ class NodeUtils{
                 foreach ($names as $name)
                     return NodeUtils::getNodeStringName($node->$name);
                 break;
-                
+            //$this->property对象属性
+            case "Expr_PropertyFetch":
+                $names = $node->getSubNodeNames();
+                //print_r($names);
+                $ret = '';
+                foreach ($names as $name)
+                     $ret .= NodeUtils::getNodeStringName($node->$name);
+                $ret .= $node->name;
+                return $ret;
+                break;    
             default:
                 ;
             break;
@@ -185,7 +194,7 @@ class NodeUtils{
      * 获取concat中的所有变量名
      * @param Node $node
      */
-    private function getConcatParams($node){
+    private static function getConcatParams($node){
     	$retArr = array() ;
     	if($node->getType() != "Expr_BinaryOp_Concat"){
     		return $retArr ;

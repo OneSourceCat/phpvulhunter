@@ -31,7 +31,8 @@ class FileUtils
             if ($file == "." or $file == "..")
                 continue;
             elseif (is_dir($filePath)) {
-                foreach (FileUtils::getPHPfile($filePath) as $filePath)
+                $files = FileUtils::getPHPfile($filePath);
+                foreach ($files as $filePath)
                     if (! is_null($filePath))
                         array_push($ret, $filePath);
             } elseif (substr($filePath, - 4) == ".php")
@@ -84,9 +85,10 @@ class FileUtils
      */
     public static function getAbsPath($filePath, $rpath){
     	global $project_path;
+    	global $allFiles;
     	//补全路径
     	$currentDir = dirname($filePath);
-    	$allFile = FileUtils::getPHPfile($project_path);
+        //$allFiles = FileUtils::getPHPfile($project_path);
     	$absPath = '';
 	    if(!strpbrk($rpath,'/')){
 	        //require_once "test.php"
@@ -109,7 +111,7 @@ class FileUtils
 	    }else{
 	        //require_once CURR_PATH . '/c.php';
 	        $pathLen = strlen($rpath);
-	        foreach ($allFile as $fileAbsPath){
+	        foreach ($allFiles as $fileAbsPath){
 	            if(strstr($fileAbsPath,$rpath)){
 	                return $fileAbsPath;
 	            }

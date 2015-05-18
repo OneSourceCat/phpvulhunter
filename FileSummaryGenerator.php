@@ -41,7 +41,12 @@ class FileSummaryGenerator {
 	    $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 	    $traverser = new PhpParser\NodeTraverser ;
 	    $code = file_get_contents($absPath);
-	    $stmts = $parser->parse($code);
+	    try {
+	        $stmts = $parser->parse($code);
+	    } catch (Exception $e) {
+	        return ;
+	    }
+	    
 	    $traverser->addVisitor($visitor) ;
 	    $traverser->traverse($stmts) ;
 	    $nodes = $visitor->getNodes() ;

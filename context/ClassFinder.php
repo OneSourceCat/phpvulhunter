@@ -163,7 +163,7 @@ class Context {
         //补全路径
         $currentDir = dirname($path);
         global $project_path;
-        $allfile = FileUtils::getPHPfile($project_path);
+        //$allfiles = FileUtils::getPHPfile($project_path);
         foreach ($require_array as $filepath){
             $absPath = FileUtils::getAbsPath($path, $filepath);
             array_push($tempRequireFile, $absPath);
@@ -199,8 +199,12 @@ class Context {
 	        $traverser = new PhpParser\NodeTraverser ;
 	        $visitor->startLine = $startLine ;
 	        $visitor->endLine = $endLine ;
-	         
-	        $stmts = $parser->parse($code) ;
+	        try {
+	            $stmts = $parser->parse($code) ;
+	        } catch (Exception $e) {
+	            return null;
+	        }
+	        
 	        $traverser->addVisitor($visitor) ;
 	        $traverser->traverse($stmts) ;
 	        return $visitor->getFunctionBody() ;
@@ -264,49 +268,49 @@ class ClassVisitor extends PhpParser\NodeVisitorAbstract{
 			$record = new Record ;
 			$record->path = $this->class_path ;
 			//设置类的名字
-			echo "Class_name:$node->name<br/>";
+			//echo "Class_name:$node->name<br/>";
 			$record->class_name = $node->name ;
 
 			if($node->extends) $record->class_extends = $node->extends->parts[0];
 			$record->class_implements = $node->implements ;
 
 			//设置类的成员变量
-			echo "Class_properties:" ;
+			//echo "Class_properties:" ;
 			$props = array() ;
 			foreach($node->stmts as $key => $value){
 				//找到类属性信息
 				if($value instanceof Node\Stmt\Property){
-					echo $value->props[0]->name ."<br/>";
+					//echo $value->props[0]->name ."<br/>";
 					array_push($props,$value->props[0]->name) ;
 				}
 			}
 			$record->class_properties = $props ;
 
 			//设置类的方法
-			echo "Class_methods:<br/>" ;
+			//echo "Class_methods:<br/>" ;
 			foreach ($node->stmts as $key => $value) {
 				if($value instanceof Node\Stmt\ClassMethod){
 					//初始化类方法的描述
 					$method = array('name'=>'','params'=>array(),'startLine'=>0,'endLine'=>0);
 					
 					//设置方法名称
-					echo "[methods_name]:" .$value->name ."<br/>";
+					//echo "[methods_name]:" .$value->name ."<br/>";
 					$method['name'] = $value->name ;
 
 					//设置方法的参数
-					echo "[methods_params]:";
+					//echo "[methods_params]:";
 					for($i=0;$i<count($value->params);$i++){
-						echo $value->params[$i]->name ."\t";
+						//echo $value->params[$i]->name ."\t";
 						array_push($method['params'],$value->params[$i]->name) ;
 					}
-					echo "<br>" ;
+					//echo "<br>" ;
 
 					//设置方法的起始行号和终止行号
-					echo "[method_Lineinfo]:" ;
+					//echo "[method_Lineinfo]:" ;
 					$method['startLine'] = $value->getAttribute("startLine") ;
 					$method['endLine'] = $value->getAttribute("endLine") ;
 					//echo "startLine:$method['startLine'],endLine:$method['endLine']" ;
-					echo "<br>" ;
+					//echo "<br>" ;
 
 					array_push($record->class_methods,$method);
 				}
@@ -327,23 +331,23 @@ class ClassVisitor extends PhpParser\NodeVisitorAbstract{
 		    $method = array('name'=>'','params'=>array(),'startLine'=>0,'endLine'=>0);
 		
 		    //设置方法名称
-		    echo "[methods_name]:" .$node->name ."<br/>";
+		    //echo "[methods_name]:" .$node->name ."<br/>";
 		    $method['name'] = $node->name ;
 		
 		    //设置方法的参数
-		    echo "[methods_params]:";
+		    //echo "[methods_params]:";
 		    for($i=0;$i<count($node->params);$i++){
-		        echo $node->params[$i]->name ."\t";
+		        //echo $node->params[$i]->name ."\t";
 		        array_push($method['params'],$node->params[$i]->name) ;
 		    }
-		    echo "<br>" ;
+		    //echo "<br>" ;
 		
 		    //设置方法的起始行号和终止行号
-		    echo "[method_Lineinfo]:" ;
+		    //echo "[method_Lineinfo]:" ;
 		    $method['startLine'] = $node->getAttribute("startLine") ;
 		    $method['endLine'] = $node->getAttribute("endLine") ;
 		    //echo "startLine:$method['startLine'],endLine:$method['endLine']" ;
-		    echo "<br>" ;
+		    //echo "<br>" ;
 		     
 		    array_push($record->class_methods,$method);
 		
@@ -423,6 +427,7 @@ class ClassFinder{
 
 		$filearr = $this->getAllSourceFiles() ;
 		$len = count($filearr) ;
+		
 		for($i=0;$i<$len;$i++){
 			$this->visitor->class_path = $filearr[$i] ;
 			$code = file_get_contents($this->visitor->class_path);
