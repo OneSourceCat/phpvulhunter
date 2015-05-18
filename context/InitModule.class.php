@@ -14,8 +14,7 @@ class InitModule {
     public function init($project_path){
         
         $allFiles = FileUtils::getPHPfile($project_path);
-        print_r('init... <br/>');
-        
+
         $this->initContext($project_path);
         //test
         $context = Context::getInstance() ;
@@ -27,7 +26,7 @@ class InitModule {
         //$absPath = $path;
         //$ret = FileSummaryGenerator::getFileSummary($absPath);
         //print_r($ret);
-        print_r('init end...<br/>');
+
     }
     /**
      * 初始化class finder上下文

@@ -57,28 +57,8 @@ class SecureUtils {
 	 * @return bool true 表示受到净化   false反之
 	 */
 	public static function checkSanitiByArr($type, $sanitiArr){
-		//CMS的编码
-		global $encoding ;
-		
 		//获取用户自定义sink上下文
 		$userDefSinkContext = UserDefinedSinkContext::getInstance() ;
-		
-		//判断宽字节注入
-		//encoding为GBK，并且调用顺序为addslashes => iconv
-		$flag = false ;
-		foreach ($sanitiArr as $value){
-			if($value->funcName == 'iconv'){
-				$flag = true ;
-			}
-		}
-		if($flag && $encoding == 'GBK'){
-			$iconv_pos = array_search('iconv', $sanitiArr) ;
-			$slashes_list = array('addslashes','mysql_escape_string') ;
-			$position = self::findFirstPosition($sanitiArr, $slashes_list) ;
-			if($position !== false && $iconv_pos > $position){
-				return true ;
-			}
-		}
 		
 		//判断sanitiArr中是否存在list中
 		$userDefSinkSaniti = $userDefSinkContext->getSinksSanitiByType($type) ;

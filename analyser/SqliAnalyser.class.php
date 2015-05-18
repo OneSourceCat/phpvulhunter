@@ -18,19 +18,45 @@ class SqliAnalyser {
 	 * @return bool  true说明净化正确   false说明没有净化
 	 */
 	private function check_sanitization($var,$saniArr){
+		//CMS的编码
+		global $encoding ;
+		
+		
 		//如果数组为空，说明没有进行任何净化
 		if(count($saniArr) == 0){
 			return false ;
-		}else if (SecureUtils::checkSanitiByArr("SQLI", $saniArr)) {
-			//如果判别为真,则说明有效净化过
+		}
+		
+		//判断宽字节注入
+		//encoding为GBK，并且调用顺序为addslashes => iconv
+		$flag = false ;
+		foreach ($saniArr as $value){
+			if($value->funcName == 'iconv'){
+				$flag = true ;
+			}
+		}
+		
+		if($flag && $encoding == 'GBK'){
+			$iconv_pos = array_search('iconv', $saniArr) ;
+			$slashes_list = array('addslashes','mysql_escape_string') ;
+			$position = self::findFirstPosition($saniArr, $slashes_list) ;
+			if($position !== false && $iconv_pos > $position){
+				return true ;
+			}
+		}
+		
+		
+		//插件式判别，如果判别为真,则说明有效净化过
+		if (SecureUtils::checkSanitiByArr("SQLI", $saniArr)) {
 			return true;
-		}else if($var->getType() == "int" && in_array("addslashes", $saniArr)){
-			//数值型注入，转义无效
-			return false ;
-		}else{
+		}
+		
+		//数值型注入，转义无效
+		if($var->getType() == "int" && in_array("addslashes", $saniArr)){
 			return false ;
 		}
-
+		
+		return false ;
 	}
 	
 	

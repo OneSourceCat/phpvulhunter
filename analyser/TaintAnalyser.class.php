@@ -534,6 +534,7 @@ class TaintAnalyser {
 		//多个基本块的处理
 		$this->pathArr = array() ;
 		$this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
+		
 	}
 	
 	

@@ -260,21 +260,16 @@ class CFGGenerator{
 					EncodingHandler::setEncodeInfo($part, $dataFlow, $block) ;
 
 				}
-				
-				
-				
+
 				//处理内置函数
 				
 			}
-			
-			
+
 			//处理三元表达式
 			if($part && $part->getType() == "Expr_Ternary"){
 				BIFuncUtils::ternaryHandler($type, $part, $dataFlow) ;
 			}
-			
-			
-			
+
 		}
 		
 		//处理完一条赋值语句，加入DataFlowMap
@@ -408,11 +403,9 @@ class CFGGenerator{
 				$registerItem->setName($varName) ;
 				$registerItem->setIsUrlOverWrite(true) ;
 				$block->getBlockSummary()->addRegisterGlobalItem($registerItem) ;
-				break ;
-				
+				break ;			
 		}
-		
-		
+
 	}
 	
 	
@@ -518,16 +511,22 @@ class CFGGenerator{
 	    }else{
 	        //如果不是sink调用，启动过程间分析
 	        $context = Context::getInstance() ;
-	        $funcBody = $context->getClassMethodBody($funcName,$this->fileSummary->getPath(),
-	        		$this->fileSummary->getIncludeMap());
+	        $funcBody = $context->getClassMethodBody(
+	        	$funcName,
+	        	$this->fileSummary->getPath(),
+	        	$this->fileSummary->getIncludeMap()
+	        );
 	        
+			//check
+	        if(!$funcBody || !is_object($funcBody)) return ;
+			
 	        if($funcBody->getType() == "Stmt_ClassMethod"){
 	        	$funcBody->stmts = $funcBody->stmts[0] ;
 	        }
-	        
-	        if(!$funcBody) return ;
-			
+	
+	        //构建相应方法体的block和summary
 	        $nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
+	        
 	        //ret危险参数的位置比如：array(0)
 	        $ret = $this->sinkFunctionHandler($funcBody, $nextblock, $block);
 
