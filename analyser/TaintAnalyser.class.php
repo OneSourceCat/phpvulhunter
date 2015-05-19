@@ -170,11 +170,24 @@ class TaintAnalyser {
 		$flows = array_reverse($flows); //逆序处理flows
 		
 		foreach ($flows as $flow){
+		    //print_r($flow) ;
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
+				//先对左边的变量进行查询
+				if(is_object($flow->getLocation())){
+				    $target = $flow->getLocation() ;
+				    $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+				    $encodingArr = $target->getEncoding() ;
+				    $saniArr =  $target->getSanitization() ;
+				    
+				    $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
+				    if($res == true){
+				        return "safe" ;
+				    }
+				}
+			    
 				//被isSanitization函数取代
 				$variable = $this->getVarsByFlow($flow) ;
-				
 				if ($flow && (count($variable) > 0)){
 					$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 					$encodingArr = $flow->getLocation()->getEncoding() ;
@@ -184,7 +197,6 @@ class TaintAnalyser {
 						if(is_object($var)){ 
 							$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
 							if($res == true){
-								$name = NodeUtils::getNodeStringName($var) ;
 								return "safe" ;
 							}
 						}
@@ -206,7 +218,6 @@ class TaintAnalyser {
 						//报告漏洞
 						$path = $fileSummary->getPath() ;
 						$this->report($path, $node, $flow->getLocation(), $type) ;
-						return true ;
 					}else{
 						//首先进行文件夹的分析
 						//首先根据fileSummary获取到fileSummaryMap
@@ -271,6 +282,19 @@ class TaintAnalyser {
 				foreach ($flows as $flow){
 					if($flow->getName() == $argName){
 						//处理净化信息,如果被编码或者净化则返回safe
+					    //先对左边的变量进行查询
+					    if(is_object($flow->getLocation())){
+					        $target = $flow->getLocation() ;
+					        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+					        $encodingArr = $target->getEncoding() ;
+					        $saniArr =  $target->getSanitization() ;
+					    
+					        $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
+					        if($res == true){
+					            return "safe" ;
+					        }
+					    }
+					    
 						//被isSanitization函数取代
 						$variable = $this->getVarsByFlow($flow) ;
 						
@@ -353,6 +377,19 @@ class TaintAnalyser {
 					foreach ($flows as $flow){
 						if($flow->getName() == $argName){
 							//处理净化信息,如果被编码或者净化则返回safe
+						    //先对左边的变量进行查询
+						    if(is_object($flow->getLocation())){
+						        $target = $flow->getLocation() ;
+						        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+						        $encodingArr = $target->getEncoding() ;
+						        $saniArr =  $target->getSanitization() ;
+						    
+						        $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
+						        if($res == true){
+						            return "safe" ;
+						        }
+						    }
+						    
 							//被isSanitization函数取代
 							$variable = $this->getVarsByFlow($flow) ;
 							
@@ -384,7 +421,7 @@ class TaintAnalyser {
 									//报告漏洞
 									$path = $fileSummary->getPath() ;
 									$this->report($path, $node, $flow->getLocation(),$type) ;
-									return true ;
+									//return true ;
 								}else{
 									//首先进行文件夹的分析
 									//首先根据fileSummary获取到fileSummaryMap

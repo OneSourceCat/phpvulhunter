@@ -21,6 +21,7 @@ class TypeUtils {
 		//用户自定义sink
 		$userDefinedSink = UserDefinedSinkContext::getInstance() ;
 		$U_SINK_ALL = $userDefinedSink->getAllSinks() ;
+        
 		//系统sink
 		if(key_exists($funcName, $F_SINK_ALL)){
 			foreach ($F_SINK_ARRAY as $value){

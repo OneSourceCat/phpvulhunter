@@ -25,7 +25,7 @@ function load_file($path){
 	
 	$pEntryBlock = new BasicBlock() ;
 	$pEntryBlock->is_entry = true ;
-	
+
 	//开始分析
 	$cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 }

@@ -135,7 +135,7 @@ class UserDefinedSinkContext {
 		$sink_list = $this->getAllSinkArray() ;
 		foreach ($sink_list as $sink){
 			if($sink['__NAME__'] == $type){
-				return $sink[2] ;
+				return $sink ;
 			}
 		}
 	}

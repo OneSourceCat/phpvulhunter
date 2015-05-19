@@ -18,14 +18,6 @@ class CFGGenerator{
 	
 	//全局的filesummary对象
 	private $fileSummary ;
-	
-	public function getFileSummary() {
-		return $this->fileSummary;
-	}
-
-	public function setFileSummary($fileSummary) {
-		$this->fileSummary = $fileSummary;
-	}
 
 	//构造器
 	public function __construct(){
@@ -33,6 +25,16 @@ class CFGGenerator{
 		$this->traverser = new PhpParser\NodeTraverser ;
 		$this->fileSummary = new FileSummary() ;
 	}	
+	
+	//fileSummary的get方法
+	public function getFileSummary() {
+	    return $this->fileSummary;
+	}
+	
+	//fileSummary的set方法
+	public function setFileSummary($fileSummary) {
+	    $this->fileSummary = $fileSummary;
+	}
 	
 	/**
 	 * 给定一个JUMP类型的Statement，获取分支node
@@ -113,6 +115,7 @@ class CFGGenerator{
 		return $branches ;
 	}
 	
+	
 	/**
 	 * 处理循环结构，将循环变量添加到基本块
 	 * @param $node  AST Node
@@ -168,7 +171,8 @@ class CFGGenerator{
 
 		//处理$GLOBALS的赋值
 		//$GLOBAL['name'] = "chongrui" ; 数据流信息为 $name = "chongrui" ;
-		if ($part && SymbolUtils::isArrayDimFetch($part) && (substr(NodeUtils::getNodeStringName($part),0,7)=="GLOBALS")){
+		if ($part && SymbolUtils::isArrayDimFetch($part) && 
+		      (substr(NodeUtils::getNodeStringName($part),0,7)=="GLOBALS")){
 		    //加入dataFlow
 		    $arr = new ArrayDimFetchSymbol() ;
 		    $arr->setValue($part) ;
@@ -623,7 +627,9 @@ class CFGGenerator{
 				
 				//全局变量的注册extract,import_request_variables
 				//识别净化值
-				case 'Expr_FuncCall' && (NodeUtils::getNodeFunctionName($node) == "import_request_variables" || NodeUtils::getNodeFunctionName($node) == "extract") :
+				case 'Expr_FuncCall' && 
+				     (NodeUtils::getNodeFunctionName($node) == "import_request_variables" || 
+				     NodeUtils::getNodeFunctionName($node) == "extract") :
 					$this->registerGlobalHandler($node, $block) ;
 					break ;
 					
@@ -810,7 +816,9 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
 	 */
 	public function leaveNode(Node $node) {
 		if($node instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr){
-			if(!($node->left instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr) && !($node->right instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
+			if(!($node->left instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr) && 
+			    !($node->right instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
+			    
 				array_push($this->branches,$node->left) ;
 				array_push($this->branches,$node->right) ;
 			}else{
@@ -831,7 +839,7 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
  * @author Exploit
  *
  */
-class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
+class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 
 	public $posArr ;   //参数列表
 	public $block ;  //当前基本块
@@ -878,7 +886,12 @@ class FunctionVisitor extends  PhpParser\NodeVisitorAbstract{
 				
 				$context = Context::getInstance() ;
 				$funcName = NodeUtils::getNodeFunctionName($node);
-			    $funcBody = $context->getClassMethodBody($funcName,$fileSummary->getPath(),$this->fileSummary->getIncludeMap());
+			    $funcBody = $context->getClassMethodBody(
+			        $funcName,
+			        $this->fileSummary->getPath(),
+			        $this->fileSummary->getIncludeMap()
+			    );
+			    
 			    if(!$funcBody) break ;
 			    $cfg = new CFGGenerator() ;
 			    //$this->block->function[$nodeName]
