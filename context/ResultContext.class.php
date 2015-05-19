@@ -92,7 +92,6 @@ class Result{
 		return $this->record;
 	}
 
-	
 }
 
 

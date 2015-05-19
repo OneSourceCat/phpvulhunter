@@ -27,6 +27,34 @@ class TaintAnalyser {
 	}
 	
 	/**
+	 * 判断字符串needle是否是str的开头
+	 * @param string $str
+	 * @param string $needle
+	 * @return boolean
+	 */
+	private function startWith($str, $needle) {
+        if(strpos($str, $needle) === 0){
+            return true ;
+        }else{
+            return false ;
+        }
+    }
+	
+    /**
+     * 判断target是否是source的结尾
+     * @param string $source
+     * @param string $target
+     * @return boolean
+     */
+	private function endsWith($source, $target){
+	    if(strrchr($source,$target) == $target){
+	        return true ;
+	    }else{
+	        return false ;
+	    }
+	}
+	
+	/**
 	 * 根据变量的节点返回变量的名称
 	 * @param unknown $var
 	 * @return Ambigous <base, NULL, string, unknown>
@@ -75,9 +103,8 @@ class TaintAnalyser {
 					continue ;
 				}
 				//判断是否被单引号包裹
-				$is_start_with = strpos($vars[$i-1]->getValue(),"'",0) ;
-				$is_end_with = strpos($vars[$i+1]->getValue(),"'",strlen($vars[$i-1]->getValue())-2) ;
-				
+				$is_start_with = $this->startWith($vars[$i-1]->getValue(), "'");
+				$is_end_with = $this->endsWith($vars[$i+1]->getValue(), "'") ;
 				if($is_start_with != -1 && $is_end_with != -1){
 					$vars[$i]->setType("int") ;
 				}
@@ -86,7 +113,6 @@ class TaintAnalyser {
 				if($vars[$i] instanceof VariableSymbol){
 					$vars[$i]->setType("int") ;
 				}
-				
 			}
 		}
 	}
@@ -242,6 +268,7 @@ class TaintAnalyser {
 	 * @param FileSummary $fileSummary 当前文件的文件摘要
 	 */
 	public function multiBlockHandler($block, $argName, $node, $fileSummary){
+	    echo $argName . "<br/>" ;
 		if($this->pathArr){
 			$this->pathArr = array() ;
 		}
@@ -259,6 +286,7 @@ class TaintAnalyser {
 		if(!is_array($block_list[0])){
 			$flows = $block_list[0]->getBlockSummary()->getDataFlowMap() ;
 			$flows = array_reverse($flows) ;
+		
 			
 			//如果flow中没有信息，则换下一个基本块
 			if($flows == null){
@@ -296,12 +324,12 @@ class TaintAnalyser {
 					    }
 					    
 						//被isSanitization函数取代
+
 						$variable = $this->getVarsByFlow($flow) ;
-						
 						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 						$encodingArr = $flow->getLocation()->getEncoding() ;
 						$saniArr =  $flow->getLocation()->getSanitization() ;
-						
+
 						if ($flow && (count($variable) > 0)){
 							foreach($variable as $var){
 								if(is_object($var)){
@@ -348,6 +376,7 @@ class TaintAnalyser {
 					}
 				}
 			}
+			
 		}else if(is_array($block_list[0]) && count($block_list) > 0){
 			//是平行结构
 			foreach ($block_list[0] as $block_item){
@@ -357,7 +386,7 @@ class TaintAnalyser {
 				if($flows == null){
 					//找到新的argName
 					foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
-						if($flow->getName() == $argName){			
+						if($flow->getName() == $argName){		
 							$vars = $this->getVarsByFlow($flow) ;
 							foreach ($vars as $var){
 								$varName = $this->getVarName($var) ;
