@@ -100,7 +100,7 @@ class Context {
 	    //得到require文件包含的函数集合
 	    $records = $this->getRequireFileFuncs($path,$require_array);
 	    $method = null ;
-	    $path = '';
+	    $path = null;
 	    $funcInfo = explode(":", $funcName);
 	    $className = '';
 	    if(count($funcInfo)>1){
@@ -109,8 +109,6 @@ class Context {
 	    }else{
 	        $funcName = $funcInfo[0];
 	    }
-	   
-	    
 	    //寻找相应的method
 	    for($i=0;$i<count($records);$i++) {
 	        if($records[$i]->class_name == $className){
@@ -121,22 +119,13 @@ class Context {
     	                break;
     	            }
     	        }
-	        }else{
-	        	foreach ($records[$i]->class_methods as $value){
-	        		if($value['name'] == $funcName){
-	        			$method = $value ;
-	        			$path = $records[$i]->path ;
-	        			break ;
-	        		}
-	        	}
 	        }
 	    }
-	    
-	    //在包含的文件中找不到相应函数，只能去全部的函数集合中寻找
-	    if(($path == '') && ($method = null)){
+	    if(($path == null) && ($method == null)){
+	        //在包含的文件中找不到相应函数，只能去全部的函数集合中寻找
 	        for($i=0;$i<count($this->records);$i++) {
 	            if($this->records[$i]->class_name == $className){
-	                foreach($this->records[$i]->class_methods as $k => $item){
+	                foreach($this->records[$i]->class_methods as $item){
 	                    if($item['name'] ==  $funcName ){
 	                        $method = $item ;
 	                        $path = $this->records[$i]->path;
@@ -146,7 +135,18 @@ class Context {
 	            }
 	        }
 	    }
-	    
+	    if(($path == null) && ($method == null)){
+	        //在包含的文件中找不到相应函数，在全部的函数集合中只找函数名一致的
+	        for($i=0;$i<count($this->records);$i++) {
+                foreach($this->records[$i]->class_methods as $item){
+                    if($item['name'] ==  $funcName ){
+                        $method = $item ;
+                        $path = $this->records[$i]->path;
+                        break;
+                    }
+                }
+	        }
+	    }
 	    return $this->getFunction($path, $method);
 	}
 	
@@ -407,7 +407,6 @@ class ClassFinder{
 	*/
 	private function getAllSourceFiles(){
 		//return $this->fileUtil->getPHPfile($this->path) ;
-		var_dump($this->path) ;
 		return FileUtils::getPHPfile($this->path);
 	}
 

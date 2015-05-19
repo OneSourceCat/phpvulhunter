@@ -103,8 +103,10 @@ class TaintAnalyser {
 					continue ;
 				}
 				//判断是否被单引号包裹
+
 				$is_start_with = $this->startWith($vars[$i-1]->getValue(), "'");
 				$is_end_with = $this->endsWith($vars[$i+1]->getValue(), "'") ;
+
 				if($is_start_with != -1 && $is_end_with != -1){
 					$vars[$i]->setType("int") ;
 				}

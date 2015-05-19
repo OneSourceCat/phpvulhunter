@@ -537,7 +537,7 @@ class NodeUtils{
     	if(key_exists($funcName, $U_SINK_ALL)){
     		foreach ($userDefinedSink->getAllSinkArray() as $value){
     			if(key_exists($funcName, $value)){
-    				return $U_SINK_ALL[$funcName] ;
+    				return $U_SINK_ALL[$funcName][0] ;
     			}
     		}
     	
