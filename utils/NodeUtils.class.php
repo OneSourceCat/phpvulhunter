@@ -295,14 +295,28 @@ class NodeUtils{
     	$argsNameArr = self::getNodeFuncParams($node) ;	
     	$retArr = array() ;
     	if(count($argsNameArr) > 0){
-    		foreach ($argsPos[0] as $value){
-    			//sink是从索引1开始的
-    			//如果参数位置为0，如echo，则不做处理
-    			if($value != 0){
-    				$value -= 1 ;
+    		//类方法判别时，argsPos[0]为array
+    		if(is_array($argsPos[0])){
+    			foreach ($argsPos[0] as $value){
+    				//sink是从索引1开始的
+    				//如果参数位置为0，如echo，则不做处理
+    				if($value != 0){
+    					$value -= 1 ;
+    				}
+    				array_push($retArr,$argsNameArr[$value]) ;
     			}
-    			array_push($retArr,$argsNameArr[$value]) ;
+    		}else{
+    			//普通方法判断时，argsPos为array
+    			foreach ($argsPos as $value){
+    				//sink是从索引1开始的
+    				//如果参数位置为0，如echo，则不做处理
+    				if($value != 0){
+    					$value -= 1 ;
+    				}
+    				array_push($retArr,$argsNameArr[$value]) ;
+    			}
     		}
+    		
     	}
     	return $retArr ;
     }

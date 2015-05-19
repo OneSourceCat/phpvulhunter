@@ -95,7 +95,7 @@ class AnalyseUtils {
 			return -1 ;
 		}
 	
-		$secu_ins = array('md5','sha1') ;
+		$secu_ins = array('md5','sha1','crc32') ;
 		$vul_encode_ins = array('urlencode','base64_encode','html_entity_decode','htmlspecialchars_decode') ;
 	
 		//如果最后一个编码为secu_ins,则返回false

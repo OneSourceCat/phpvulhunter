@@ -1,11 +1,9 @@
 <?php
 
-require 'source.php';
+$id = trim(urldecode(urlencode($_GET['id']))) ;
 
-$id = $_GET['id'] ;
-$db = new MYSQLDB() ;
 
 $sql = "xxx". $id ;
-$db->query($sql) ;
+mysql_query($sql) ;
 
 ?>

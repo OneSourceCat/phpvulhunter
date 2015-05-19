@@ -312,7 +312,12 @@ class TaintAnalyser {
 								$fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
 								
 								//文件间分析失败，递归
-								!empty($block_list) && $this->multiBlockHandler($block_list[0],$varName,$node,$fileSummary) ;
+								!empty($block_list) && $this->multiBlockHandler(
+									$block_list[0],
+									$varName,
+									$node,
+									$fileSummary
+								) ;
 								!empty($block_list) && array_shift($block_list) ;
 							}
 						}
@@ -534,11 +539,8 @@ class TaintAnalyser {
 		//多个基本块的处理
 		$this->pathArr = array() ;
 		$this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
-		
 	}
-	
-	
-	
+
 	
 	/**
 	 * 报告漏洞的函数

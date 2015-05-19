@@ -51,9 +51,13 @@ if(is_file($project_path)){
 	foreach ($dirs as $dir){
 		$path_list = FileUtils::getPHPfile($dir) ;
 		foreach ($path_list as $path){
-			load_file($path) ;
-			$count ++ ;
-			//传给templates
+			try{
+				load_file($path) ;
+				$count ++ ;
+				//传给templates
+			}catch(Exception $e){
+				continue ;
+			}	
 		}
 	}
 }else{
