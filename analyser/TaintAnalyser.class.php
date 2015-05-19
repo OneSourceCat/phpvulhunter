@@ -296,6 +296,7 @@ class TaintAnalyser {
 		                        $varName = $this->getVarName($var) ;
 		                        $this->multiBlockHandler($bitem, $varName, $node, $fileSummary) ;
 		                    }
+		                    return ;
 		                }else{
 		                    //在最初block中，argName没有变化则直接递归
 		    
@@ -303,6 +304,7 @@ class TaintAnalyser {
 		                        return ;
 		                    }else{
 		                        $this->multiBlockHandler($bitem, $argName, $node, $fileSummary) ;
+                                   return ;
 		                    }
 		    
 		                }
@@ -337,16 +339,6 @@ class TaintAnalyser {
 		                            continue ;
 		                        }
 		    
-// 		                        if(is_object($var)){
-// 		                            $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-// 		                            $encodingArr = $var->getEncoding() ;
-// 		                            $saniArr =  $var->getSanitization() ;
-// 		                            $res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-// 		                            if($res === true){
-// 		                                continue ;
-// 		                            }
-// 		                        }
-		    
 		                        $varName = $this->getVarName($var) ;
 		                        //如果var右边有source项
 		                        if(in_array($varName, $this->sourcesArr)){
@@ -374,7 +366,7 @@ class TaintAnalyser {
 
 		                        }
 		                    }
-		    
+                		    return ;
 		                }
 		            }
 		    
@@ -396,9 +388,11 @@ class TaintAnalyser {
 		                            $this->multiBlockHandler($block_item, $varName, $node,$fileSummary) ;
 
 		                        }
+		                        return ;
 		                    }else{
 		                        //在最初block中，argName没有变化则直接递归
 		                        $this->multiBlockHandler($block_item, $argName, $node,$fileSummary) ;
+                                return ;
 		                    }
 		                }
 		            }else{
@@ -429,16 +423,6 @@ class TaintAnalyser {
 		                                continue ;
 		                            }
 		    
-// 		                            if(is_object($var)){
-// 		                                $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-// 		                                $encodingArr = $var->getEncoding() ;
-// 		                                $saniArr =  $var->getSanitization() ;
-// 		                                $res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-// 		                                if($res == true){
-// 		                                    continue ;
-// 		                                }
-// 		                            }
-		                            	
 		                            $varName = $this->getVarName($var) ;
 		                            //如果var右边有source项,直接报告漏洞
 		                            if(in_array($varName, $this->sourcesArr)){
@@ -457,6 +441,7 @@ class TaintAnalyser {
 
 		                            }
 		                        }
+		                        return ;
 		                    }
 		                }
 		            }
