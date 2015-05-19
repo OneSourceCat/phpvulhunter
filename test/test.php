@@ -1,10 +1,10 @@
 <?php
 	$cat_name=$_POST['cat_name'];
 	$parent_id=intval($_POST['parent_id']);
-// 	if (empty($cat_name))
-// 	{
-// 		sys_message('分类名字不能为空',$referer_url);
-// 	}
+	if (empty($cat_name))
+	{
+		sys_message('分类名字不能为空',$referer_url);
+	}
 	$cat_desc=$_POST['cat_desc'];
 	$list_sort=$_POST['list_sort'];
 	$url_type=intval($_POST['url_type']);

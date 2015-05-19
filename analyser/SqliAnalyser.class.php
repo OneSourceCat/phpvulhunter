@@ -20,8 +20,7 @@ class SqliAnalyser {
 	private function check_sanitization($var,$saniArr){
 		//CMS的编码
 		global $encoding ;
-		
-		
+
 		//如果数组为空，说明没有进行任何净化
 		if(count($saniArr) == 0){
 			return false ;
@@ -70,10 +69,9 @@ class SqliAnalyser {
 	 * @return bool
 	 */
 	public function analyse($var,$saniArr,$encodingArr){
-	    echo "--------start-------<br/>";
-	    print_r($var) ;
-	    print_r($saniArr) ;
-	    echo "--------end-------<br/>";
+// 	    echo "------<br/>";
+// 	    print_r($var) ;
+// 	    print_r($saniArr) ; 
 		//处理编码
 		AnalyseUtils::initSaniti($saniArr) ;
 		AnalyseUtils::initEncodeList($encodingArr) ;

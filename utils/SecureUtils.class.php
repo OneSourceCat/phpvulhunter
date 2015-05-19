@@ -10,6 +10,19 @@ require_once CURR_PATH . '/conf/sinks.php';
  */
 class SecureUtils {
 	
+    /**
+     * 返回通用的安全函数列表
+     * @return multitype:
+     */
+    public static function getCommonSecureList(){
+        global $F_SECURING_STRING, $F_SECURING_BOOL ;
+        unset($F_SECURING_STRING['__NAME__']) ;
+        unset($F_SECURING_BOOL['__NAME__']) ;
+        
+        return array_merge($F_SECURING_STRING, $F_SECURING_BOOL) ;
+    }
+    
+    
 	/**
 	 * 根据漏洞的类型寻找对应的净化函数
 	 * 'XSS','SQLI','HTTP','CODE','EXEC','LDAP','INCLUDE','FILE','XPATH','FILEAFFECT'
@@ -63,8 +76,9 @@ class SecureUtils {
 		//判断sanitiArr中是否存在list中
 		$userDefSinkSaniti = $userDefSinkContext->getSinksSanitiByType($type) ;
 		$confDefSinkSaniti = self::getSecureListByType($type) ;
-		$combine_list = array_merge($userDefSinkSaniti,$confDefSinkSaniti) ;
+		$commonDefSinkSaniti = self::getCommonSecureList() ;
 		
+		$combine_list = array_merge($userDefSinkSaniti,$confDefSinkSaniti,$commonDefSinkSaniti) ;
 		foreach ($sanitiArr as $value){
 			if(in_array($value->funcName, $combine_list)){
 				return true ;

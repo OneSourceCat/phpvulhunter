@@ -213,25 +213,7 @@ class TaintAnalyser {
 				        return "safe" ;
 				    }
 				}
-			    
-				//被isSanitization函数取代
-				$variable = $this->getVarsByFlow($flow) ;
-				if ($flow && (count($variable) > 0)){
-					$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-					$encodingArr = $flow->getLocation()->getEncoding() ;
-					$saniArr =  $flow->getLocation()->getSanitization() ;
-					
-					foreach($variable as $var){
-						if(is_object($var)){ 
-							$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-							if($res == true){
-								return "safe" ;
-							}
-						}
-						
-					}
-					
-				}
+
 				
 				//获取flow中的右边赋值变量
 				//得到flow->getValue()的变量node
@@ -240,6 +222,21 @@ class TaintAnalyser {
 				
 				$retarr = array();
 				foreach($vars as $var){
+				    
+				    if($var instanceof ValueSymbol) continue ;
+				    
+				    $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+				    $encodingArr = $var->getEncoding() ;
+				    $saniArr =  $var->getSanitization() ;
+				    
+				    if(is_object($var)){
+				        $res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+				        if($res == true){
+				            $name = NodeUtils::getNodeStringName($var) ;
+				            continue ;
+				        }
+				    }
+				    
 					$varName = $this->getVarName($var) ;
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
@@ -270,7 +267,6 @@ class TaintAnalyser {
 	 * @param FileSummary $fileSummary 当前文件的文件摘要
 	 */
 	public function multiBlockHandler($block, $argName, $node, $fileSummary){
-	    echo $argName . "<br/>" ;
 		if($this->pathArr){
 			$this->pathArr = array() ;
 		}
@@ -284,193 +280,190 @@ class TaintAnalyser {
 			return  ;
 		}
 		
-		//处理非平行结构的前驱基本块
-		if(!is_array($block_list[0])){
-			$flows = $block_list[0]->getBlockSummary()->getDataFlowMap() ;
-			$flows = array_reverse($flows) ;
-		
-			
-			//如果flow中没有信息，则换下一个基本块
-			if($flows == null){
-				//找到新的argName
-				foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
-					if($flow->getName() == $argName){
-						$vars = $this->getVarsByFlow($flow) ;
-						foreach ($vars as $var){
-							$varName = $this->getVarName($var) ;
-							$this->multiBlockHandler($block_list[0], $varName, $node, $fileSummary) ;
-						}
-					}else{
-						//在最初block中，argName没有变化则直接递归
-						$this->multiBlockHandler($block_list[0], $argName, $node, $fileSummary) ;
-						array_shift($block_list) ;
-					}
-					
-				}
-			}else{
-				//对于每个flow,寻找变量argName
-				foreach ($flows as $flow){
-					if($flow->getName() == $argName){
-						//处理净化信息,如果被编码或者净化则返回safe
-					    //先对左边的变量进行查询
-					    if(is_object($flow->getLocation())){
-					        $target = $flow->getLocation() ;
-					        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-					        $encodingArr = $target->getEncoding() ;
-					        $saniArr =  $target->getSanitization() ;
-					    
-					        $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
-					        if($res == true){
-					            return "safe" ;
-					        }
-					    }
-					    
-						//被isSanitization函数取代
+		foreach($block_list as $bitem){
+		    //处理非平行结构的前驱基本块
+		    if(!is_array($bitem)){
+		        $flows = $bitem->getBlockSummary()->getDataFlowMap() ;
+		        $flows = array_reverse($flows) ;
+		    
+		        //如果flow中没有信息，则换下一个基本块
+		        if($flows == null){
+		            //找到新的argName
+		            foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
+		                if($flow->getName() == $argName){
+		                    $vars = $this->getVarsByFlow($flow) ;
+		                    foreach ($vars as $var){
+		                        $varName = $this->getVarName($var) ;
+		                        $this->multiBlockHandler($bitem, $varName, $node, $fileSummary) ;
+		                    }
+		                }else{
+		                    //在最初block中，argName没有变化则直接递归
+		    
+		                    if($block_list == null){
+		                        return ;
+		                    }else{
+		                        $this->multiBlockHandler($bitem, $argName, $node, $fileSummary) ;
+		                    }
+		    
+		                }
+		            }
+		        }else{
+		            //对于每个flow,寻找变量argName
+		            foreach ($flows as $flow){
+		                if($flow->getName() == $argName){
+		                    //处理净化信息,如果被编码或者净化则返回safe
+		                    //先对左边的变量进行查询
+		                    if(is_object($flow->getLocation())){
+		                        $target = $flow->getLocation() ;
+		                        
+		                        //print_r($target) ;
+		                        
+		                        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+		                        $encodingArr = $target->getEncoding() ;
+		                        $saniArr =  $target->getSanitization() ;
+		                        	
+		                        $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
+		                        if($res == true){
+		                            return "safe" ;
+		                        }
+		                    }
+		                    	
+		                    //获取flow中的右边赋值变量
+		                    //得到flow->getValue()的变量node
+		                    //$sql = $a . $b ;  =>  array($a,$b)
+		                    $vars = $this->getVarsByFlow($flow) ;
+		                    foreach($vars as $var){
+		                        if($var instanceof ValueSymbol){
+		                            continue ;
+		                        }
+		    
+// 		                        if(is_object($var)){
+// 		                            $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+// 		                            $encodingArr = $var->getEncoding() ;
+// 		                            $saniArr =  $var->getSanitization() ;
+// 		                            $res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+// 		                            if($res === true){
+// 		                                continue ;
+// 		                            }
+// 		                        }
+		    
+		                        $varName = $this->getVarName($var) ;
+		                        //如果var右边有source项
+		                        if(in_array($varName, $this->sourcesArr)){
+		                            //报告漏洞
+		                            $path = $fileSummary->getPath() ;
+		                            $this->report($path, $node, $flow->getLocation(), $type) ;
+		                        }else{
+		                            //首先进行文件夹的分析
+		                            //首先根据fileSummary获取到fileSummaryMap
+		                            $fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
+		                            $fileSummaryMap && $this->multiFileHandler(
+		                                $bitem,
+		                                $varName,
+		                                $node,
+		                                $fileSummaryMap
+		                            ) ;
+		    
+		                            //文件间分析失败，递归
+		                            !empty($block_list) && $this->multiBlockHandler(
+		                                $bitem,
+		                                $varName,
+		                                $node,
+		                                $fileSummary
+		                            ) ;
 
-						$variable = $this->getVarsByFlow($flow) ;
-						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-						$encodingArr = $flow->getLocation()->getEncoding() ;
-						$saniArr =  $flow->getLocation()->getSanitization() ;
+		                        }
+		                    }
+		    
+		                }
+		            }
+		    
+		        }
+		        	
+		    }else if(is_array($bitem) && count($block_list) > 0){
+		        //是平行结构
+		        foreach ($bitem as $block_item){
+		            $flows = $block_item->getBlockSummary()->getDataFlowMap() ;
+		            $flows = array_reverse($flows) ;
+		            //如果flow中没有信息，则换下一个基本块
+		            if($flows == null){
+		                //找到新的argName
+		                foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
+		                    if($flow->getName() == $argName){
+		                        $vars = $this->getVarsByFlow($flow) ;
+		                        foreach ($vars as $var){
+		                            $varName = $this->getVarName($var) ;
+		                            $this->multiBlockHandler($block_item, $varName, $node,$fileSummary) ;
 
-						if ($flow && (count($variable) > 0)){
-							foreach($variable as $var){
-								if(is_object($var)){
-									$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-									if($res == true){
-										$name = NodeUtils::getNodeStringName($var) ;
-										return "safe" ;
-									}
-								}
-								
-							}
-							
-						}
+		                        }
+		                    }else{
+		                        //在最初block中，argName没有变化则直接递归
+		                        $this->multiBlockHandler($block_item, $argName, $node,$fileSummary) ;
+		                    }
+		                }
+		            }else{
+		                //对于每个flow,寻找变量argName
+		                foreach ($flows as $flow){
+		                    if($flow->getName() == $argName){
+		                        //处理净化信息,如果被编码或者净化则返回safe
+		                        //先对左边的变量进行查询
+		                        if(is_object($flow->getLocation())){
+		                            $target = $flow->getLocation() ;
+		                            $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+		                            $encodingArr = $target->getEncoding() ;
+		                            $saniArr =  $target->getSanitization() ;
+		    
+		                            $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
+		                            if($res == true){
+		                                return "safe" ;
+		                            }
+		                        }
+		    
+		    
+		                        //获取flow中的右边赋值变量
+		                        //得到flow->getValue()的变量node
+		                        //$sql = $a . $b ;  =>  array($a,$b)
+		                        $vars = $this->getVarsByFlow($flow) ;
+		                        foreach($vars as $var){
+		                            if($var instanceof ValueSymbol){
+		                                continue ;
+		                            }
+		    
+// 		                            if(is_object($var)){
+// 		                                $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+// 		                                $encodingArr = $var->getEncoding() ;
+// 		                                $saniArr =  $var->getSanitization() ;
+// 		                                $res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+// 		                                if($res == true){
+// 		                                    continue ;
+// 		                                }
+// 		                            }
+		                            	
+		                            $varName = $this->getVarName($var) ;
+		                            //如果var右边有source项,直接报告漏洞
+		                            if(in_array($varName, $this->sourcesArr)){
+		                                //报告漏洞
+		                                $path = $fileSummary->getPath() ;
+		                                $this->report($path, $node, $flow->getLocation(),$type) ;
+		                                //return true ;
+		                            }else{
+		                                //首先进行文件夹的分析
+		                                //首先根据fileSummary获取到fileSummaryMap
+		                                $fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
+		                                $fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
+		                                	
+		                                //文件间分析失败，递归
+		                                $ret = $this->multiBlockHandler($block_item, $varName, $node, $fileSummary) ;
 
-						//获取flow中的右边赋值变量
-						//得到flow->getValue()的变量node
-						//$sql = $a . $b ;  =>  array($a,$b)
-						$vars = $this->getVarsByFlow($flow) ;
-
-						foreach($vars as $var){
-							$varName = $this->getVarName($var) ;
-							//print_r($var) ;
-							//如果var右边有source项
-							if(in_array($varName, $this->sourcesArr)){
-								//报告漏洞
-								$path = $fileSummary->getPath() ;
-								$this->report($path, $node, $flow->getLocation(), $type) ;
-							}else{
-								//首先进行文件夹的分析
-								//首先根据fileSummary获取到fileSummaryMap
-								$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-								$fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
-								
-								//文件间分析失败，递归
-								!empty($block_list) && $this->multiBlockHandler(
-									$block_list[0],
-									$varName,
-									$node,
-									$fileSummary
-								) ;
-								!empty($block_list) && array_shift($block_list) ;
-							}
-						}
-					}
-				}
-			}
-			
-		}else if(is_array($block_list[0]) && count($block_list) > 0){
-			//是平行结构
-			foreach ($block_list[0] as $block_item){
-				$flows = $block_item->getBlockSummary()->getDataFlowMap() ;
-				$flows = array_reverse($flows) ;
-				//如果flow中没有信息，则换下一个基本块
-				if($flows == null){
-					//找到新的argName
-					foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
-						if($flow->getName() == $argName){		
-							$vars = $this->getVarsByFlow($flow) ;
-							foreach ($vars as $var){
-								$varName = $this->getVarName($var) ;
-								$this->multiBlockHandler($block_item, $varName, $node,$fileSummary) ;
-								if(count($block_list[0]) == 0){
-									array_shift($block_list) ;
-								}
-							}
-						}else{
-							//在最初block中，argName没有变化则直接递归
-							$this->multiBlockHandler($block_item, $argName, $node,$fileSummary) ;
-							array_shift($block_list) ;
-						}
-					}
-				}else{
-					//对于每个flow,寻找变量argName
-					foreach ($flows as $flow){
-						if($flow->getName() == $argName){
-							//处理净化信息,如果被编码或者净化则返回safe
-						    //先对左边的变量进行查询
-						    if(is_object($flow->getLocation())){
-						        $target = $flow->getLocation() ;
-						        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-						        $encodingArr = $target->getEncoding() ;
-						        $saniArr =  $target->getSanitization() ;
-						    
-						        $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
-						        if($res == true){
-						            return "safe" ;
-						        }
-						    }
-						    
-							//被isSanitization函数取代
-							$variable = $this->getVarsByFlow($flow) ;
-							
-							$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-							$encodingArr = $flow->getLocation()->getEncoding() ;
-							$saniArr =  $flow->getLocation()->getSanitization() ;
-							
-							if ($flow && (count($variable) > 0)){
-								foreach($variable as $var){
-									if(is_object($var)){
-										$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-										if($res == true){
-											return "safe" ;
-										}
-									}
-								}
-							}
-								
-							//获取flow中的右边赋值变量
-							//得到flow->getValue()的变量node
-							//$sql = $a . $b ;  =>  array($a,$b)
-							$vars = $this->getVarsByFlow($flow) ;
-					
-							$retarr = array();
-							foreach($vars as $var){
-								$varName = $this->getVarName($var) ;
-								//如果var右边有source项,直接报告漏洞
-								if(in_array($varName, $this->sourcesArr)){
-									//报告漏洞
-									$path = $fileSummary->getPath() ;
-									$this->report($path, $node, $flow->getLocation(),$type) ;
-									//return true ;
-								}else{
-									//首先进行文件夹的分析
-									//首先根据fileSummary获取到fileSummaryMap
-									$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-									$fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
-									
-									//文件间分析失败，递归
-									$ret = $this->multiBlockHandler($block_item, $varName, $node, $fileSummary) ;
-									if(count($block_list[0]) == 0){
-										array_shift($block_list) ;
-									}
-								}	
-							}	
-						}
-					}
-				}
-			}
+		                            }
+		                        }
+		                    }
+		                }
+		            }
+		        }
+		    }
 		}
+		
 	}
 	
 	
@@ -503,9 +496,7 @@ class TaintAnalyser {
 										return "safe" ;
 									}
 								}
-					
-							}
-								
+							}	
 						}
 					
 						//获取flow中的右边赋值变量
@@ -521,7 +512,6 @@ class TaintAnalyser {
 								$this->report($path, $node, $flow->getLocation(),$type) ;
 							}	
 						}
-					
 					}
 				}
 			}
@@ -603,10 +593,12 @@ class TaintAnalyser {
 		array_push($block_list, $block) ;
 		//首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
 		$this->currBlockTaintHandler($block, $node, $argName, $fileSummary) ;
-		
 		//多个基本块的处理
 		$this->pathArr = array() ;
 		$this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
+
+		$resContext = ResultContext::getInstance() ;
+		print_r($resContext->getResArr()) ;
 	}
 
 	
@@ -618,12 +610,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($path, $node, $var, $type){
-		echo "<pre>" ;
-		echo "有漏洞=====>". $type ."<br/>" ;
-		echo "漏洞变量：<br/>" ;
-		print_r($var) ;
-		echo "漏洞节点：<br/>" ;
-		print_r($node) ;
+// 		echo "<pre>" ;
+// 		echo "有漏洞=====>". $type ."<br/>" ;
+// 		echo "漏洞变量：<br/>" ;
+// 		print_r($var) ;
+// 		echo "漏洞节点：<br/>" ;
+// 		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;
