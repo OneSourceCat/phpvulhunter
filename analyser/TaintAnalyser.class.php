@@ -75,9 +75,10 @@ class TaintAnalyser {
 					continue ;
 				}
 				//判断是否被单引号包裹
-				$is_start_with = strpos($vars[$i-1]->getValue(),"'",0) ;
-				$is_end_with = strpos($vars[$i+1]->getValue(),"'",strlen($vars[$i-1]->getValue())-2) ;
-				
+				if ($i>1 && $i<$len-1){
+				    $is_start_with = strpos($vars[$i-1]->getValue(),"'",0) ;
+				    $is_end_with = strpos($vars[$i+1]->getValue(),"'",strlen($vars[$i-1]->getValue())-2) ;
+				}
 				if($is_start_with != -1 && $is_end_with != -1){
 					$vars[$i]->setType("int") ;
 				}
