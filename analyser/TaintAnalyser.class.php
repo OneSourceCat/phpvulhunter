@@ -198,7 +198,6 @@ class TaintAnalyser {
 		$flows = array_reverse($flows); //逆序处理flows
 		
 		foreach ($flows as $flow){
-		    //print_r($flow) ;
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
 				//先对左边的变量进行查询
@@ -228,15 +227,7 @@ class TaintAnalyser {
 				    $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 				    $encodingArr = $var->getEncoding() ;
 				    $saniArr =  $var->getSanitization() ;
-				    
-				    if(is_object($var)){
-				        $res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-				        if($res == true){
-				            $name = NodeUtils::getNodeStringName($var) ;
-				            continue ;
-				        }
-				    }
-				    
+    
 					$varName = $this->getVarName($var) ;
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
@@ -338,7 +329,7 @@ class TaintAnalyser {
 		                        if($var instanceof ValueSymbol){
 		                            continue ;
 		                        }
-		    
+
 		                        $varName = $this->getVarName($var) ;
 		                        //如果var右边有source项
 		                        if(in_array($varName, $this->sourcesArr)){
@@ -396,7 +387,7 @@ class TaintAnalyser {
 		                    }
 		                }
 		            }else{
-		                //对于每个flow,寻找变量argName
+		                //对于每个flow,寻找变量argName  
 		                foreach ($flows as $flow){
 		                    if($flow->getName() == $argName){
 		                        //处理净化信息,如果被编码或者净化则返回safe
@@ -595,12 +586,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($path, $node, $var, $type){
-// 		echo "<pre>" ;
-// 		echo "有漏洞=====>". $type ."<br/>" ;
-// 		echo "漏洞变量：<br/>" ;
-// 		print_r($var) ;
-// 		echo "漏洞节点：<br/>" ;
-// 		print_r($node) ;
+		echo "<pre>" ;
+		echo "有漏洞=====>". $type ."<br/>" ;
+		echo "漏洞变量：<br/>" ;
+		print_r($var) ;
+		echo "漏洞节点：<br/>" ;
+		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;
