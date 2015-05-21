@@ -15,7 +15,7 @@ class SanitizationHandler {
 	 * @param Node $node
 	 * @param 数据流 $dataFlow
 	 */
-	public static function setSanitiInfo($node, $dataFlow, $block, $fileSummary ){
+	public static function setSanitiInfo($node, $dataFlow, $block, $fileSummary){
 	    $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	    $sanitiInfo = self::SantiniFuncHandler($node, $fileSummary);
 	    //print_r($sanitiInfo);

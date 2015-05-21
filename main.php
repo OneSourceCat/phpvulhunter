@@ -41,7 +41,6 @@ if(!isset($_POST['path']) || !isset($_POST['type'])){
 $t_start = time();
 
 //1、从web ui中获取并加载项目工程
-$count = 0 ;
 $project_path = $_POST['path'] ;  //扫描的工程路径
 $scan_type = $_POST['type'] ;     //扫描的类型
 $encoding = $_POST['encoding'] ;  //CMS的编码   UTF-8 或者  GBK
