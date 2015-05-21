@@ -207,7 +207,6 @@ class TaintAnalyser {
 		$flows = array_reverse($flows); //逆序处理flows
 		
 		foreach ($flows as $flow){
-		    //print_r($flow) ;
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
 				//先对左边的变量进行查询
@@ -235,20 +234,7 @@ class TaintAnalyser {
 				foreach($vars as $var){
 				    
 				    if($var instanceof ValueSymbol) continue ;
-				    
-// 				    if(is_object($var)){
-// 				        if (!$var)
-// 				            continue ;
-// 				        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-// 				        $encodingArr = $var->getEncoding() ;
-// 				        $saniArr =  $var->getSanitization() ;
-// 				        $res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-// 				        if($res == true){
-// 				            $name = NodeUtils::getNodeStringName($var) ;
-// 				            continue ;
-// 				        }
-// 				    }
-				    
+				    			    
 					$varName = $this->getVarName($var) ;
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
@@ -351,7 +337,7 @@ class TaintAnalyser {
 		                        if($var instanceof ValueSymbol){
 		                            continue ;
 		                        }
-		    
+
 		                        $varName = $this->getVarName($var) ;
 		                        //如果var右边有source项
 		                        if(in_array($varName, $this->sourcesArr)){
@@ -409,7 +395,7 @@ class TaintAnalyser {
 		                    }
 		                }
 		            }else{
-		                //对于每个flow,寻找变量argName
+		                //对于每个flow,寻找变量argName  
 		                foreach ($flows as $flow){
 		                    if($flow->getName() == $argName){
 		                        //处理净化信息,如果被编码或者净化则返回safe
