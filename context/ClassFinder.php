@@ -386,7 +386,6 @@ class FunctionBodyVisitor extends PhpParser\NodeVisitorAbstract{
 */
 class ClassFinder{
 	private $parser = NULL ;   //代码解析器
-	//private $fileUtil = NULL ;  //文件工具类
 	private $visitor = NULL ;   //访问者
 	private $traverser  = NULL;  //遍历AST对象
 	private $path = '' ;   //工程入口路径

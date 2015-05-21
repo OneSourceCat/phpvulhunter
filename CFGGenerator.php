@@ -248,6 +248,7 @@ class CFGGenerator{
 		}else{
 			//不属于已有的任何一个symbol类型,如函数调用
 			if($part && $part->getType() == "Expr_FuncCall"){
+			    //处理内置函数
 				//处理 id = urlencode($_GET['id']) ;
 				if(!SymbolUtils::isValue($part)){
 					$funcName = NodeUtils::getNodeFunctionName($part) ;
@@ -274,10 +275,6 @@ class CFGGenerator{
     					EncodingHandler::setEncodeInfo($part, $dataFlow, $block) ;
 				    }
 				}
-				
-				
-				
-				//处理内置函数
 				
 			}
 			
@@ -651,7 +648,7 @@ class CFGGenerator{
 				case 'Stmt_Echo':
 				case 'Expr_Print':
 				case 'Expr_FuncCall':
-					echo "<pre>";
+					//echo "<pre>";
 					$this->functionHandler($node, $block, $this->fileSummary);
 					break ;
 			}
@@ -1040,7 +1037,7 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 
 //扫描漏洞类型
 $scan_type = 'ALL';
-echo "<pre>" ;
+//echo "<pre>" ;
 //从用户那接受项目路径
 // $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
 // $allFiles = FileUtils::getPHPfile($project_path);

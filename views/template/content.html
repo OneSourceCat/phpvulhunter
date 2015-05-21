@@ -1,0 +1,16 @@
+
+	
+		<ul>
+		<!--{if isset($results)}-->
+		<!--{foreach item=n from=$results}-->
+			<li>
+				<h2>Find a vulnerability !</h2>
+				<div>file path : <!--{$n.path}--></div>
+				<div>vlun type : <!--{$n.type}--></div>
+				<div>node : <!--{$n.node}--></div>
+				<div>var : <!--{$n.var}--></div>				
+			</li>
+		<!--{/foreach}-->
+		<!--{/if}-->
+		</ul>
+
