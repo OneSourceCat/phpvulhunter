@@ -25,7 +25,7 @@ class UserDefinedSinkContext {
 	private $F_XPATH = array('__NAME__'=>'XPATH') ;    //XPATH注入
 	private $F_LDAP = array('__NAME__'=>'LDAP') ;    //LDAP注入
 	private $F_FILE_AFFECT = array('__NAME__'=>'FILEAFFECT') ;   //文件相关操作
-
+	private $F_POP = array('__NAME__'=>'UNSERIALIZE') ;   //序列化操作
 
 
 	/**
@@ -35,7 +35,7 @@ class UserDefinedSinkContext {
 	 * @param string $type=>()
 	 */
 	public function addByTagName($item,$type){
-		if(!in_array($type,array('XSS','SQLI','HTTP','CODE','EXEC','LDAP','INCLUDE','FILE','XPATH','FILEAFFECT'))){
+		if(!in_array($type,array('XSS','SQLI','HTTP','CODE','EXEC','LDAP','INCLUDE','FILE','XPATH','FILEAFFECT','UNSERIALIZE'))){
 			return ;
 		}
 		$securings = SecureUtils::getSecureListByType($type) ;
@@ -121,6 +121,14 @@ class UserDefinedSinkContext {
 			    
 			    array_push($this->F_FILE_AFFECT[$item[0]], $securings) ;
 				break;
+			case 'UNSERIALIZE':
+			    if(array_key_exists($item[0], $this->$F_POP))
+			        $this->$F_POP[$item[0]] = array(array_merge($this->$F_POP[$item[0]], $item[1]));
+			        else
+			            $this->$F_POP[$item[0]] = array($item[1]) ;
+			         
+			        array_push($this->$F_POP[$item[0]], $securings) ;
+			        break;
 			
 		}
 		
@@ -155,7 +163,8 @@ class UserDefinedSinkContext {
 				$this->F_FILE_READ,
 				$this->F_HTTP_HEADER,
 				$this->F_LDAP,
-				$this->F_XPATH		
+				$this->F_XPATH,
+                $this->F_POP
 		) ;	
 	}
 	
@@ -173,10 +182,28 @@ class UserDefinedSinkContext {
 				$this->F_FILE_READ,
 				$this->F_HTTP_HEADER,
 				$this->F_LDAP,
-				$this->F_XPATH
+				$this->F_XPATH,
+                $this->F_POP
 		) ;
 	}
-	
+	public function getServerSinkArray(){
+	    return array(
+	        $this->F_CODE,
+	        $this->F_DATABASE,
+	        $this->F_EXEC,
+	        $this->F_FILE_INCLUDE,
+	        $this->F_FILE_READ,
+	        $this->F_LDAP,
+	        $this->F_XPATH,
+	        $this->F_POP
+	    ) ;
+	}
+	public function getClientSinkArray(){
+	    return array(
+	        $this->F_XSS,
+	        $this->F_HTTP_HEADER,
+	    ) ;
+	}
 	//--------------------单例模式---------------------------------
 	private function __construct(){
 		
@@ -240,7 +267,10 @@ class UserDefinedSinkContext {
 	public function getF_FILE_AFFECT() {
 		return $this->F_FILE_AFFECT;
 	}
-
+    
+	public function getF_POP() {
+	    return $this->F_POP;
+	}
 	
 }
 

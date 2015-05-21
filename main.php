@@ -60,7 +60,6 @@ if(is_file($project_path)){
 }elseif (is_dir($project_path)){
 	$path_list = $mainlFiles;
     //$path_list = array('C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload/admin/admin.php');
-	//$path_list = array(CURR_PATH . '/test/test.php');
 	foreach ($path_list as $path){
 		try{
 		    //print_r($path.'<br/>');
@@ -77,9 +76,22 @@ if(is_file($project_path)){
 	exit() ;
 }
 
-//4、获取ResultContext  传给template
+//4、获取ResultContext  序列化
 $results = ResultContext::getInstance() ;
+$serialPath = CURR_PATH . '/data/resultConetxtSerialData';
 
+if(($serial_str = file_get_contents($serialPath))!=''){
+    $results = unserialize($serial_str) ;
+    //print_r($results);
+}
+
+file_put_contents($serialPath, serialize($results)) ;
+
+$t_end = time();
+$t = $t_end - $t_start;
+print_r($t);
+
+//5、处理results 传给template
 $tempRes = array();
 foreach ($results->getResArr() as $result){
     $record = $result->getRecord();
@@ -88,7 +100,6 @@ foreach ($results->getResArr() as $result){
 
 $results = $tempRes;
 
-//print_r($results);
 // 测试使用的 results
 // $results = array(
 // 				// 第一个记录
@@ -124,20 +135,8 @@ $results = $tempRes;
 // 				)
 // 			);
 
-
 $smarty->assign('results',$results);
 $smarty->display('content.html');
 
-//5、序列化
-$serialPath = CURR_PATH . '/data/resultConetxtSerialData';
-file_put_contents($serialPath, serialize($results)) ;
-if(($serial_str = file_get_contents($serialPath))!=''){
-    $results = unserialize($serial_str) ;
-    //print_r($results);
-}
-
-$t_end = time();
-$t = $t_end - $t_start;
-print_r($t);
 
 ?>
