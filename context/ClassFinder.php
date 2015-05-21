@@ -163,7 +163,6 @@ class Context {
         //补全路径
         $currentDir = dirname($path);
         global $project_path;
-        //$allfiles = FileUtils::getPHPfile($project_path);
         foreach ($require_array as $filepath){
             $absPath = FileUtils::getAbsPath($path, $filepath);
             array_push($tempRequireFile, $absPath);
@@ -406,7 +405,6 @@ class ClassFinder{
 		获取所有的源文件的路径
 	*/
 	private function getAllSourceFiles(){
-		//return $this->fileUtil->getPHPfile($this->path) ;
 		return FileUtils::getPHPfile($this->path);
 	}
 
@@ -423,8 +421,8 @@ class ClassFinder{
 			$context->records = $records ;
 			return ;
 		}
-
-		$filearr = $this->getAllSourceFiles() ;
+        global $allFiles;
+		$filearr = $allFiles;
 		$len = count($filearr) ;
 		
 		for($i=0;$i<$len;$i++){

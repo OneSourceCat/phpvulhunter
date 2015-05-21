@@ -48,8 +48,8 @@ class FileUtils
      * @return multitype:
      */
     public static function mainFileFinder($dirpath){
-        $files = FileUtils::getPHPfile($dirpath);
-        //print_r($files);
+        global $allFiles;
+        $files = $allFiles;
         $should2parser = array();
         $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative());      
         $traverser = new PhpParser\NodeTraverser();
@@ -60,7 +60,6 @@ class FileUtils
             try {
                 $stmts = $parser->parse($code);
             } catch (PhpParser\Error $e) {
-                //die("==> Parse Error: {$e->getMessage()}\n");
                 print_r("==> Parse Error: {$e->getMessage()}\n");
             }
             $traverser->traverse($stmts);
@@ -88,7 +87,6 @@ class FileUtils
     	global $allFiles;
     	//补全路径
     	$currentDir = dirname($filePath);
-        //$allFiles = FileUtils::getPHPfile($project_path);
     	$absPath = '';
 	    if(!strpbrk($rpath,'/')){
 	        //require_once "test.php"

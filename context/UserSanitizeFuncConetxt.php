@@ -315,8 +315,8 @@ class UserSanitiFuncFinder{
             $funcContext->sanitizeFunctions = $sanitizeFunctions ;
             return ;
         }
-    
-        $filearr = $this->getAllSourceFiles() ;
+        global $allFiles;
+        $filearr = $allFiles ;
         $len = count($filearr) ;
         for($i=0;$i<$len;$i++){
             $this->visitor->filePath = $filearr[$i] ;

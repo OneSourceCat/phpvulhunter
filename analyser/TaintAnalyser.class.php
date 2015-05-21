@@ -2,6 +2,15 @@
 
 require_once 'SqliAnalyser.class.php';
 require_once 'XssAnalyser.class.php';
+require_once 'FileAffectAnalyser.class.php';
+require_once 'FileAnalyser.class.php';
+require_once 'CodeAnalyser.class.php';
+require_once 'ExecAnalyser.class.php';
+require_once 'HeaderAnalyser.class.php';
+require_once 'IncludeAnalyser.class.php';
+require_once 'LDPAAnalyser.class.php';
+require_once 'XPathAnalyser.class.php';
+
 
 /**
  * 用于污点分析的类
@@ -204,6 +213,8 @@ class TaintAnalyser {
 				//先对左边的变量进行查询
 				if(is_object($flow->getLocation())){
 				    $target = $flow->getLocation() ;
+				    if (!$target)
+				        continue;
 				    $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 				    $encodingArr = $target->getEncoding() ;
 				    $saniArr =  $target->getSanitization() ;
@@ -225,17 +236,18 @@ class TaintAnalyser {
 				    
 				    if($var instanceof ValueSymbol) continue ;
 				    
-				    $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-				    $encodingArr = $var->getEncoding() ;
-				    $saniArr =  $var->getSanitization() ;
-				    
-				    if(is_object($var)){
-				        $res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-				        if($res == true){
-				            $name = NodeUtils::getNodeStringName($var) ;
-				            continue ;
-				        }
-				    }
+// 				    if(is_object($var)){
+// 				        if (!$var)
+// 				            continue ;
+// 				        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+// 				        $encodingArr = $var->getEncoding() ;
+// 				        $saniArr =  $var->getSanitization() ;
+// 				        $res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+// 				        if($res == true){
+// 				            $name = NodeUtils::getNodeStringName($var) ;
+// 				            continue ;
+// 				        }
+// 				    }
 				    
 					$varName = $this->getVarName($var) ;
 					//如果var右边有source项
@@ -319,7 +331,8 @@ class TaintAnalyser {
 		                        $target = $flow->getLocation() ;
 		                        
 		                        //print_r($target) ;
-		                        
+		                        if (!$target)
+		                            continue ;
 		                        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 		                        $encodingArr = $target->getEncoding() ;
 		                        $saniArr =  $target->getSanitization() ;
@@ -403,6 +416,8 @@ class TaintAnalyser {
 		                        //先对左边的变量进行查询
 		                        if(is_object($flow->getLocation())){
 		                            $target = $flow->getLocation() ;
+		                            if (!$target)
+		                                continue;
 		                            $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 		                            $encodingArr = $target->getEncoding() ;
 		                            $saniArr =  $target->getSanitization() ;
@@ -469,6 +484,8 @@ class TaintAnalyser {
 						//被isSanitization函数取代
 						$variable = $this->getVarsByFlow($flow) ;
 						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+						if (!$flow->getLocation())
+						    continue;
 						$encodingArr = $flow->getLocation()->getEncoding() ;
 						$saniArr = $flow->getLocation()->getSanitization() ;
 						
@@ -583,7 +600,7 @@ class TaintAnalyser {
 		$this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
 
 		$resContext = ResultContext::getInstance() ;
-		print_r($resContext->getResArr()) ;
+		//print_r($resContext->getResArr()) ;
 	}
 
 	
@@ -595,12 +612,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($path, $node, $var, $type){
-// 		echo "<pre>" ;
-// 		echo "有漏洞=====>". $type ."<br/>" ;
-// 		echo "漏洞变量：<br/>" ;
-// 		print_r($var) ;
-// 		echo "漏洞节点：<br/>" ;
-// 		print_r($node) ;
+		echo "<pre>" ;
+		echo "有漏洞=====>". $type ."<br/>" ;
+		echo "漏洞变量：<br/>" ;
+		print_r($var) ;
+		echo "漏洞节点：<br/>" ;
+		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;
