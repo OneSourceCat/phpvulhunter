@@ -112,16 +112,17 @@ function sendScanReq()
             encoding : $("#vuln-encoding").val()
         },
         success : function( data ){
-            if( !data ){ // 判断是否有数据返回
-                $('#err_cont').append('<span>'+data+'</span>');
-                $('#err_cont').css({'display':'block'}).animate({'opacity':'1'},0.8);
-            }
-            $('.content-panel').html(data);
             $('.waiting').css({'opacity':'0'});
             setTimeout(disappear_waiting, 600);
             function disappear_waiting(){
                 $('.waiting').css({'display':'none'});
             }
+            if( data == '工程不存在！'){ // 判断是否有数据返回
+                $('#err_cont').append('<span>'+data+'</span>');
+                $('#err_cont').css({'display':'block'}).animate({'opacity':'1'},0.8);
+                return false;
+            }
+            $('.content-panel').html(data);
         },
         error :  function( jqXHR ){
             alert("发生错误：" + jqXHR.status);

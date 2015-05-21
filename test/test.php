@@ -1,17 +1,8 @@
 <?php
-$id = $_GET['id'] ;
-if($id){
-	echo $id ;
-}else if($id>0){
-	echo false;
-}else{
-	if(1){
-		echo "xxxx" ;
-	}
-	echo "shit";
-}
-
-$sql = "xxx". $id ;
-mysql_query($sql) ;
-
+	$a = urlencode($str);
+	if (1)
+	    echo 123;
+	else 
+	    echo 456;
+	$b = html_entity_encode($a);
 ?>

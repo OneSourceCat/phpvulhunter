@@ -328,6 +328,7 @@ $F_LDAP = array(
 // property oriented programming with unserialize
 $NAME_POP = 'Unserialize';
 $F_POP = array(
+    '__NAME__'						=> 'UNSERIALIZE',
 	'unserialize'					=> array(array(1), array()), // calls __destruct
 	'is_a'							=> array(array(1), array())	 // calls __autoload in php 5.3.7, 5.3.8
 );
@@ -342,9 +343,26 @@ $F_SINK_ALL = array_merge(
 		$F_FILE_READ,
 		$F_FILE_INCLUDE,
 		$F_CODE,
-		$F_HTTP_HEADER
+		$F_HTTP_HEADER,
+        $F_POP
 ) ;
 
+$F_SINK_SERVER = array_merge(
+    $F_LDAP,
+    $F_XPATH,
+    $F_DATABASE,
+    $F_EXEC,
+    $F_FILE_AFFECT,
+    $F_FILE_READ,
+    $F_FILE_INCLUDE,
+    $F_CODE,
+    $F_POP
+) ;
+
+$F_SINK_CLIENT = array_merge(
+    $F_XSS,
+    $F_HTTP_HEADER
+) ;
 
 $F_SINK_ARRAY = array(
 		$F_XSS,
@@ -356,7 +374,8 @@ $F_SINK_ARRAY = array(
 		$F_FILE_READ,
 		$F_FILE_INCLUDE,
 		$F_CODE,
-		$F_HTTP_HEADER
+		$F_HTTP_HEADER,
+        $F_POP
 );
 
 ?>	

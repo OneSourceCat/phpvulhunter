@@ -104,7 +104,6 @@ class SanitizeParamsFinder{
                 //function 
                 case "Expr_FuncCall":
                     $funcname = NodeUtils::getNodeFunctionName($node);
-                    echo $funcname."<br/>";
                     //查找函数是否在净化函数中，净化类别
                     $ret = $this->isSecureFunction($funcname);
                     if($ret[0]){
@@ -146,7 +145,6 @@ class SanitizeParamsFinder{
                 //class static method
                 case "Expr_StaticCall":
                     $funcname = NodeUtils::getNodeFunctionName($node);
-                    echo $funcname."<br/>";
                     //查找函数是否在净化函数中，净化类别
                     $ret = $this->isSecureFunction($funcname);
                     if($ret[0]){
@@ -247,17 +245,14 @@ class SanitizeParamsFinder{
             $type = array();
             for($i = 0;$i < $nameNum; $i++){
 		    	if(in_array($funcName, $F_SECURES_ARRAY[$i])){
-		    	    print_r("      find<br/>");
 		    	    array_push($type, $F_SECURES_ARRAY[$i]['__NAME__']);
 		    		//return array(true,'type'=>$F_SECURES_ARRAY[$i]['__NAME__']);
 		    	}
 	    	}
 	    	if($type)
 	    	    return array(true,'type'=>$type);
-	    	print_r("      not find<br/>");
     		return array(false);
         }else{
-            print_r("      not find<br/>");
             return array(false);
         }
     }
@@ -324,7 +319,7 @@ class UserSanitiFuncFinder{
             try{
                 $stmts = $this->parser->parse($code) ;
             }catch (PhpParser\Error $e) {
-                echo 'Parse Error: ', $e->getMessage();
+                //echo 'Parse Error: ', $e->getMessage();
                 continue ;
             }
             	

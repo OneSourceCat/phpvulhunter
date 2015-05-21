@@ -207,6 +207,7 @@ class TaintAnalyser {
 		$flows = array_reverse($flows); //逆序处理flows
 		
 		foreach ($flows as $flow){
+		    //print_r($flow) ;
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
 				//先对左边的变量进行查询
@@ -234,18 +235,16 @@ class TaintAnalyser {
 				foreach($vars as $var){
 				    
 				    if($var instanceof ValueSymbol) continue ;
-				    			    
+				    				    
 					$varName = $this->getVarName($var) ;
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
 						//报告漏洞
 						$path = $fileSummary->getPath() ;
-						$this->report($path, $node, $flow->getLocation(), $type) ;
+						$this->report($path, $path, $node, $flow->getLocation(), $type) ;
 					}else{
 						//首先进行文件夹的分析
-						//首先根据fileSummary获取到fileSummaryMap
-						$fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-						$fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
+						$this->multiFileHandler($block, $varName, $node, $fileSummary) ;
 						
 						//文件间分析失败，递归
 						$this->currBlockTaintHandler($block, $node, $varName, $fileSummary) ;
@@ -337,23 +336,16 @@ class TaintAnalyser {
 		                        if($var instanceof ValueSymbol){
 		                            continue ;
 		                        }
-
+		    
 		                        $varName = $this->getVarName($var) ;
 		                        //如果var右边有source项
 		                        if(in_array($varName, $this->sourcesArr)){
 		                            //报告漏洞
 		                            $path = $fileSummary->getPath() ;
-		                            $this->report($path, $node, $flow->getLocation(), $type) ;
+		                            $this->report($path, $path, $node, $flow->getLocation(), $type) ;
 		                        }else{
 		                            //首先进行文件夹的分析
-		                            //首先根据fileSummary获取到fileSummaryMap
-		                            $fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-		                            $fileSummaryMap && $this->multiFileHandler(
-		                                $bitem,
-		                                $varName,
-		                                $node,
-		                                $fileSummaryMap
-		                            ) ;
+		                            $this->multiFileHandler($bitem, $varName, $node, $fileSummary) ;
 		    
 		                            //文件间分析失败，递归
 		                            !empty($block_list) && $this->multiBlockHandler(
@@ -395,7 +387,7 @@ class TaintAnalyser {
 		                    }
 		                }
 		            }else{
-		                //对于每个flow,寻找变量argName  
+		                //对于每个flow,寻找变量argName
 		                foreach ($flows as $flow){
 		                    if($flow->getName() == $argName){
 		                        //处理净化信息,如果被编码或者净化则返回safe
@@ -429,13 +421,11 @@ class TaintAnalyser {
 		                            if(in_array($varName, $this->sourcesArr)){
 		                                //报告漏洞
 		                                $path = $fileSummary->getPath() ;
-		                                $this->report($path, $node, $flow->getLocation(),$type) ;
+		                                $this->report($path, $path, $node, $flow->getLocation(),$type) ;
 		                                //return true ;
 		                            }else{
 		                                //首先进行文件夹的分析
-		                                //首先根据fileSummary获取到fileSummaryMap
-		                                $fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-		                                $fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
+		                                $this->multiFileHandler($block, $varName, $node, $fileSummary) ;
 		                                	
 		                                //文件间分析失败，递归
 		                                $ret = $this->multiBlockHandler($block_item, $varName, $node, $fileSummary) ;
@@ -460,7 +450,12 @@ class TaintAnalyser {
 	 * @param Node $node 调用sink的node
 	 * @param array $fileSummaryMap 要分析的require文件的summary的list
 	 */
-	public function multiFileHandler($block, $argName, $node, $fileSummaryMap){
+	public function multiFileHandler($block, $argName, $node, $fileSummary){
+	    //首先根据fileSummary获取到fileSummaryMap
+	    $fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
+	    if (!$fileSummaryMap)
+	        return ;
+	    $node_path = $fileSummary->getPath() ;
 		foreach ($fileSummaryMap as $fsummary){
 			if($fsummary instanceof FileSummary){
 				$flows = $fsummary->getFlowsMap() ;
@@ -496,8 +491,8 @@ class TaintAnalyser {
 							//如果var右边有source项
 							if(in_array($varName, $this->sourcesArr)){
 								//报告漏洞
-								$path = $fsummary->getPath() ;
-								$this->report($path, $node, $flow->getLocation(),$type) ;
+								$var_path = $fsummary->getPath() ;
+								$this->report($node_path, $var_path, $node, $flow->getLocation(),$type) ;
 							}	
 						}
 					}
@@ -597,7 +592,7 @@ class TaintAnalyser {
 	 * @param Node $var  出现漏洞的变量node
 	 * @param string 漏洞的类型
 	 */
-	public function report($path, $node, $var, $type){
+	public function report($node_path, $var_path, $node, $var, $type){
 // 		echo "<pre>" ;
 // 		echo "有漏洞=====>". $type ."<br/>" ;
 // 		echo "漏洞变量：<br/>" ;
@@ -609,7 +604,7 @@ class TaintAnalyser {
 		$resultContext = ResultContext::getInstance() ;
 		
 		//加入至上下文中
-		$record = new Result($path, $type, $node, $var) ;
+		$record = new Result($node_path, $var_path, $type, $node, $var) ;
 		
 		//如果存在记录则不添加，反之才添加
 		if($resultContext->isRecordExists($record)){

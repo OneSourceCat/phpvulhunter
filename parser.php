@@ -74,7 +74,7 @@ $traverser = new PhpParser\NodeTraverser ;
 
 //$code = file_get_contents('source.class2.php') ;
 //$code = file_get_contents('./test/sub.php') ;
-$code = file_get_contents('./test/source.php') ;
+$code = file_get_contents('./test/test.php') ;
 
 $stmts = $parser->parse($code) ;
 echo "<pre>" ;

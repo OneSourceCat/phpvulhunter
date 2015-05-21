@@ -12,7 +12,7 @@ class InitModule {
      * @param string $project_path
      */    
     public function init($project_path, $allFiles){
-        print_r('init start... <br/>');
+        //print_r('init start... <br/>');
         
         $this->initContext($project_path);
         //test
@@ -25,7 +25,7 @@ class InitModule {
         //$absPath = $path;
         //$ret = FileSummaryGenerator::getFileSummary($absPath);
         //print_r($ret);
-        print_r('init end...<br/>');
+        //print_r('init end...<br/>');
     }
     /**
      * 初始化class finder上下文

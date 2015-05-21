@@ -57,7 +57,6 @@ class SanitizationHandler {
         $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
         $blockList = $mulitBlockHandlerUtils->getPathArr();
         
-        
         //当前块flows没有遍历完
         if(count($dataFlows) != 0)
             return self::sanitiSameVarTraceback($varName, $block, $dataFlows);

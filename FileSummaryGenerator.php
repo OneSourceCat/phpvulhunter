@@ -218,7 +218,7 @@ class FileSummaryGenerator {
     	        }else if($type == "right"){
                     //处理净化信息和编码信息
                     SanitizationHandler::setSanitiInfo($part, $dataFlow, $block, $fileSummary) ;
-                    //EncodingHandler::setEncodeInfo($part, $dataFlow) ;
+                    EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $fileSummary) ;
                 }
 	        }
 	    }

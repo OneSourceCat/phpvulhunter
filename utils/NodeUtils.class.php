@@ -292,7 +292,7 @@ class NodeUtils{
     	if ((!$node instanceof Node) || !$argsPos){
     		return null;
     	}
-    	print_r(self::getNodeFunctionName($node));
+    	//print_r(self::getNodeFunctionName($node));
     	$argsNameArr = self::getNodeFuncParams($node) ;	
     	$retArr = array() ;
     	$argNum = count($argsNameArr);
@@ -366,7 +366,7 @@ class NodeUtils{
     	$nameNum = count($F_SINK_ARRAY);
     	$userDefinedSink = UserDefinedSinkContext::getInstance() ;
     	$U_SINK_ALL = $userDefinedSink->getAllSinks() ;
-    	
+
     	//根据scanType,查找sink函数
     	switch ($scanType){
     	    case 'ALL':
@@ -389,6 +389,40 @@ class NodeUtils{
             		}
             		return array(false) ;
             	}
+            	break;
+            case 'SERVER':
+        	    global $F__SINK_SERVER;
+            	//如果是系统的sink
+    	       if (key_exists($funcName, $F__SINK_SERVER)){
+                    return array(true, $F__SINK_SERVER[$funcName][0]);
+                }
+        	
+            	//如果是用户的sink
+            	if(key_exists($funcName, $U_SINK_ALL)){
+            		foreach ($userDefinedSink->getServerSinkArray() as $value){
+            			if(key_exists($funcName, $value)){
+            				return array(true,$U_SINK_ALL[$funcName]) ;
+            			}
+            		}
+            		return array(false) ;
+            	}
+        	    break;
+            case 'CLIENT':
+                global $F_SINK_CLIENT;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_SINK_CLIENT)){
+                    return array(true, $F_SINK_CLIENT[$funcName][0]);
+                }
+                //如果是用户的sink
+            	if(key_exists($funcName, $U_SINK_ALL)){
+            		foreach ($userDefinedSink->getClientSinkArray() as $value){
+            			if(key_exists($funcName, $value)){
+            				return array(true,$U_SINK_ALL[$funcName]) ;
+            			}
+            		}
+            		return array(false) ;
+            	}
+                break;
 	        case 'XSS':
 	            global $F_XSS;
 	            //如果是系统的sink
@@ -413,7 +447,7 @@ class NodeUtils{
                 }
                 return array(false) ;
                 break;
-            case 'HTTP':
+            case 'HTTPHEADER':
                 global $F_HTTP_HEADER;
                 //如果是系统的sink
                 if (key_exists($funcName, $F_HTTP_HEADER)){
@@ -461,7 +495,7 @@ class NodeUtils{
                 }
                 return array(false) ;
                 break;
-            case 'INCLUDE':
+            case 'FILE_INCLUDE':
                 global $F_FILE_INCLUDE;
                 //如果是系统的sink
                 if (key_exists($funcName, $F_FILE_INCLUDE)){
@@ -473,7 +507,7 @@ class NodeUtils{
                 }
                 return array(false) ;
                 break;
-            case 'FILE':
+            case 'FILE_READ':
                 global $F_FILE_READ;
                 //如果是系统的sink
                 if (key_exists($funcName, $F_FILE_READ)){
@@ -497,7 +531,7 @@ class NodeUtils{
                 }
                 return array(false) ;
                 break;
-            case 'FILEAFFECT':
+            case 'FILE_AFFECT':
                 global $F_FILE_AFFECT;
                 //如果是系统的sink
                 if (key_exists($funcName, $F_FILE_AFFECT)){
@@ -505,6 +539,18 @@ class NodeUtils{
                 }
                 //如果是用户的sink
                 if (key_exists($funcName, $userDefinedSink->getF_FILE_AFFECT())){
+                    return array(true,$U_SINK_ALL[$funcName]) ;
+                }
+                return array(false) ;
+                break;
+            case 'UNSERIALIZE':
+                global $F_POP;
+                //如果是系统的sink
+                if (key_exists($funcName, $F_POP)){
+                    return array(true, $F_POP[$funcName][0]);
+                }
+                //如果是用户的sink
+                if (key_exists($funcName, $userDefinedSink->getF_POP())){
                     return array(true,$U_SINK_ALL[$funcName]) ;
                 }
                 return array(false) ;
