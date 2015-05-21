@@ -77,8 +77,8 @@ class SecureUtils {
 		$userDefSinkSaniti = $userDefSinkContext->getSinksSanitiByType($type) ;
 		$confDefSinkSaniti = self::getSecureListByType($type) ;
 		$commonDefSinkSaniti = self::getCommonSecureList() ;
+	    $combine_list = array_merge($userDefSinkSaniti,$confDefSinkSaniti,$commonDefSinkSaniti) ;
 		
-		$combine_list = array_merge($userDefSinkSaniti,$confDefSinkSaniti,$commonDefSinkSaniti) ;
 		foreach ($sanitiArr as $value){
 			if(in_array($value->funcName, $combine_list)){
 				return true ;

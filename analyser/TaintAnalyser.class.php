@@ -2,6 +2,15 @@
 
 require_once 'SqliAnalyser.class.php';
 require_once 'XssAnalyser.class.php';
+require_once 'FileAffectAnalyser.class.php';
+require_once 'FileAnalyser.class.php';
+require_once 'CodeAnalyser.class.php';
+require_once 'ExecAnalyser.class.php';
+require_once 'HeaderAnalyser.class.php';
+require_once 'IncludeAnalyser.class.php';
+require_once 'LDPAAnalyser.class.php';
+require_once 'XPathAnalyser.class.php';
+
 
 /**
  * 用于污点分析的类
@@ -203,6 +212,8 @@ class TaintAnalyser {
 				//先对左边的变量进行查询
 				if(is_object($flow->getLocation())){
 				    $target = $flow->getLocation() ;
+				    if (!$target)
+				        continue;
 				    $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 				    $encodingArr = $target->getEncoding() ;
 				    $saniArr =  $target->getSanitization() ;
@@ -223,11 +234,7 @@ class TaintAnalyser {
 				foreach($vars as $var){
 				    
 				    if($var instanceof ValueSymbol) continue ;
-				    
-				    $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-				    $encodingArr = $var->getEncoding() ;
-				    $saniArr =  $var->getSanitization() ;
-    
+				    			    
 					$varName = $this->getVarName($var) ;
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
@@ -310,7 +317,8 @@ class TaintAnalyser {
 		                        $target = $flow->getLocation() ;
 		                        
 		                        //print_r($target) ;
-		                        
+		                        if (!$target)
+		                            continue ;
 		                        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 		                        $encodingArr = $target->getEncoding() ;
 		                        $saniArr =  $target->getSanitization() ;
@@ -394,6 +402,8 @@ class TaintAnalyser {
 		                        //先对左边的变量进行查询
 		                        if(is_object($flow->getLocation())){
 		                            $target = $flow->getLocation() ;
+		                            if (!$target)
+		                                continue;
 		                            $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 		                            $encodingArr = $target->getEncoding() ;
 		                            $saniArr =  $target->getSanitization() ;
@@ -460,6 +470,8 @@ class TaintAnalyser {
 						//被isSanitization函数取代
 						$variable = $this->getVarsByFlow($flow) ;
 						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+						if (!$flow->getLocation())
+						    continue;
 						$encodingArr = $flow->getLocation()->getEncoding() ;
 						$saniArr = $flow->getLocation()->getSanitization() ;
 						

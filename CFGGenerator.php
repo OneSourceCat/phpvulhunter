@@ -554,8 +554,8 @@ class CFGGenerator{
 	        $userDefinedSink->addByTagName($item, $type) ;
 	    	        
 	        //开始污点分析
-	        $argPosition = NodeUtils::getVulArgs($node) ;
-	        $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
+            $argPosition = NodeUtils::getVulArgs($node) ;
+            $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);	            
 
 	        if(count($argArr) > 0){
 	        	$analyser = new TaintAnalyser() ;
@@ -675,7 +675,10 @@ class CFGGenerator{
 			$pEntryBlock->addOutEdge($block_edge) ;
 			$currBlock->addInEdge($block_edge) ;
 		}
-
+		//处理只有一个node节点，不是数组
+        if (!is_array($nodes)){
+            $nodes = array($nodes);
+        }
 		//迭代每个AST node
 		foreach($nodes as $node){
 			//print_r($node) ;
@@ -867,6 +870,9 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 				
 				//array(where)找到危险参数的位置
 				$args = $ret[1];
+				if (is_array($args[0])){
+				    $args = $args[0];
+				}
 				$vars = $this->senstivePostion($node,$this->block,$args) ;  
 				$type = TypeUtils::getTypeByFuncName($nodeName) ;
 				
@@ -1035,40 +1041,5 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 }
 
-//扫描漏洞类型
-$scan_type = 'ALL';
-//echo "<pre>" ;
-//从用户那接受项目路径
-// $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
-// $allFiles = FileUtils::getPHPfile($project_path);
-// //初始化
-// $initModule = new InitModule() ;
-// $initModule->init($project_path) ;
-
-
-$cfg = new CFGGenerator() ;
-$visitor = new MyVisitor() ;
-$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-$traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/test.php';
-//$path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/test.php';
-$cfg->getFileSummary()->setPath($path);
-$code = file_get_contents($path);
-$stmts = $parser->parse($code) ;
-$traverser->addVisitor($visitor) ;
-$traverser->traverse($stmts) ;
-$nodes = $visitor->getNodes() ;
-
-
-$pEntryBlock = new BasicBlock() ;
-$pEntryBlock->is_entry = true ;
-$endLine = $cfg->getEndLine($nodes);
-$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL,$endLine) ;
-
-//print_r($pEntryBlock) ;
-$sanitiFuncContext = UserSanitizeFuncConetxt::getInstance();
-//print_r($sanitiFuncContext);
-$sinkContext = UserDefinedSinkContext::getInstance();
-//print_r($sinkContext);
 
 ?>

@@ -2,6 +2,11 @@
 
 class FileSummaryGenerator {
     
+    /**
+     * 获取当前文件include的所有文件的summary
+     * @param FileSummary $fileSummary
+     * @return array(fileSummarys)
+     */
     public static function getIncludeFilesDataFlows($fileSummary){
         //1.得到include files
         $includeFiles = $fileSummary->getIncludeMap();
@@ -19,7 +24,7 @@ class FileSummaryGenerator {
                 $pRetFiles = self::getIncludeFilesDataFlows($ret);
                 $retFileSummary = array_merge($pRetFiles, $retFileSummary);
                 
-                $retFileSummary = array_merge($ret, $retFileSummary);
+                $retFileSummary = array_merge(array($ret), $retFileSummary);
             }else{
                 $includeFileSummary = self::getFileSummary($absPath);
                 if ($includeFileSummary)
@@ -56,9 +61,6 @@ class FileSummaryGenerator {
 	    
 	    $currBlock = new BasicBlock() ;
 	    foreach ($nodes as $node){
-	        //搜集节点中的require include require_once include_once的PHP文件名称
-	        $fileSummary->addIncludeToMap(NodeUtils::getNodeIncludeInfo($node)) ;
-	        
 	        if(!is_object($node)) continue ;
 	        	
 	        //不分析函数定义

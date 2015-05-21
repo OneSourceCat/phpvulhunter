@@ -11,10 +11,8 @@ class InitModule {
      * 用于对工程进行初始化
      * @param string $project_path
      */    
-    public function init($project_path){
-        
-        $allFiles = FileUtils::getPHPfile($project_path);
-        print_r('init... <br/>');
+    public function init($project_path, $allFiles){
+        print_r('init start... <br/>');
         
         $this->initContext($project_path);
         //test
@@ -45,8 +43,8 @@ class InitModule {
 	private function initFileSummaryContext($project_path, $allFiles){
 	    
 	    //判断本地序列化文件中是否存在UserSanitizeFuncConetxt
-	    $serialPath = '/data/fileSummaryConetxtSerialData';
-	    if(($serial_str = file_get_contents(CURR_PATH . $serialPath))!=''){
+	    $serialPath = CURR_PATH . '/data/fileSummaryConetxtSerialData';
+	    if(($serial_str = file_get_contents($serialPath))!=''){
 	        $fileSummaryMap = unserialize($serial_str) ;
 	        $fileSummaryContext = FileSummaryContext::getInstance();
 	        $fileSummaryContext->setFileSummaryMap($fileSummaryMap);
@@ -54,7 +52,6 @@ class InitModule {
 	    }
 	    
 	    //没有序列化，则获取fileSummary
-		//$allFiles = FileUtils::getPHPfile($project_path);
 		$fileSummaryContext = FileSummaryContext::getInstance();
 		foreach ($allFiles as $fileAbsPath){
 		    $ret = FileSummaryGenerator::getFileSummary($fileAbsPath);
@@ -71,7 +68,7 @@ class InitModule {
 	 * @param multitype $context
 	 */	
 	public function serializeContext($path, $context){
-	    file_put_contents(CURR_PATH . $path, serialize($context)) ;
+	    file_put_contents($path, serialize($context)) ;
 	}
 	
 

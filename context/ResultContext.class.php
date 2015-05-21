@@ -27,7 +27,7 @@ class ResultContext {
 	 * @param Result $record
 	 * @return boolean
 	 */
-	public function isRecordExists($record){
+    public function isRecordExists($record){
 		foreach ($this->resArr as $value){
 		    $value_record = $value->getRecord() ; 
 			if($value_record == $record){

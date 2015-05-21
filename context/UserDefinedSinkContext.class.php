@@ -138,6 +138,7 @@ class UserDefinedSinkContext {
 				return $sink ;
 			}
 		}
+		return array();
 	}
 	
 	/**
