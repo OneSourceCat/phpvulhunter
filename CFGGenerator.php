@@ -248,7 +248,6 @@ class CFGGenerator{
 		}else{
 			//不属于已有的任何一个symbol类型,如函数调用
 			if($part && $part->getType() == "Expr_FuncCall"){
-			    //处理内置函数
 				//处理 id = urlencode($_GET['id']) ;
 				if(!SymbolUtils::isValue($part)){
 					$funcName = NodeUtils::getNodeFunctionName($part) ;
@@ -263,6 +262,10 @@ class CFGGenerator{
 				    $funcName = NodeUtils::getNodeFunctionName($part);
 				    
 				    if (array_key_exists($funcName, $singleFuncs)){
+				        global $F_ENCODING_STRING ;
+				        if (in_array($funcName, $F_ENCODING_STRING)){
+				            EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $this->fileSummary) ;
+				        }
 				        //将函数加入净化栈
 				        $oneFunction = new OneFunction($funcName);
 				        $dataFlow->getLocation()->addSanitization($oneFunction) ;
@@ -272,9 +275,13 @@ class CFGGenerator{
      					
     					//处理净化信息和编码信息
     					SanitizationHandler::setSanitiInfo($part,$dataFlow, $block, $this->fileSummary) ;
-    					EncodingHandler::setEncodeInfo($part, $dataFlow, $block) ;
+    					EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $this->fileSummary) ;
 				    }
 				}
+				
+				
+				
+				//处理内置函数
 				
 			}
 			
@@ -648,7 +655,6 @@ class CFGGenerator{
 				case 'Stmt_Echo':
 				case 'Expr_Print':
 				case 'Expr_FuncCall':
-					//echo "<pre>";
 					$this->functionHandler($node, $block, $this->fileSummary);
 					break ;
 			}
@@ -1040,6 +1046,5 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	    
 	}
 }
-
 
 ?>

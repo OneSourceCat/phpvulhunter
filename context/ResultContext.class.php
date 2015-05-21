@@ -79,10 +79,11 @@ class ResultContext {
 class Result{
 	private $record = array();
 	//construct
-	public function __construct($path,$type,$node,$var){
+	public function __construct($node_path, $var_path, $type, $node, $var){
 		$this->record = array(
-				'path' => $path,
+				'node_path' => $node_path,
 				'node'=> $node,
+                'var_path' => $var_path,
 				'var' => $var,
 				'type' => $type
 		) ;

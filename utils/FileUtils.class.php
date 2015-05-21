@@ -60,7 +60,8 @@ class FileUtils
             try {
                 $stmts = $parser->parse($code);
             } catch (PhpParser\Error $e) {
-                print_r("==> Parse Error: {$e->getMessage()}\n");
+                //print_r("==> Parse Error: {$e->getMessage()}\n");
+                ;
             }
             $traverser->traverse($stmts);
             $nodes = $visitor->getNodes();

@@ -292,7 +292,7 @@ class NodeUtils{
     	if ((!$node instanceof Node) || !$argsPos){
     		return null;
     	}
-    	print_r(self::getNodeFunctionName($node));
+    	//print_r(self::getNodeFunctionName($node));
     	$argsNameArr = self::getNodeFuncParams($node) ;	
     	$retArr = array() ;
     	$argNum = count($argsNameArr);
@@ -366,7 +366,7 @@ class NodeUtils{
     	$nameNum = count($F_SINK_ARRAY);
     	$userDefinedSink = UserDefinedSinkContext::getInstance() ;
     	$U_SINK_ALL = $userDefinedSink->getAllSinks() ;
-    	
+
     	//根据scanType,查找sink函数
     	switch ($scanType){
     	    case 'ALL':
