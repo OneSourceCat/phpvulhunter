@@ -32,78 +32,58 @@ function load_file($path){
 	$cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 }
 
-<<<<<<< HEAD
-	if(!isset($_POST['path']) || !isset($_POST['type'])){
-		$smarty->display('index.html') ;
-		exit() ;
-=======
+
+if(!isset($_POST['path']) || !isset($_POST['type'])){
+	$smarty->display('index.html') ;
+	exit() ;
+}
+
 $t_start = time();
 
 //1、从web ui中获取并加载项目工程
 $count = 0 ;
-// $project_path = $_POST['path'] ;  //扫描的工程路径
-// $scan_type = $_POST['type'] ;     //扫描的类型
-// $encoding = $_POST['encoding'] ;  //CMS的编码   UTF-8 或者  GBK
+$project_path = $_POST['path'] ;  //扫描的工程路径
+$scan_type = $_POST['type'] ;     //扫描的类型
+$encoding = $_POST['encoding'] ;  //CMS的编码   UTF-8 或者  GBK
 
-$scan_type = 'ALL';
-$project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
-print_r('<pre>');
+
+// $scan_type = 'ALL';
+// $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
+// print_r('<pre>');
+
+
 //2、初始化模块
-$allFiles = FileUtils::getPHPfile($project_path);
-$mainlFiles = FileUtils::mainFileFinder($project_path);
-$initModule = new InitModule() ;
-$initModule->init($project_path, $allFiles) ;
+// $allFiles = FileUtils::getPHPfile($project_path);
+// $mainlFiles = FileUtils::mainFileFinder($project_path);
+// $initModule = new InitModule() ;
+// $initModule->init($project_path, $allFiles) ;
 
 
 //3、循环每个文件  进行分析工作
-if(is_file($project_path)){
-	load_file($project_path) ;
-}elseif (is_dir($project_path)){
-	$path_list = $mainlFiles;
-	foreach ($path_list as $path){
-		try{
-		    print_r($path.'<br/>');
-			load_file($path) ;
-			$count ++ ;
-			//传给templates
-		}catch(Exception $e){
-			continue ;
-		}	
->>>>>>> d97c1f577ae02ae7e5fecdc71b1692eb55541d1e
-	}
-	//1、从web ui中获取并加载项目工程
-	$project_path = $_POST['path'] ;
-	$scan_type = $_POST['type'] ;
-	// $project_path = "E:/testWeb/dynamic/AjaxTest.php" ;
+// if(is_file($project_path)){
+// 	load_file($project_path) ;
+// }elseif (is_dir($project_path)){
+// 	$path_list = $mainlFiles;
+// 	foreach ($path_list as $path){
+// 		try{
+// 		    //print_r($path.'<br/>');
+// 			load_file($path) ;
+// 			$count ++ ;
+// 			//传给templates
+// 		}catch(Exception $e){
+// 			continue ;
+// 		}	
+
+// 	}
+// }else{
+//     echo "<script>alert('工程不存在！');</script>" ;
+//     exit() ;
+// }
 
 
 
-	//2、初始化模块
-	// $project_path = 'F:/wamp/www/phpvulhunter/test';
-	//$initModule = new InitModule() ;
-	//$initModule->init($project_path) ;
-
-
-	//3、循环每个文件  进行分析工作
-	// if(is_file($project_path)){
-	// 	load_file($project_path) ;
-	// }elseif (is_dir($project_path)){
-	// 	$dirs = FileUtils::getDir($project_path) ;
-	// 	foreach ($dirs as $dir){
-	// 		$path_list = FileUtils::getPHPfile($dir) ;
-	// 		foreach ($path_list as $path){
-	// 			load_file($path) ;
-	// 		}
-	// 	}
-	// }else{
-	// 	//请求不合法
-	// 	// echo "<script>alert('工程不存在！');</script>" ;
-	// 	exit() ;
-	// }
 //4、获取ResultContext  传给template
-<<<<<<< HEAD
 // $results = ResultContext::getInstance() ;
-
 // 测试使用的 results
 $results = array(
 				array(
@@ -131,25 +111,20 @@ $results = array(
 			 		'type'	=> 	'SQLI'   //漏洞类型
 				)
 			);
-// ---------------------------------------------------------/**/
 
 $smarty->assign('results',$results);
 $smarty->display('content.html');
-=======
-$results = ResultContext::getInstance() ;
 
 //5、序列化
-$serialPath = CURR_PATH . '/data/resultConetxtSerialData';
-file_put_contents($serialPath, serialize($results)) ;
-if(($serial_str = file_get_contents($serialPath))!=''){
-    $results = unserialize($serial_str) ;
-    print_r($results);
-}
+// $serialPath = CURR_PATH . '/data/resultConetxtSerialData';
+// file_put_contents($serialPath, serialize($results)) ;
+// if(($serial_str = file_get_contents($serialPath))!=''){
+//     $results = unserialize($serial_str) ;
+//     print_r($results);
+// }
 
-$t_end = time();
-$t = $t_end - $t_start;
-print_r($t);
+// $t_end = time();
+// $t = $t_end - $t_start;
+// print_r($t);
 
-
->>>>>>> d97c1f577ae02ae7e5fecdc71b1692eb55541d1e
 ?>
