@@ -43,9 +43,14 @@ require_once CURR_PATH . '/analyser/TaintAnalyser.class.php';
 require_once CURR_PATH . '/libs/Smarty_setup.php';
 
 require_once CURR_PATH . '/CFGGenerator.php';
-header("Content-type:text/html;charset=utf-8") ;
-ini_set('xdebug.max_nesting_level', 2000);
-ini_set("max_execution_time", "3600*4");
 
+header("Content-type:text/html;charset=utf-8") ;
+
+//设置递归层数
+ini_set('xdebug.max_nesting_level', 5000);
+//设置最大执行时间
+ini_set("max_execution_time", "3600*4");
+//设置内存限制大小
+ini_set('memory_limit', '300M') ;
 
 ?>

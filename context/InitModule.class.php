@@ -12,21 +12,11 @@ class InitModule {
      * @param string $project_path
      */    
     public function init($project_path, $allFiles){
-        //print_r('init start... <br/>');
-        
         $this->initContext($project_path);
-        //test
         $context = Context::getInstance() ;
-        //print_r($context);
-        
         $this->initFileSummaryContext($project_path, $allFiles) ;
-        //test
-        //$path = 'C:\Users\xyw55\Desktop\test\niubicms\NiubiCMS v1.3\upload\bbs\index.php';
-        //$absPath = $path;
-        //$ret = FileSummaryGenerator::getFileSummary($absPath);
-        //print_r($ret);
-        //print_r('init end...<br/>');
     }
+    
     /**
      * 初始化class finder上下文
      * @param string $project_path

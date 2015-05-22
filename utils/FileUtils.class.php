@@ -19,24 +19,38 @@ class FileUtils
      */
     public static function getPHPfile($dirpath){
         $ret = array();
-        if (substr($dirpath, - 4) == ".php")
+        if (substr($dirpath, - 4) == ".php"){
+            $in_charset = mb_detect_encoding($dirpath) ;
+            $dirpath = iconv($in_charset, "UTF-8", $dirpath) ;
             array_push($ret, $dirpath);
-        if (! is_dir($dirpath))
+        }
+            
+        if (! is_dir($dirpath)){
             return $ret;
+        }
+            
         $dh = opendir($dirpath);
         while (($file = readdir($dh)) != false) {
             // 文件名的全路径 包含文件名
             $filePath = $dirpath . "/" . $file;
             // echo $filePath."<br/>";
-            if ($file == "." or $file == "..")
+            if ($file == "." or $file == ".."){
                 continue;
-            elseif (is_dir($filePath)) {
+            }elseif (is_dir($filePath)) {
                 $files = FileUtils::getPHPfile($filePath);
-                foreach ($files as $filePath)
-                    if (! is_null($filePath))
+                foreach ($files as $filePath){
+                    if (! is_null($filePath)){
+                        $in_charset = mb_detect_encoding($filePath) ;
+                        $filePath = iconv($in_charset, "UTF-8", $filePath) ;
                         array_push($ret, $filePath);
-            } elseif (substr($filePath, - 4) == ".php")
+                    }
+                }      
+            } elseif (substr($filePath, - 4) == ".php"){
+                $in_charset = mb_detect_encoding($filePath) ;
+                $filePath = iconv($in_charset, "UTF-8", $filePath) ;
                 array_push($ret, $filePath);
+            }
+               
         }
         closedir($dh);
         return $ret;
@@ -60,16 +74,17 @@ class FileUtils
             try {
                 $stmts = $parser->parse($code);
             } catch (PhpParser\Error $e) {
-                //print_r("==> Parse Error: {$e->getMessage()}\n");
-                ;
+                continue ;
             }
             $traverser->traverse($stmts);
             $nodes = $visitor->getNodes();
             $sumcount = count($nodes);
             $count = $visitor->getCount();
+            
             //暂时确定当比值小于0.6，为main php files
-            if($count/$sumcount<0.6)
+            if($count / $sumcount < 0.6){
                 array_push($should2parser, $file);
+            }
             $visitor->setCount(0);
             $visitor->setNodes(array());
         }
@@ -120,38 +135,6 @@ class FileUtils
     }
     
     
-    /**
-     * 递归获取文件夹下的所有PHP文件
-     * @param unknown $path
-     * @return multitype:
-     */
-    public static function getDir($path){
-    	static $ret = array() ;
-    	if(!is_dir($path)){
-    		array_push($ret, $path) ;
-    		return $ret ;
-    	}
-    	if(($handle = opendir($path)) == false){
-    		return $ret ;
-    	}
-    	while(($file = readdir($handle))!=false){
-    		if($file == "." || $file == ".."){
-    			continue ;
-    		}
-    		if(is_dir($path . "/" . $file)){
-    			$item = $path . "/" . $file ;
-    			$in_charset = mb_detect_encoding($item) ;
-    			$item = iconv($in_charset, "UTF-8", $item) ;
-    			array_push($ret, $item) ;
-    		}else{
-    			continue ;				
-    		}
-    	}
-    	closedir($handle) ;
-    	return $ret ;
-    }
-
-    
 }
 
 /**
@@ -170,16 +153,12 @@ class VisitorForLine extends PhpParser\NodeVisitorAbstract
     public function enterNode(Node $node)
     {
         $type = $node->getType();
-        // echo $type;
         switch ($type) {
             case "Stmt_Class":
                 $this->count= $this->count+2;
                 break;
             case "Stmt_Function":
                 $this->count= $this->count+1;
-                break;
-            default:
-                ;
                 break;
         }
     }

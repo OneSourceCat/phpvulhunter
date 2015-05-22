@@ -2,8 +2,6 @@
 
 require_once 'global.php';
 
-header("Content-type:text/html;charset=utf-8") ;
-
 $smarty = new Smarty_setup();
 
 /**
@@ -38,7 +36,6 @@ if(!isset($_POST['path']) || !isset($_POST['type'])){
 }
 
 $t_start = time();
-//print_r('<pre>');
 //1、从web ui中获取并加载项目工程
 $project_path = $_POST['path'] ;  //扫描的工程路径
 $scan_type = $_POST['type'] ;     //扫描的类型
@@ -58,12 +55,10 @@ if(is_file($project_path)){
 	load_file($project_path) ;
 }elseif (is_dir($project_path)){
 	$path_list = $mainlFiles;
-    //$path_list = array('C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload/admin/admin.php');
 	foreach ($path_list as $path){
 		try{
 		    //print_r($path.'<br/>');
 			load_file($path) ;
-			$count ++ ;
 			//传给templates
 		}catch(Exception $e){
 			continue ;
@@ -81,7 +76,6 @@ $serialPath = CURR_PATH . '/data/resultConetxtSerialData';
 
 if(($serial_str = file_get_contents($serialPath))!=''){
     $results = unserialize($serial_str) ;
-    //print_r($results);
 }
 
 file_put_contents($serialPath, serialize($results)) ;
@@ -98,42 +92,6 @@ foreach ($results->getResArr() as $result){
 }
 
 $results = $tempRes;
-
-// 测试使用的 results
-// $results = array(
-// 				// 第一个记录
-// 				array(
-// 			 		'path'	=>	'E:\\demo\\demo1.php',  //漏洞的页面路径
-// 			 		'type'	=> 	'SQLI',				//漏洞类型
-// 			 		'node'	=>	array(	
-// 			 						'line'		=>	'startline ~ endline',
-// 			 						'code'		=>	'startcode ... endcode'
-// 			 					), 
-//                  'node_file' =>	'nodefile',
-// 			 		'var'	=>	array(
-// 			 						'line'		=>	'startline ~ endline',
-// 			 						'code'		=>	'startcode ... endcode'
-// 			 					)
-//                  'var_file'	=>	'varfile',
-// 				),	
-
-// 				// 第二个记录
-// 				array(
-// 			 		'path'	=>	'E:\\demo\\demo2.php',  //漏洞的页面路径
-// 			 		'type'	=> 	'SQLI',				//漏洞类型
-// 			 		'node'	=>	array(	
-// 			 						'line'		=>	'startline ~ endline',
-// 			 						'code'		=>	'startcode ... endcode'
-// 			 					), 
-//                  'node_file' =>	'nodefile',
-// 			 		'var'	=>	array(
-// 			 						'line'		=>	'startline ~ endline',
-// 			 						'code'		=>	'startcode ... endcode'
-// 			 					)
-//                  'var_file'	=>	'varfile',
-// 				)
-// 			);
-
 $smarty->assign('results',$results);
 $smarty->display('content.html');
 

@@ -267,49 +267,40 @@ class ClassVisitor extends PhpParser\NodeVisitorAbstract{
 			$record = new Record ;
 			$record->path = $this->class_path ;
 			//设置类的名字
-			//echo "Class_name:$node->name<br/>";
 			$record->class_name = $node->name ;
 
 			if($node->extends) $record->class_extends = $node->extends->parts[0];
 			$record->class_implements = $node->implements ;
 
 			//设置类的成员变量
-			//echo "Class_properties:" ;
 			$props = array() ;
 			foreach($node->stmts as $key => $value){
 				//找到类属性信息
 				if($value instanceof Node\Stmt\Property){
-					//echo $value->props[0]->name ."<br/>";
 					array_push($props,$value->props[0]->name) ;
 				}
 			}
 			$record->class_properties = $props ;
 
 			//设置类的方法
-			//echo "Class_methods:<br/>" ;
 			foreach ($node->stmts as $key => $value) {
 				if($value instanceof Node\Stmt\ClassMethod){
 					//初始化类方法的描述
 					$method = array('name'=>'','params'=>array(),'startLine'=>0,'endLine'=>0);
 					
 					//设置方法名称
-					//echo "[methods_name]:" .$value->name ."<br/>";
 					$method['name'] = $value->name ;
 
 					//设置方法的参数
 					//echo "[methods_params]:";
 					for($i=0;$i<count($value->params);$i++){
-						//echo $value->params[$i]->name ."\t";
 						array_push($method['params'],$value->params[$i]->name) ;
 					}
-					//echo "<br>" ;
 
 					//设置方法的起始行号和终止行号
 					//echo "[method_Lineinfo]:" ;
 					$method['startLine'] = $value->getAttribute("startLine") ;
 					$method['endLine'] = $value->getAttribute("endLine") ;
-					//echo "startLine:$method['startLine'],endLine:$method['endLine']" ;
-					//echo "<br>" ;
 
 					array_push($record->class_methods,$method);
 				}
@@ -431,14 +422,11 @@ class ClassFinder{
 			try{
 				$stmts = $this->parser->parse($code) ;	
 			}catch (PhpParser\Error $e) {
-    			//echo 'Parse Error: ', $e->getMessage();
     			continue ;
 			}
-			
 			$this->traverser->traverse($stmts) ;  //遍历AST
 		}
 
-		
 		//补充类通过继承获得的属性和方法
 		$context = Context::getInstance() ;
 		$this->getExtendsInfo($context) ;
