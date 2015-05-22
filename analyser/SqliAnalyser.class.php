@@ -6,7 +6,7 @@
  *
  */
 class SqliAnalyser {	
-	
+    
 	/**
 	 * 判断变量的净化情况
 	 * 返回:
@@ -38,7 +38,7 @@ class SqliAnalyser {
 		if($flag && $encoding == 'GBK'){
 			$iconv_pos = array_search('iconv', $saniArr) ;
 			$slashes_list = array('addslashes','mysql_escape_string') ;
-			$position = self::findFirstPosition($saniArr, $slashes_list) ;
+			$position = SecureUtils::findFirstPosition($saniArr, $slashes_list) ;
 			if($position !== false && $iconv_pos > $position){
 				return true ;
 			}
