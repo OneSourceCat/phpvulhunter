@@ -146,10 +146,14 @@ class FileUtils{
         $endLine = $endLine - 1 ;
         $path = str_replace("\\", "/", $path) ;
         if(is_file($path)){
-            $codeArr = explode('\n', file_get_contents($path), -1) ;
+            $codeArr = explode("\n", file_get_contents($path), -1) ;
             $ret = $codeArr[$startLine] ;
-            $ret .= $codeArr[$endLine] ;
+            if($startLine != $endLine){
+                $ret .= $codeArr[$endLine] ;
+            }
+            
         }
+        
         return $ret ;
     }
     

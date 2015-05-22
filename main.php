@@ -40,7 +40,6 @@ function convertResults($resContext){
     foreach($resArr as $record){
         $item = array() ;
         $record = $record->getRecord() ;
-        $item['path'] = $record['path'] ;
         $item['type'] = $record['type'] ;
         $item['node_path'] = $record['node_path'] ;
         $item['var_path'] = $record['var_path'] ;
@@ -48,8 +47,14 @@ function convertResults($resContext){
         //整理node代码
         $node = $record['node'] ;
         $node_item = array() ;
-        $node_start = $node->getAttribute('startLine') ;
-        $node_end = $node->getAttribute('endLine') ;
+        if($node instanceof Symbol){
+            $node_start = $node->getValue()->getAttribute('startLine') ;
+            $node_end = $node->getValue()->getAttribute('endLine') ;
+        }else{
+            $node_start = $node->getAttribute('startLine') ;
+            $node_end = $node->getAttribute('endLine') ;
+        }
+        
         $node_item['line'] = $node_start . "|" . $node_end ;
         $node_item['code'] = FileUtils::getCodeByLine($record['node_path'], $node_start, $node_end) ;
         $item['node'] = $node_item ;
@@ -57,8 +62,13 @@ function convertResults($resContext){
         //整理var代码
         $var = $record['var'] ;
         $var_item = array() ;
-        $var_start = $var->getAttribute('startLine') ;
-        $var_end = $var->getAttribute('endLine') ;
+        if($var instanceof Symbol){
+            $var_start = $var->getValue()->getAttribute('startLine') ;
+            $var_end = $var->getValue()->getAttribute('endLine') ;
+        }else{
+            $var_start = $var->getAttribute('startLine') ;
+            $var_end = $var->getAttribute('endLine') ;
+        }
         $var_item['line'] = $var_start . "|" . $var_end ;
         $var_item['code'] = FileUtils::getCodeByLine($record['var_path'], $var_start, $var_end) ;
         $item['var'] = $var_item ;
@@ -125,7 +135,7 @@ print_r($t);
 
 //5、处理results 传给template
 
-$template_res = convertResults($results) ;
+$template_res = convertResults(ResultContext::getInstance()) ;
 
 $smarty->assign('results',$template_res);
 $smarty->display('content.html');
