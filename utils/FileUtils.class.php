@@ -10,8 +10,7 @@ use PhpParser\Node;
  * @author xyw55
  *        
  */
-class FileUtils
-{
+class FileUtils{
     /**
      *
      * @param php项目文件夹路径 $dirpath            
@@ -133,6 +132,27 @@ class FileUtils
 	    }
     	return '' ; 
     }
+    
+
+    /**
+     * 根据代码的路径，起始和终止行号获取相应的代码
+     * @param string $path
+     * @param string $startLine
+     * @param string $endLine
+     */
+    public static function getCodeByLine($path, $startLine, $endLine){
+        $ret = '' ;
+        $startLine = $startLine - 1 ;
+        $endLine = $endLine - 1 ;
+        $path = str_replace("\\", "/", $path) ;
+        if(is_file($path)){
+            $codeArr = explode('\n', file_get_contents($path), -1) ;
+            $ret = $codeArr[$startLine] ;
+            $ret .= $codeArr[$endLine] ;
+        }
+        return $ret ;
+    }
+    
     
     
 }

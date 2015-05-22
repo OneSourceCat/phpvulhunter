@@ -20,8 +20,10 @@ class SanitizationHandler {
 	    $sanitiInfo = self::SantiniFuncHandler($node, $fileSummary);
 	    //print_r($sanitiInfo);
 	    if($sanitiInfo){
+	        
 	        //向上追踪变量，相同变量的净化信息，全部添加
 	        $funcParams = NodeUtils::getNodeFuncParams($node);
+	        
 	        //traceback
 	        $sameVarSanitiInfo = array();
 	        foreach ($funcParams as $param){
@@ -36,14 +38,15 @@ class SanitizationHandler {
 	            $sameVarSanitiInfo = array_merge($sameVarSanitiInfo,$ret['funcs']);
 	        }
 	        //加入此变量的净化信息中
-	        foreach ($sameVarSanitiInfo as $oneFunction)
+	        foreach ($sameVarSanitiInfo as $oneFunction){
 	            $dataFlow->getLocation()->addSanitization($oneFunction) ;
+	        }
+	           
 	        $dataFlow->getLocation()->addSanitization($sanitiInfo) ;
 	    }
 	    $funcName = NodeUtils::getNodeFunctionName($node) ;
 	    //清除反作用的函数
 	    SanitizationHandler::clearSantiInfo($funcName, $node, $dataFlow) ;
-	    //print_r($dataFlow);
 	}
 	/**
 	 * 相同净化变量的多块回溯
@@ -53,7 +56,6 @@ class SanitizationHandler {
 	 * @return 
 	 */
 	public static function sanitiSameVarMultiBlockHandler($varName, $block, $dataFlows){
-	    //print_r("enter sanitiSameVarMultiBlock<br/>");
         $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
         $blockList = $mulitBlockHandlerUtils->getPathArr();
         
@@ -199,7 +201,6 @@ class SanitizationHandler {
 	        $visitor->fileSummary = $fileSummary;
 	        $traverser->traverse($funcBody->stmts) ;
 	        
-	        //var_dump($visitor->sanitiInfo);
 	        if($visitor->sanitiInfo[0]){
 	            //将净化函数加入净化UserSanitizeFuncContext
 	            $oneFunction = new OneFunction($funcName);
@@ -207,8 +208,10 @@ class SanitizationHandler {
 	            $SanitiFuncContext = UserSanitizeFuncConetxt::getInstance();
 	            $SanitiFuncContext->addFunction($oneFunction);
 	            return $oneFunction;
-	        }else
+	        }else{
 	            return null;
+	        }
+	            
 	    }
 	}
 	
@@ -408,7 +411,6 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
      * @return void|净化信息
      */
     public function sanitiMultiBlockHandler($arg, $block, $flowsNum=0){
-        //print_r("enter sanitiMultiBlock<br/>");
         $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
         $blockList = $mulitBlockHandlerUtils->getPathArr();
         
@@ -419,7 +421,7 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
             return $this->sanitiTracebackBlock($arg, $block, $flowsNum);
         
         if($blockList == null || count($blockList) == 0){
-                return  ;
+            return  ;
         }
         
         if(!is_array($blockList[0])){

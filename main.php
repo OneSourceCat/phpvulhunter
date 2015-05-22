@@ -30,6 +30,45 @@ function load_file($path){
 	$cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 }
 
+/**
+ * 将结果集转为前端的模式
+ * @param ResultContext $resContext
+ */
+function convertResults($resContext){
+    $ret = array() ;
+    $resArr = $resContext->getResArr() ;
+    foreach($resArr as $record){
+        $item = array() ;
+        $record = $record->getRecord() ;
+        $item['path'] = $record['path'] ;
+        $item['type'] = $record['type'] ;
+        $item['node_path'] = $record['node_path'] ;
+        $item['var_path'] = $record['var_path'] ;
+        
+        //整理node代码
+        $node = $record['node'] ;
+        $node_item = array() ;
+        $node_start = $node->getAttribute('startLine') ;
+        $node_end = $node->getAttribute('endLine') ;
+        $node_item['line'] = $node_start . "|" . $node_end ;
+        $node_item['code'] = FileUtils::getCodeByLine($record['node_path'], $node_start, $node_end) ;
+        $item['node'] = $node_item ;
+        
+        //整理var代码
+        $var = $record['var'] ;
+        $var_item = array() ;
+        $var_start = $var->getAttribute('startLine') ;
+        $var_end = $var->getAttribute('endLine') ;
+        $var_item['line'] = $var_start . "|" . $var_end ;
+        $var_item['code'] = FileUtils::getCodeByLine($record['var_path'], $var_start, $var_end) ;
+        $item['var'] = $var_item ;
+        
+        array_push($ret, $item) ;
+    }
+    return $ret ;
+}
+
+
 if(!isset($_POST['path']) || !isset($_POST['type'])){
 	$smarty->display('index.html') ;
 	exit() ;
@@ -85,14 +124,10 @@ $t = $t_end - $t_start;
 print_r($t);
 
 //5、处理results 传给template
-$tempRes = array();
-foreach ($results->getResArr() as $result){
-    $record = $result->getRecord();
-    array_push($tempRes, $record);
-}
 
-$results = $tempRes;
-$smarty->assign('results',$results);
+$template_res = convertResults($results) ;
+
+$smarty->assign('results',$template_res);
 $smarty->display('content.html');
 
 

@@ -453,8 +453,10 @@ class TaintAnalyser {
 	public function multiFileHandler($block, $argName, $node, $fileSummary){
 	    //首先根据fileSummary获取到fileSummaryMap
 	    $fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-	    if (!$fileSummaryMap)
+	    if (!$fileSummaryMap){
 	        return ;
+	    }
+	        
 	    $node_path = $fileSummary->getPath() ;
 		foreach ($fileSummaryMap as $fsummary){
 			if($fsummary instanceof FileSummary){
@@ -465,8 +467,10 @@ class TaintAnalyser {
 						//被isSanitization函数取代
 						$variable = $this->getVarsByFlow($flow) ;
 						$type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-						if (!$flow->getLocation())
+						if (!$flow->getLocation()){
 						    continue;
+						}
+						    
 						$encodingArr = $flow->getLocation()->getEncoding() ;
 						$saniArr = $flow->getLocation()->getSanitization() ;
 						

@@ -100,8 +100,13 @@ class AnalyseUtils {
 	
 		//如果最后一个编码为secu_ins,则返回false
 		$last = array_pop($encodingArr) ;
-		if(in_array($last, $secu_ins) || in_array($last, $vul_encode_ins)){
+		if(in_array($last, $secu_ins)){
 			return true ;
+		}
+		
+		//如果直接解码操作，则编码不安全
+		if(in_array($last, $vul_encode_ins)){
+		    return false;
 		}
 	
 	}
