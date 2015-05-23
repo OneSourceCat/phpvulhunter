@@ -27,7 +27,7 @@ class SanitizationHandler {
 	        foreach ($funcParams as $param){
 	            $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	            $dataFlows = array_reverse($dataFlows);
-	            $ret = self::sanitiSameVarMultiBlockHandler($param, $block, $dataFlows, $fileSummary);
+                $ret = self::sanitiSameVarMultiBlockHandler($param, $block, $dataFlows, $fileSummary);
 	            //如果一个参数没有净化，则未净化
 	            if(!$ret[0]){
 	                $sameVarSanitiInfo = array();
@@ -45,8 +45,8 @@ class SanitizationHandler {
 	    SanitizationHandler::clearSantiInfo($funcName, $node, $dataFlow) ;
 	    //print_r($dataFlow);
 	}
-	
-	private static function sanitiSameVarMultiFileHandler($varName, $block, $dataFlows, $fileSummary){  
+
+	private static function sanitiSameVarMultiFileHandler($varName, $block, $dataFlows, $fileSummary){
 	    $includeFileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary);
 	    if (!$includeFileSummaryMap){
 	        return array(false);
@@ -63,16 +63,16 @@ class SanitizationHandler {
 	                if ($flow->getlocation()){
 	                    $ret = $flow->getlocation()->getSanitization();
 	                    if ($ret){
-                            return array(true,'funcs'=>$ret);
+	                        return array(true,'funcs'=>$ret);
 	                    }else {
 	                        return array(false);
 	                    }
-                    }
+	                }
 	            }
 	        }
 	    }
 	}
-	
+
 	/**
 	 * 相同净化变量的多块回溯
 	 * @param 变量名 $varName
@@ -417,7 +417,7 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
                     ($part->getType() == 'Expr_MethodCall') || 
                     ($part->getType() == 'Expr_StaticCall') ){
                     $ret = SanitizationHandler::SantiniFuncHandler($part, $this->fileSummary);
-                   
+                    
                     if($ret){
                         $saniType = $ret->getSanitiType();
                         if (is_array($saniType[0])){

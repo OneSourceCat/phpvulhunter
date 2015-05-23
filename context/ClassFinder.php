@@ -147,7 +147,8 @@ class Context {
                 }
 	        }
 	    }
-	    return $this->getFunction($path, $method);
+	    $ret = $this->getFunction($path, $method);
+	    return $ret;
 	}
 	
     /**
@@ -199,6 +200,7 @@ class Context {
 	        $traverser = new PhpParser\NodeTraverser ;
 	        $visitor->startLine = $startLine ;
 	        $visitor->endLine = $endLine ;
+	        $visitor->funcName = $method['name'];
 	        try {
 	            $stmts = $parser->parse($code) ;
 	        } catch (Exception $e) {
@@ -341,18 +343,51 @@ class ClassVisitor extends PhpParser\NodeVisitorAbstract{
 }
 
 
+
+class InFunctionVisitor extends PhpParser\NodeVisitorAbstract{
+    public $isSameFunction = false;
+    public $funcName;
+    public function leaveNode(PhpParser\Node $node){
+        if(($node->getType() == 'Expr_FuncCall' ||
+            $node->getType() == 'Expr_MethodCall' ||
+            $node->getType() == 'Expr_StaticCall')){
+            $funcName = NodeUtils::getNodeFunctionName($node);
+            
+            $funcName = substr($funcName, strpos($funcName, ':')+1);
+            if ($funcName == $this->funcName){
+                $this->isSameFunction = true;
+                return ;
+            }
+    
+
+        }
+    }
+}
+
 /*
 	用来获取方法体的遍历
 */
 class FunctionBodyVisitor extends PhpParser\NodeVisitorAbstract{
-	public $func_body = NULL ;
+	public $func_body = null ;
 	public $startLine ;
 	public $endLine ;
-
+    public $funcName ;
+    
 	public function leaveNode(PhpParser\Node $node){
 		if(($node->getAttribute('startLine') == $this->startLine) && ($node->getAttribute('endLine') == $this->endLine)){
-			$this->func_body = $node ;
+		    $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+		    $visitor = new InFunctionVisitor ;
+		    $traverser = new PhpParser\NodeTraverser ;
+		    $visitor->funcName = $this->funcName;
+		    $traverser->addVisitor($visitor) ;
+		    $traverser->traverse(array($node)) ;
+		    
+		    if ($visitor->isSameFunction){
+		        return ;		        
+		    }
+		    $this->func_body = $node ;
 		}
+
 	}
 
 	public function getFunctionBody(){
@@ -408,7 +443,7 @@ class ClassFinder{
 	        fclose($fileHandler);
 	    }
 		//判断本地序列化文件中是否存在Context
-		if(($serial_str = file_get_contents($serialPath))!=''){
+		if(($serial_str = file_get_contents($serialPath)) != ''){
 			$records = unserialize($serial_str) ;
 			$context = Context::getInstance() ;
 			$context->records = $records ;
