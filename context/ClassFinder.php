@@ -156,7 +156,6 @@ class Context {
      * @return 返回当前文件包含文件的函数集合
      */
     public function getRequireFileFuncs($path,$require_array){
-        
         $tempRequireFile = array();
         //将文件自身添加
         array_push($tempRequireFile, $path);
@@ -165,7 +164,9 @@ class Context {
         global $project_path;
         foreach ($require_array as $filepath){
             $absPath = FileUtils::getAbsPath($path, $filepath);
-            array_push($tempRequireFile, $absPath);
+            if ($absPath){
+                array_push($tempRequireFile, $absPath);
+            }
         }
         $records = array();
         //不能定义同名类和函数，不同类方法可以相同
@@ -292,13 +293,11 @@ class ClassVisitor extends PhpParser\NodeVisitorAbstract{
 					$method['name'] = $value->name ;
 
 					//设置方法的参数
-					//echo "[methods_params]:";
 					for($i=0;$i<count($value->params);$i++){
 						array_push($method['params'],$value->params[$i]->name) ;
 					}
 
 					//设置方法的起始行号和终止行号
-					//echo "[method_Lineinfo]:" ;
 					$method['startLine'] = $value->getAttribute("startLine") ;
 					$method['endLine'] = $value->getAttribute("endLine") ;
 
@@ -321,23 +320,16 @@ class ClassVisitor extends PhpParser\NodeVisitorAbstract{
 		    $method = array('name'=>'','params'=>array(),'startLine'=>0,'endLine'=>0);
 		
 		    //设置方法名称
-		    //echo "[methods_name]:" .$node->name ."<br/>";
 		    $method['name'] = $node->name ;
 		
 		    //设置方法的参数
-		    //echo "[methods_params]:";
 		    for($i=0;$i<count($node->params);$i++){
-		        //echo $node->params[$i]->name ."\t";
 		        array_push($method['params'],$node->params[$i]->name) ;
 		    }
-		    //echo "<br>" ;
 		
 		    //设置方法的起始行号和终止行号
-		    //echo "[method_Lineinfo]:" ;
 		    $method['startLine'] = $node->getAttribute("startLine") ;
 		    $method['endLine'] = $node->getAttribute("endLine") ;
-		    //echo "startLine:$method['startLine'],endLine:$method['endLine']" ;
-		    //echo "<br>" ;
 		     
 		    array_push($record->class_methods,$method);
 		
@@ -405,8 +397,18 @@ class ClassFinder{
 		收集完成之后，将信息设置到Context中（序列化）
 	*/
 	public function getContext(){
+	    global $project_path;
+	    $fileName = str_replace('/', '_', $project_path);
+	    $fileName = str_replace(':', '_', $fileName);
+	    $serialPath = CURR_PATH . "/data/serialdata/" . $fileName;
+	    
+	    if (!is_file($serialPath)){
+	        //创建文件
+	        $fileHandler = fopen($serialPath, 'w');
+	        fclose($fileHandler);
+	    }
 		//判断本地序列化文件中是否存在Context
-		if(($serial_str = file_get_contents(CURR_PATH . "/data/serialdata"))!=''){
+		if(($serial_str = file_get_contents($serialPath))!=''){
 			$records = unserialize($serial_str) ;
 			$context = Context::getInstance() ;
 			$context->records = $records ;
@@ -424,19 +426,21 @@ class ClassFinder{
 			}catch (PhpParser\Error $e) {
     			continue ;
 			}
+			
 			$this->traverser->traverse($stmts) ;  //遍历AST
 		}
 
+		
 		//补充类通过继承获得的属性和方法
 		$context = Context::getInstance() ;
 		$this->getExtendsInfo($context) ;
 
 		//对Context进行序列化，加快下次读取速度
-		$this->serializeContext($context) ;
+		$this->serializeContext($context, $serialPath) ;
 	}
 
-	public function serializeContext($context){
-		file_put_contents(CURR_PATH . "/data/serialdata",serialize($context->records)) ;
+	public function serializeContext($context, $serialPath){
+		file_put_contents($serialPath, serialize($context->records)) ;
 	}
 
 	/*

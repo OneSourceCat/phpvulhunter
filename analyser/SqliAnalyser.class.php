@@ -69,9 +69,6 @@ class SqliAnalyser {
 	 * @return bool
 	 */
 	public function analyse($var,$saniArr,$encodingArr){
-// 	    echo "------<br/>";
-// 	    print_r($var) ;
-// 	    print_r($saniArr) ; 
 		//处理编码
 		AnalyseUtils::initSaniti($saniArr) ;
 		AnalyseUtils::initEncodeList($encodingArr) ;
