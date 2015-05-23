@@ -183,7 +183,7 @@ class Context {
 	 * @param 函数的信息 $mehod
 	 * @return 函数体
 	 */
-	public function getFunction($path,$method){
+	public function getFunction($path, $method){
 	    //设置code
 	    if (!$path)
 	        return null;

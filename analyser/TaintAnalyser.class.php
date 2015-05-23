@@ -573,10 +573,9 @@ class TaintAnalyser {
 	 * @param FileSummary 当前文件摘要
 	 */
 	public function analysis($block, $node, $argName, $fileSummary){
-	    
 	    //传入变量本身就是source
-        $argName = substr($argName, 0, strpos($argName, '['));
-	    if(in_array($argName, $this->sourcesArr)){
+        $varName = substr($argName, 0, strpos($argName, '['));
+	    if(in_array($varName, $this->sourcesArr)){
 	        //报告漏洞
 	        $path = $fileSummary->getPath() ;
 	        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
@@ -604,12 +603,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($node_path, $var_path, $node, $var, $type){
-// 		echo "<pre>" ;
-// 		echo "有漏洞=====>". $type ."<br/>" ;
-// 		echo "漏洞变量：<br/>" ;
-// 		print_r($var) ;
-// 		echo "漏洞节点：<br/>" ;
-// 		print_r($node) ;
+		echo "<pre>" ;
+		echo "有漏洞=====>". $type ."<br/>" ;
+		echo "漏洞变量：<br/>" ;
+		print_r($var) ;
+		echo "漏洞节点：<br/>" ;
+		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;

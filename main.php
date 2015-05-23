@@ -84,8 +84,6 @@ if(!isset($_POST['path']) || !isset($_POST['type'])){
 	exit() ;
 }
 
-//项目开始时间
-$t_start = time();
 
 //1、从web ui中获取并加载项目工程
 $project_path = $_POST['path'] ;  //扫描的工程路径
@@ -119,22 +117,8 @@ if(($serial_str = file_get_contents($serialPath)) == ''){
     	load_file($project_path) ;
     }elseif (is_dir($project_path)){
     	$path_list = $mainlFiles;
-        //$path_list = array('C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload/admin/admin.php');
-        //$path_list = array('C:/users/xyw55/Desktop/test/74cms_3.3/plus/ajax_street.php');
-//     $path_list = array('C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/allTests.php',
-//     'C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/IDS/CachingTest.php',
-//     'C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/IDS/EventTest.php',
-//     'C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/IDS/ExceptionTest.php',
-//     'C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/IDS/FilterTest.php',
-//     'C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/IDS/InitTest.php',
-//     'C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/IDS/MonitorTest.php',
-//     'C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/IDS/ReportTest.php');
-        $path_list = array(
-            'C:/Users/xyw55/Desktop/test/dvwa/vulnerabilities/upload/source/low.php'
-        );
     	foreach ($path_list as $path){
     		try{
-    		    print_r($path.'<br/>');
     			load_file($path) ;
     		}catch(Exception $e){
     			continue ;
@@ -151,10 +135,6 @@ if(($serial_str = file_get_contents($serialPath)) == ''){
     file_put_contents($serialPath, serialize($results)) ;
 }
 
-//项目结束时间
-$t_end = time();
-$t = $t_end - $t_start;
-print_r($t);
 
 
 //5、处理results 传给template

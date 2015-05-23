@@ -1083,4 +1083,30 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 }
 
+//扫描漏洞类型
+$scan_type = 'ALL';
+echo "<pre>" ;
+//从用户那接受项目路径
+// $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
+// $allFiles = FileUtils::getPHPfile($project_path);
+// //初始化
+// $initModule = new InitModule() ;
+// $initModule->init($project_path) ;
+
+$cfg = new CFGGenerator() ;
+$visitor = new MyVisitor() ;
+$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+$traverser = new PhpParser\NodeTraverser ;
+$path = CURR_PATH . '/test/test.php';
+$cfg->getFileSummary()->setPath($path);
+$code = file_get_contents($path);
+$stmts = $parser->parse($code) ;
+$traverser->addVisitor($visitor) ;
+$traverser->traverse($stmts) ;
+$nodes = $visitor->getNodes() ;
+$pEntryBlock = new BasicBlock() ;
+$pEntryBlock->is_entry = true ;
+$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
+
+
 ?>
