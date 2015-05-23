@@ -572,20 +572,27 @@ class TaintAnalyser {
 	 * @param string $argName 危险参数名
 	 * @param FileSummary 当前文件摘要
 	 */
-	public function analysis($block,$node,$argName,$fileSummary){
-		$path = $fileSummary->getPath() ;
-		//获取前驱基本块集合并将当前基本量添加至列表
-		$this->getPrevBlocks($block) ;
-		$block_list = $this->pathArr ;
-		array_push($block_list, $block) ;
-		//首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
-		$this->currBlockTaintHandler($block, $node, $argName, $fileSummary) ;
-		//多个基本块的处理
-		$this->pathArr = array() ;
-		$this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
-
-		$resContext = ResultContext::getInstance() ;
-		//print_r($resContext->getResArr()) ;
+	public function analysis($block, $node, $argName, $fileSummary){
+	    
+	    //传入变量本身就是source
+        $argName = substr($argName, 0, strpos($argName, '['));
+	    if(in_array($argName, $this->sourcesArr)){
+	        //报告漏洞
+	        $path = $fileSummary->getPath() ;
+	        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+	        $this->report($path, $path, $node, $argName ,$type) ;
+	    }else{
+	        $path = $fileSummary->getPath() ;
+	        //获取前驱基本块集合并将当前基本量添加至列表
+	        $this->getPrevBlocks($block) ;
+	        $block_list = $this->pathArr ;
+	        array_push($block_list, $block) ;
+	        //首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
+	        $this->currBlockTaintHandler($block, $node, $argName, $fileSummary) ;
+	        //多个基本块的处理
+	        $this->pathArr = array() ;
+	        $this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
+	    }
 	}
 
 	

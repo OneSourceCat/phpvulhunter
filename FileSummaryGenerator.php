@@ -15,6 +15,9 @@ class FileSummaryGenerator {
         $retFileSummary = array();
         foreach ($includeFiles as $rpath){
             $absPath = FileUtils::getAbsPath($currentFilePath, $rpath);
+            if (!$absPath){
+                continue;
+            }
             //  查看是否在fileSummaryContext中
             //  得到DataFlows
             $fileSummaryContext = FileSummaryContext::getInstance();           
@@ -27,11 +30,16 @@ class FileSummaryGenerator {
                 $retFileSummary = array_merge(array($ret), $retFileSummary);
             }else{
                 $includeFileSummary = self::getFileSummary($absPath);
-                if ($includeFileSummary)
+                if ($includeFileSummary){
+                    $pRetFiles = self::getIncludeFilesDataFlows($includeFileSummary);
+                    $retFileSummary = array_merge($pRetFiles, $retFileSummary);
                     $retFileSummary = array_merge(array($includeFileSummary), $retFileSummary);
+                }
+                    
             }
         }
         //return all files summary
+        //include在前的，在数组前面
         return $retFileSummary;
     }
     
@@ -211,7 +219,9 @@ class FileSummaryGenerator {
 			}
 		}else{
 	        //不属于已有的任何一个symbol类型,如函数调用
-	        if($part && $part->getType() == "Expr_FuncCall"){
+	        if($part && ($part->getType() == "Expr_FuncCall" || 
+			    $part->getType() == "Expr_MethodCall" || 
+			    $part->getType() == "Expr_StaticCall")){
                 if($type == "left"){
     	            $dataFlow->setLocation($arr) ;
     	            $dataFlow->setName(NodeUtils::getNodeStringName($part)) ;

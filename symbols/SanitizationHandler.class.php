@@ -29,7 +29,7 @@ class SanitizationHandler {
 	        foreach ($funcParams as $param){
 	            $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	            $dataFlows = array_reverse($dataFlows);
-	            $ret = self::sanitiSameVarMultiBlockHandler($param, $block, $dataFlows);
+	            $ret = self::sanitiSameVarMultiBlockHandler($param, $block, $dataFlows, $fileSummary);
 	            //如果一个参数没有净化，则未净化
 	            if(!$ret[0]){
 	                $sameVarSanitiInfo = array();
@@ -48,6 +48,34 @@ class SanitizationHandler {
 	    //清除反作用的函数
 	    SanitizationHandler::clearSantiInfo($funcName, $node, $dataFlow) ;
 	}
+	
+	private static function sanitiSameVarMultiFileHandler($varName, $block, $dataFlows, $fileSummary){  
+	    $includeFileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary);
+	    if (!$includeFileSummaryMap){
+	        return array(false);
+	    }
+	    $includeFileSummaryMap = array_reverse($includeFileSummaryMap);
+	    foreach ($includeFileSummaryMap as $includeFileSummary){
+	        if(!($includeFileSummary instanceof FileSummary)){
+	            continue;
+	        }
+	        $fileDataFlows = $includeFileSummary->getFlowsMap();
+	        $fileDataFlows = array_reverse($fileDataFlows);
+	        foreach ($fileDataFlows as $flow){
+	            if ($flow->getName() == $varName){
+	                if ($flow->getlocation()){
+	                    $ret = $flow->getlocation()->getSanitization();
+	                    if ($ret){
+                            return array(true,'funcs'=>$ret);
+	                    }else {
+	                        return array(false);
+	                    }
+                    }
+	            }
+	        }
+	    }
+	}
+	
 	/**
 	 * 相同净化变量的多块回溯
 	 * @param 变量名 $varName
@@ -55,15 +83,19 @@ class SanitizationHandler {
 	 * @param 数据流 $dataFlows
 	 * @return 
 	 */
-	public static function sanitiSameVarMultiBlockHandler($varName, $block, $dataFlows){
+
+	public static function sanitiSameVarMultiBlockHandler($varName, $block, $dataFlows, $fileSummary){
+	    //print_r("enter sanitiSameVarMultiBlock<br/>");
         $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
         $blockList = $mulitBlockHandlerUtils->getPathArr();
         
         //当前块flows没有遍历完
         if(count($dataFlows) != 0)
-            return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+            return self::sanitiSameVarTraceback($varName, $block, $dataFlows, $fileSummary);
             
 	    if($blockList == null || count($blockList) == 0){
+	        //加入多文件分析
+	        self::sanitiSameVarMultiFileHandler($varName, $block, $dataFlows, $fileSummary);
             return  array(false);
 	    }
 	    
@@ -74,9 +106,9 @@ class SanitizationHandler {
 	            $block = $blockList[0];
 	            $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	            $dataFlows = array_reverse($dataFlows);
-	            return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+	            return self::sanitiSameVarTraceback($varName, $block, $dataFlows, $fileSummary);
 	        }
-	        return self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+	        return self::sanitiSameVarTraceback($varName, $block, $dataFlows, $fileSummary);
 	    }else{
 	        //平行结构
 	        //向上找相关变量的净化信息，只有平行块间的变量净化信息相同，才保存
@@ -86,10 +118,10 @@ class SanitizationHandler {
 	                //当前块回溯完毕，回溯上一块
 	                $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	                $dataFlows = array_reverse($dataFlows);
-	                $ret = self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+	                $ret = self::sanitiSameVarTraceback($varName, $block, $dataFlows, $fileSummary);
 	                $dataFlows = array();
 	            }else
-                    $ret = self::sanitiSameVarTraceback($varName, $block, $dataFlows);
+                    $ret = self::sanitiSameVarTraceback($varName, $block, $dataFlows, $fileSummary);
 	            //得到各个平行结构中的相同函数
 	            if ($key == 0){
 	                if ($ret[0])
@@ -123,7 +155,7 @@ class SanitizationHandler {
 	 * @param 数据流 $dataFlow
 	 * @return 是否净化，及净化信息
 	 */
-	public static function sanitiSameVarTraceback($varName, $block, $dataFlows){
+	public static function sanitiSameVarTraceback($varName, $block, $dataFlows, $fileSummary){
 	    global $SECURES_TYPE_ALL;
 	    //将块内数据流逆序，从后往前遍历
 	    $flows = $dataFlows;
@@ -149,7 +181,7 @@ class SanitizationHandler {
                     $retarr = array();
                     foreach($vars as $var){
                         $varName = NodeUtils::getNodeStringName($var);
-                        $ret = self::sanitiSameVarMultiBlockHandler($varName,$block,$dataFlows);
+                        $ret = self::sanitiSameVarMultiBlockHandler($varName, $block, $dataFlows, $fileSummary);
                         if ($ret[0]){
                             $retarr = array_merge($retarr,$ret['funcs']);
                         }else{
@@ -164,7 +196,7 @@ class SanitizationHandler {
 	        }
 	    }
 	    //当前块内不存在,回溯上一块
-	    return self::sanitiSameVarMultiBlockHandler($varName,$block,$dataFlows);
+	    return self::sanitiSameVarMultiBlockHandler($varName, $block, $dataFlows, $fileSummary);
 	}
 	
 	
@@ -386,10 +418,17 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
                 $this->sanitiInfo = array(true, 'type'=>$retarr);
             }else{
                 //处理函数调用
-                if (($part->getType() == 'Expr_FuncCall') || ($part->getType() == 'Expr_MethodCall') ){
+                if (($part->getType() == 'Expr_FuncCall') || 
+                    ($part->getType() == 'Expr_MethodCall') || 
+                    ($part->getType() == 'Expr_StaticCall') ){
                     $ret = SanitizationHandler::SantiniFuncHandler($part, $this->fileSummary);
+                   
                     if($ret){
-                        $type = array_intersect($this->sanitiInfo['type'], $ret->getSanitiType());
+                        $saniType = $ret->getSanitiType();
+                        if (is_array($saniType[0])){
+                            $saniType = $saniType[0];
+                        }
+                        $type = array_intersect($this->sanitiInfo['type'], $saniType);
                         $this->sanitiInfo = array(true,'type'=>$type);
                     }
                         

@@ -247,7 +247,9 @@ class CFGGenerator{
 			}
 		}else{
 			//不属于已有的任何一个symbol类型,如函数调用
-			if($part && $part->getType() == "Expr_FuncCall"){
+			if($part && ($part->getType() == "Expr_FuncCall" || 
+			    $part->getType() == "Expr_MethodCall" || 
+			    $part->getType() == "Expr_StaticCall") ){
 				//处理 id = urlencode($_GET['id']) ;
 				if(!SymbolUtils::isValue($part)){
 					$funcName = NodeUtils::getNodeFunctionName($part) ;
@@ -354,6 +356,8 @@ class CFGGenerator{
 	 */
 	private function constantHandler($node,$block,$mode){
 		if($mode == "define"){
+		    if (count($node->args)<2)
+		        return ;
 			$cons = new Constants() ;
 			$cons->setName($node->args[0]->value->value) ;
 			$cons->setValue($node->args[1]->value->value) ;
@@ -488,7 +492,7 @@ class CFGGenerator{
 	 * @param BasicBlock $block
 	 * @param fileSummary $fileSummary
 	 */
-	private function functionHandler($node, $block, $fileSummary){
+	public function functionHandler($node, $block, $fileSummary){
 	    //根据用户指定的扫描类型，查找相类型的sink函数
 	    global $scan_type;
 	    
@@ -514,10 +518,10 @@ class CFGGenerator{
 	            foreach ($argArr as $item){
 	                if(is_array($item)){
 	                    foreach ($item as $v){
-	                        $analyser->analysis($block, $node, $v, $this->fileSummary) ;
+	                        $analyser->analysis($block, $node, $v, $fileSummary) ;
 	                    }
 	                }else{
-	                    $analyser->analysis($block, $node, $item, $this->fileSummary) ;
+	                    $analyser->analysis($block, $node, $item, $fileSummary) ;
 	                }
 	    
 	            }
@@ -652,11 +656,21 @@ class CFGGenerator{
 				//处理函数调用以及类方法的调用
 				//过程间分析以及污点分析
 				case 'Expr_MethodCall':
+				case 'Expr_StaticCall':
 				case 'Stmt_Echo':
 				case 'Expr_Print':
 				case 'Expr_FuncCall':
 					$this->functionHandler($node, $block, $this->fileSummary);
 					break ;
+				default:
+				    $traverser = new PhpParser\NodeTraverser;
+				    $visitor = new nodeFunctionVisitor() ;
+				    $visitor->block = $block;
+				    $visitor->fileSummary = $this->fileSummary;
+				    $visitor->cfgGen = new CFGGenerator();
+				    $traverser->addVisitor($visitor) ;
+				    $traverser->traverse(array($node)) ;
+				    break;
 			}
 		}
 		
@@ -847,6 +861,22 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
 }
 
 
+class nodeFunctionVisitor extends PhpParser\NodeVisitorAbstract{
+    public $block;
+    public $fileSummary;
+    public $cfgGen;
+    
+    public function leaveNode(Node $node){
+        //处理过程间代码，即调用的方法定义中的源码
+        if(($node->getType() == 'Expr_FuncCall' ||
+            $node->getType() == 'Expr_MethodCall' ||
+            $node->getType() == 'Expr_StaticCall')){
+            $this->cfgGen->functionHandler($node, $this->block, $this->fileSummary);
+        }
+    }
+}
+
+
 /**
  * 处理方法调用
  * @author Exploit
@@ -864,10 +894,13 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	
 	public function leaveNode(Node $node){
 		//处理过程间代码，即调用的方法定义中的源码
-		if(($node->getType() == 'Expr_FuncCall' || $node->getType() == 'Expr_MethodCall' )){
+		if(($node->getType() == 'Expr_FuncCall' || 
+		    $node->getType() == 'Expr_MethodCall' || 
+		    $node->getType() == 'Expr_StaticCall')){
 			//获取到方法的名称
 			$nodeName = NodeUtils::getNodeFunctionName($node);
 			$ret = NodeUtils::isSinkFunction($nodeName,$this->scan_type);
+			print_r($ret);
 			//进行危险参数的辨别
 			if($ret[0] == true){
 				//处理系统内置的sink
@@ -984,6 +1017,9 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	    //$args = array(0) ;  //1  => mysql_query
 	    foreach($args as $arg){
 	        //args[$arg-1] sinks函数的危险参数位置商量调整
+	        if ($arg<1){
+	            return array();	            
+	        }
 	        $argNameStr = NodeUtils::getNodeStringName($node->args[$arg-1]) ;   //sql
 	        $ret = $this->sinkMultiBlockTraceback($argNameStr ,$block,0);  //array(where,id)
 	    }

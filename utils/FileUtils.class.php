@@ -23,7 +23,7 @@ class FileUtils{
             $dirpath = iconv($in_charset, "UTF-8", $dirpath) ;
             array_push($ret, $dirpath);
         }
-            
+        
         if (! is_dir($dirpath)){
             return $ret;
         }
@@ -43,13 +43,13 @@ class FileUtils{
                         $filePath = iconv($in_charset, "UTF-8", $filePath) ;
                         array_push($ret, $filePath);
                     }
-                }      
-            } elseif (substr($filePath, - 4) == ".php"){
+                }
+            }elseif (substr($filePath, - 4) == ".php"){
                 $in_charset = mb_detect_encoding($filePath) ;
                 $filePath = iconv($in_charset, "UTF-8", $filePath) ;
                 array_push($ret, $filePath);
             }
-               
+
         }
         closedir($dh);
         return $ret;
@@ -80,6 +80,9 @@ class FileUtils{
             $sumcount = count($nodes);
             $count = $visitor->getCount();
             
+            if ($sumcount == 0){
+                continue;
+            }
             //暂时确定当比值小于0.6，为main php files
             if($count / $sumcount < 0.6){
                 array_push($should2parser, $file);
@@ -103,20 +106,20 @@ class FileUtils{
     	//补全路径
     	$currentDir = dirname($filePath);
     	$absPath = '';
-	    if(!strpbrk($rpath,'/')){
+	    if(!strpbrk($rpath, '/')){
 	        //require_once "test.php"
-	        $absPath = $currentDir .'/'. $rpath;
-	    }elseif (substr($rpath,0,2) == './'){
+	        $absPath = $currentDir . '/' . $rpath;
+	    }elseif (substr($rpath, 0, 2) == './'){
 	        //require_once "./test.php"
 	        $absPath = $currentDir .'/'. substr($rpath, 2);
-	    }elseif (substr($rpath,0,3) == '../'){
+	    }elseif (substr($rpath, 0, 3) == '../'){
 	        //require_once "../test.php" or ../../test.php
 	        $tempPath = $currentDir;
-	        while(substr($rpath,0,3) == '../'){
-	            $tempPath = substr($tempPath, 0,strrpos($tempPath, '/'));
+	        while(substr($rpath, 0, 3) == '../'){
+	            $tempPath = substr($tempPath, 0, strrpos($tempPath, '/'));
 	            $rpath = substr($rpath, 3);
 	        }
-	        $absPath = $tempPath .'/'. $rpath;
+	        $absPath = $tempPath . '/' . $rpath;
 	    }
 	    //需要判断该文件是否存在，不存在则需要在工程中查找
 	    if (is_file($absPath)){
@@ -125,12 +128,14 @@ class FileUtils{
 	        //require_once CURR_PATH . '/c.php';
 	        $pathLen = strlen($rpath);
 	        foreach ($allFiles as $fileAbsPath){
-	            if(strstr($fileAbsPath,$rpath)){
-	                return $fileAbsPath;
+	            if(strstr($fileAbsPath, $rpath)){
+	                if (is_file($absPath)){
+	                   return $fileAbsPath;
+	                }
 	            }
 	        }
 	    }
-    	return '' ; 
+    	return ; 
     }
     
 
@@ -159,6 +164,7 @@ class FileUtils{
     
     
     
+    
 }
 
 /**
@@ -183,6 +189,9 @@ class VisitorForLine extends PhpParser\NodeVisitorAbstract
                 break;
             case "Stmt_Function":
                 $this->count= $this->count+1;
+                break;
+            default:
+                ;
                 break;
         }
     }

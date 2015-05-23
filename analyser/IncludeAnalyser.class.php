@@ -35,7 +35,7 @@ class IncludeAnalyser {
 		if(!empty($saniArr) && !empty($encodingArr)){
 			return false ;
 		}
-	
+    
 		//处理编码
 		AnalyseUtils::initSaniti($saniArr) ;
 		AnalyseUtils::initEncodeList($encodingArr) ;
