@@ -1,8 +1,12 @@
-<?php
-	$a = urlencode($str);
-	if (1)
-	    echo 123;
-	else 
-	    echo 456;
-	$b = html_entity_encode($a);
+<?php 
+$id = $_GET['id'] ;
+if($id){
+    echo $id ;
+}else{
+    echo false;
+}
+
+$sql = "xxx". $id ;
+mysql_query($sql) ;
+
 ?>

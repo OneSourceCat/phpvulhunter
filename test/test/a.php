@@ -1,4 +1,10 @@
 <?php
-require_once 'c.php';
-$a = 111;
+
+                $a = $_GET['a'] ;
+                $a = htmlentities($a) ;
+//              ...
+
+                $a = addslashes($a) ;
+//              ...                
+                mysql_query($a) ;
 ?>
