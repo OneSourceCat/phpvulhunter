@@ -14,10 +14,10 @@ class InitModule {
     public function init($project_path, $allFiles){
         
         $this->initContext($project_path);
+        $context = Context::getInstance() ;
         
         $this->initFileSummaryContext($project_path, $allFiles) ;
     }
-    
     /**
      * 初始化class finder上下文
      * @param string $project_path
@@ -32,16 +32,16 @@ class InitModule {
      * @param string $project_path
      */
 	private function initFileSummaryContext($project_path, $allFiles){
-	    //判断本地序列化文件中是否存在UserSanitizeFuncConetxt
+	    global $project_path;
 	    $fileName = str_replace('/', '_', $project_path);
 	    $fileName = str_replace(':', '_', $fileName);
-	    $serialPath = CURR_PATH . '/data/fileSummaryConetxtSerialData/' . $fileName;
-	    
+	    $serialPath = CURR_PATH . "/data/fileSummaryConetxtSerialData/" . $fileName;
 	    if (!is_file($serialPath)){
 	        //创建文件
 	        $fileHandler = fopen($serialPath, 'w');
 	        fclose($fileHandler);
 	    }
+	    //判断本地序列化文件中是否存在UserSanitizeFuncConetxt
 	    if(($serial_str = file_get_contents($serialPath))!=''){
 	        $fileSummaryMap = unserialize($serial_str) ;
 	        $fileSummaryContext = FileSummaryContext::getInstance();
@@ -58,15 +58,15 @@ class InitModule {
 		    }
 		}
 		//对FileSummaryContext进行序列化，加快下次读取速度
-		$this->serializeContext($fileSummaryContext->getFileSummaryMap(), $serialPath) ;
+		$this->serializeContext($serialPath, $fileSummaryContext->getFileSummaryMap()) ;
 	}
 	/**
 	 * 序列化方法
 	 * @param string $path
 	 * @param multitype $context
 	 */	
-	public function serializeContext($context, $serialPath){
-	    file_put_contents($serialPath, serialize($context)) ;
+	public function serializeContext($path, $context){
+	    file_put_contents($path, serialize($context)) ;
 	}
 	
 

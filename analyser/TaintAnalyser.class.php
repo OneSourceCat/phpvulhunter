@@ -572,7 +572,9 @@ class TaintAnalyser {
 	 * @param string $argName 危险参数名
 	 * @param FileSummary 当前文件摘要
 	 */
-	public function analysis($block, $node, $argName, $fileSummary){
+
+
+    public function analysis($block, $node, $argName, $fileSummary){
 	    //传入变量本身就是source
         $varName = substr($argName, 0, strpos($argName, '['));
 	    if(in_array($varName, $this->sourcesArr)){
@@ -592,8 +594,7 @@ class TaintAnalyser {
 	        $this->pathArr = array() ;
 	        $this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
 	    }
-	}
-
+    }
 	
 	/**
 	 * 报告漏洞的函数

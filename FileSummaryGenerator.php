@@ -35,7 +35,7 @@ class FileSummaryGenerator {
                     $retFileSummary = array_merge($pRetFiles, $retFileSummary);
                     $retFileSummary = array_merge(array($includeFileSummary), $retFileSummary);
                 }
-                    
+                
             }
         }
         //return all files summary
@@ -219,7 +219,7 @@ class FileSummaryGenerator {
 			}
 		}else{
 	        //不属于已有的任何一个symbol类型,如函数调用
-	        if($part && ($part->getType() == "Expr_FuncCall" || 
+            if($part && ($part->getType() == "Expr_FuncCall" || 
 			    $part->getType() == "Expr_MethodCall" || 
 			    $part->getType() == "Expr_StaticCall")){
                 if($type == "left"){

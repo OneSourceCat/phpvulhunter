@@ -61,8 +61,7 @@ class FileUtils{
      * @return multitype:
      */
     public static function mainFileFinder($dirpath){
-        global $allFiles;
-        $files = $allFiles;
+        $files = self::getPHPfile($dirpath);
         $should2parser = array();
         $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative());      
         $traverser = new PhpParser\NodeTraverser();
