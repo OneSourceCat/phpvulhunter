@@ -119,7 +119,7 @@ $F_FILE_INCLUDE = array(
 // for functions that use them like fread() and fwrite()
 $NAME_FILE_READ = 'File Disclosure';
 $F_FILE_READ = array(
-	'__NAME__'						=> 'FILE_READ',
+	'__NAME__'						=> 'FILE',
 	'bzread'						=> array(array(1), $F_SECURING_FILE), 
 	'bzflush'						=> array(array(1), $F_SECURING_FILE), 
 	'dio_read'						=> array(array(1), $F_SECURING_FILE),   

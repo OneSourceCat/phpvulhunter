@@ -308,7 +308,7 @@ function sinkCodeShow( tag_a ){
         $(code_table[1]).css({'display':'none'});
     }, 400);
     $(arg).css({'background':'rgba(0,0,0,0)'});
-    $(tag_a).css({'background':'#2dcb70'});
+    $(tag_a).css({'background':'#f81'});
 }
 function argCodeShow( tag_a ){
     var sink = findPrevious( tag_a );

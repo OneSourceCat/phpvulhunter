@@ -250,6 +250,7 @@ class TaintAnalyser {
 					}
 				}
 			}
+			
 		}
 
 	}
@@ -270,7 +271,6 @@ class TaintAnalyser {
 		$this->getPrevBlocks($block) ;
 		$block_list = $this->pathArr ;
 		!empty($block) && array_push($block_list, $block) ;
-		
 		//如果前驱基本块为空，说明完成回溯，算法停止
 		if($block_list == null || count($block_list) == 0){
 			return  ;
@@ -600,6 +600,7 @@ class TaintAnalyser {
 	        //多个基本块的处理
 	        $this->pathArr = array() ;
 	        $this->multiBlockHandler($block, $argName, $node, $fileSummary) ;
+	        $this->multiFileHandler($block, $argName, $node, $fileSummary);
 	    }
     }
 	
@@ -630,7 +631,9 @@ class TaintAnalyser {
 		}else{
 			$resultContext->addResElement($record) ;
 		}
-	}
 
+	}
+	
+	
 }
 ?>

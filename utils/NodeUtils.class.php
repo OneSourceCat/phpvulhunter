@@ -162,9 +162,9 @@ class NodeUtils{
             case "Expr_Print":
             	return "print";
             	break;
-            case 'Expr_Include':
-                return "include";
-                break;
+        	case 'Expr_Include':
+        	    return "include";
+        	    break;
             default:
                 return "";
                 break;
@@ -262,8 +262,7 @@ class NodeUtils{
     			}
     		}
     		return $ret ;
-    	    
-    	}else if($funcName == "print"){
+        }else if($funcName == "print"){
     		$ret = array() ;
     		if($node->expr->getType() == "Expr_BinaryOp_Concat"){
     			$ret = self::getConcatParams($node->expr) ;
@@ -341,6 +340,11 @@ class NodeUtils{
     				//如果参数位置为0，如echo，则不做处理
     				if($value != 0){
     				    $value -= 1 ;
+    				}
+    				if ($value == 0){
+    				    if (!isset($argsNameArr[$value]) || $argsNameArr[$value] == ''){
+    				        continue;
+    				    }
     				}
     				array_push($retArr,$argsNameArr[$value]) ;
 	            }
