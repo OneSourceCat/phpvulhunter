@@ -211,12 +211,12 @@ class NodeUtils{
     	$symbol = new ConcatSymbol() ;
     	$symbol->setItemByNode($node) ;
     	$items = $symbol->getItems() ;
-
+    	
     	foreach ($items as $item){
     		if($item instanceof ValueSymbol){
     			continue ;
     		}
-    		array_push($retArr, $item->getName()) ;
+    		array_push($retArr, NodeUtils::getNodeStringName($item->getValue())) ;
     	}
     	return $retArr ;
     }
@@ -260,7 +260,6 @@ class NodeUtils{
     			if(SymbolUtils::isValue($node->expr)){
     				return array() ;
     			}else{
-    		
     				$ret = self::getNodeStringName($node->expr) ;
     			}
     		}
@@ -328,6 +327,7 @@ class NodeUtils{
     		return null;
     	}
     	$argsNameArr = self::getNodeFuncParams($node) ;	
+
     	if($node->getType() == "Expr_Include" || $node->getType() == "Expr_Eval"){
     	    
     	    return array($argsNameArr) ;

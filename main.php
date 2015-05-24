@@ -66,6 +66,9 @@ function convertResults($resContext){
         if($var instanceof Symbol){
             $var_start = $var->getValue()->getAttribute('startLine') ;
             $var_end = $var->getValue()->getAttribute('endLine') ;
+        }elseif(is_string($var)){
+            $var_start = $node_start ;
+            $var_end = $node_end ;
         }else{
             $var_start = $var->getAttribute('startLine') ;
             $var_end = $var->getAttribute('endLine') ;
