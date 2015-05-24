@@ -21,10 +21,13 @@ class NodeUtils{
             case "Scalar_String":
             case "Scalar_LNumber":
             case "Scalar_DNumber":
+                if($node->name){
+                    return $node->name ;
+                }
                 $names = $node->getSubNodeNames();
-                //print_r($node->getSubNodeNames());
-                foreach ($names as $name)
+                foreach ($names as $name){
                     return($node->$name);
+                }
                 break;
             //负数
             case "Expr_UnaryMinus":
@@ -159,6 +162,9 @@ class NodeUtils{
             case "Expr_Print":
             	return "print";
             	break;
+            case 'Expr_Include':
+                return "include";
+                break;
             default:
                 return "";
                 break;
@@ -243,6 +249,20 @@ class NodeUtils{
     		}
 
     		return $ret ;
+    	}else if($funcName == 'include'){
+    	   $ret = array() ;
+    		if($node->expr->getType() == "Expr_BinaryOp_Concat"){
+    			$ret = self::getConcatParams($node->expr) ;
+    		}else{
+    			if(SymbolUtils::isValue($node->expr)){
+    				return array() ;
+    			}else{
+    		
+    				$ret = self::getNodeStringName($node->expr) ;
+    			}
+    		}
+    		return $ret ;
+    	    
     	}else if($funcName == "print"){
     		$ret = array() ;
     		if($node->expr->getType() == "Expr_BinaryOp_Concat"){
@@ -292,8 +312,11 @@ class NodeUtils{
     	if ((!$node instanceof Node) || !$argsPos){
     		return null;
     	}
-    	//print_r(self::getNodeFunctionName($node));
     	$argsNameArr = self::getNodeFuncParams($node) ;	
+    	if($node->getType() == "Expr_Include"){
+    	    return array($argsNameArr) ;
+    	}
+    	
     	$retArr = array() ;
     	$argNum = count($argsNameArr);
     	if($argNum > 0){

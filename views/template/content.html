@@ -1,16 +1,158 @@
+<!--{assign var="sqli" value=0}-->
+<!--{assign var="xss" value=0}-->
+<!--{assign var="http" value=0}-->
+<!--{assign var="code" value=0}-->
+<!--{assign var="exec" value=0}-->
+<!--{assign var="ldap" value=0}-->
+<!--{assign var="include" value=0}-->
+<!--{assign var="file" value=0}-->
+<!--{assign var="xpath" value=0}-->
+<!--{assign var="fileaffect" value=0}-->
+<!--{assign var="unserialize" value=0}-->
+<ul id="content-box">
+<!--{if isset($results)}-->
+<!--{foreach item=n from=$results}-->
+	<li>
+		<div class="content-text">
+			<div>
+				<h4>File Path : </h4>
+					<span><!--{$n.node_path}--></span>
+			</div>
+			<div>
+				<h4>Vlun Type : </h4>
+					<span><!--{$n.type}--></span>
+			</div>
+			<div class="node">
+				<h4>Sink Call : </h4><br/>
+				<h5>File : </h5>
+					<span><!--{$n.node_path}--></span><br/>
+				<h5>Line : </h5>
+					<h6>start line : </h6><span><!--{$n.node.line|substr:0:stripos($n.node.line,'|')}--></span>
+					<h6>end line : </h6><span><!--{$n.node.line|substr:(stripos($n.node.line,'|') + 1)}--></span><br/>
+				<h5>Code : </h5>
+					<span><!--{$n.node.code}--></span><br/><!--index 5-->
+			</div>
+			<div class="var">
+				<h4>Sensitive Arg : </h4><br/>
+				<h5>File : </h5>
+					<span><!--{$n.var_path}--></span><br/>
+				<h5>Line : </h5>
+					<h6>start line : </h6><span><!--{$n.var.line|substr:0:stripos($n.var.line,'|')}--></span>
+					<h6>end line : </h6><span><!--{$n.var.line|substr:(stripos($n.var.line,'|') + 1)}--></span><br/>
+				<h5>Code : </h5>
+					<span><!--{$n.var.code}--></span><br/>
+			</div>
+		</div>
+		<div class="code-box">
+			<a href="javascript:;">Code Viewer</a>
+			<div class="code"></div>
+		</div>			
+	</li>
+	<!--{if $n.type == 'XSS'}-->
+		<!--{$xss = $xss + 1}-->
+	<!--{/if}-->
 
-	
-		<ul>
-		<!--{if isset($results)}-->
-		<!--{foreach item=n from=$results}-->
-			<li>
-				<h2>Find a vulnerability !</h2>
-				<div>file path : <!--{$n.path}--></div>
-				<div>vlun type : <!--{$n.type}--></div>
-				<div>node : <!--{$n.node}--></div>
-				<div>var : <!--{$n.var}--></div>				
-			</li>
-		<!--{/foreach}-->
-		<!--{/if}-->
-		</ul>
+	<!--{if $n.type == 'SQLI'}-->
+		<!--{$sqli = $sqli + 1}-->
+	<!--{/if}-->
 
+	<!--{if $n.type == 'HTTP'}-->
+		<!--{$http = $http + 1}-->
+	<!--{/if}-->
+
+	<!--{if $n.type == 'CODE'}-->
+		<!--{$code = $code + 1}-->
+	<!--{/if}-->
+
+	<!--{if $n.type == 'EXEC'}-->
+		<!--{$exec = $exec + 1}-->
+	<!--{/if}-->
+
+	<!--{if $n.type == 'LDAP'}-->
+		<!--{$ldap = $ldap + 1}-->
+	<!--{/if}-->
+
+	<!--{if $n.type == 'INCLUDE'}-->
+		<!--{$include = $include + 1}-->
+	<!--{/if}-->
+
+	<!--{if $n.type == 'FILE'}-->
+		<!--{$file = $file + 1}-->
+	<!--{/if}-->
+
+	<!--{if $n.type == 'XPATH'}-->
+		<!--{$xpath = $xpath + 1}-->
+	<!--{/if}-->
+
+	<!--{if $n.type == 'FILEAFFECT'}-->
+		<!--{$fileaffect = $fileaffect + 1}-->
+	<!--{/if}-->
+
+	<!--{if $n.type == 'UNSERIALIZE'}-->
+		<!--{$unserialize = $unserialize + 1}-->
+	<!--{/if}-->
+<!--{/foreach}-->
+<!--{/if}-->
+</ul>
+
+<!--{if isset($results)}-->
+<div class="count-box">
+	<span>Total : </span>
+		<abbr title="<!--{count($results)}-->"><!--{count($results)}--></abbr>
+
+	<!--{if $xss != 0}-->
+	<span>XSS : </span>
+		<abbr title="<!--{$xss}-->"><!--{$xss}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $sqli != 0}-->
+	<span>SQLI : </span>
+		<abbr title="<!--{$sqli}-->"><!--{$sqli}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $http != 0}-->
+	<span>HTTP : </span>
+		<abbr title="<!--{$http}-->"><!--{$http}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $code != 0}-->
+	<span>CODE : </span>
+		<abbr title="<!--{$code}-->"><!--{$code}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $exec != 0}-->
+	<span>EXEC : </span>
+		<abbr title="<!--{$exec}-->"><!--{$exec}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $ldap != 0}-->
+	<span>LDAP : </span>
+		<abbr title="<!--{$ldap}-->"><!--{$ldap}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $include != 0}-->
+	<span>INCLUDE : </span>
+		<abbr title="<!--{$include}-->"><!--{$include}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $file != 0}-->
+	<span>FILE : </span>
+		<abbr title="<!--{$file}-->"><!--{$file}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $xpath != 0}-->
+	<span>XPATH : </span>
+		<abbr title="<!--{$xpath}-->"><!--{$xpath}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $fileaffect != 0}-->
+	<span>FILEAFFECT : </span>
+		<abbr title="<!--{$fileaffect}-->"><!--{$fileaffect}--></abbr>
+	<!--{/if}-->
+
+	<!--{if $unserialize != 0}-->
+	<span>UNSERIALIZE : </span>
+		<abbr title="<!--{$unserialize}-->"><!--{$unserialize}--></abbr>
+	<!--{/if}-->
+</div>
+<!--{/if}-->

@@ -1,7 +1,7 @@
-<?php /* Smarty version 3.1.23, created on 2015-05-23 15:14:40
+<?php /* Smarty version 3.1.23, created on 2015-05-24 07:48:23
          compiled from "views/template/navigation.html" */ ?>
 <?php
-/*%%SmartyHeaderCode:1621955607d40c52a77_64501409%%*/
+/*%%SmartyHeaderCode:22231556166272c5615_76362883%%*/
 if(!defined('SMARTY_DIR')) exit('no direct access allowed');
 $_valid = $_smarty_tpl->decodeProperties(array (
   'file_dependency' => 
@@ -9,21 +9,21 @@ $_valid = $_smarty_tpl->decodeProperties(array (
     'ec4feeb21b21903d6f3d0b9b7aad22aa8062f668' => 
     array (
       0 => 'views/template/navigation.html',
-      1 => 1432386176,
+      1 => 1432446500,
       2 => 'file',
     ),
   ),
-  'nocache_hash' => '1621955607d40c52a77_64501409',
+  'nocache_hash' => '22231556166272c5615_76362883',
   'has_nocache_code' => false,
   'version' => '3.1.23',
-  'unifunc' => 'content_55607d411042e5_00553795',
+  'unifunc' => 'content_55616627313824_64598365',
 ),false);
 /*/%%SmartyHeaderCode%%*/
-if ($_valid && !is_callable('content_55607d411042e5_00553795')) {
-function content_55607d411042e5_00553795 ($_smarty_tpl) {
+if ($_valid && !is_callable('content_55616627313824_64598365')) {
+function content_55616627313824_64598365 ($_smarty_tpl) {
 ?>
 <?php
-$_smarty_tpl->properties['nocache_hash'] = '1621955607d40c52a77_64501409';
+$_smarty_tpl->properties['nocache_hash'] = '22231556166272c5615_76362883';
 ?>
 <div class="menu">
 	<div class="logo">
@@ -31,8 +31,19 @@ $_smarty_tpl->properties['nocache_hash'] = '1621955607d40c52a77_64501409';
 	</div>
 	<div class="in-menu">
 		<form>
+			<div class="fm-project">
+				<label for="project-path">Project Path</label>
+				<input type="text" name="prj_path" id="project-path" placeholder="Your project path."/>
+                <!-- <a href="javascript:;" class="sub-btn" id="sub-regex">
+                    <span class="line line-top"></span>
+                    <span class="line line-right"></span>
+                    <span class="line line-bottom"></span>
+                    <span class="line line-left"></span>
+                	Search
+                </a> -->
+			</div>
 			<div class="fm-file">
-				<label for="file-path">File / Path </label>
+				<label for="file-path">File Path</label>
 				<input type="text" name="path" id="file-path" placeholder="Your PHP file path."/>
                 <a href="javascript:;" class="sub-btn" id="sub-path">
                 	<span class="line line-top"></span>
@@ -41,10 +52,10 @@ $_smarty_tpl->properties['nocache_hash'] = '1621955607d40c52a77_64501409';
                     <span class="line line-left"></span>
                 	Scan
                 </a>
-			</div>
+			</div>	
 			<div class="fm-vuln">
 				<div class="fm-vuln-select select-type">
-					<label for="vuln-trup">Vuln Turp </label>
+					<label for="vuln-trup">Vuln Turp</label>
 					<span></span>
 					<select name="vuln" id="vuln-trup">
 					<!--?php 
@@ -60,11 +71,11 @@ $_smarty_tpl->properties['nocache_hash'] = '1621955607d40c52a77_64501409';
 							'ldap' 			=> '- LDAP Injection',
 							'database' 		=> '- SQL Injection',
 							'xpath' 		=> '- XPath Injection',
-							'unserialize' 	=> '- Unserialize / POP'
 							'other' 		=> '- other',
 							'client' 		=> 'All client-side',
 							'xss' 			=> '- Cross-Site Scripting',
 							'httpheader'	=> '- HTTP Response Splitting',
+							'unserialize' 	=> 'Unserialize / POP'
 							//'crypto'		=> 'Crypto hints'
 						);
 						
@@ -79,15 +90,14 @@ $_smarty_tpl->properties['nocache_hash'] = '1621955607d40c52a77_64501409';
 						<option value="server" >All server-side</option>
 						<option value="code" >- Code Execution</option>
 						<option value="exec" >- Command Execution</option>
-<!-- 						<option value="http" >- Header Injection</option> -->
+						<option value="connect" >- Header Injection</option>
 						<option value="file_read" >- File Disclosure</option>
 						<option value="file_include" >- File Inclusion</option>
 						<option value="file_affect" >- File Manipulation</option>
 						<option value="ldap" >- LDAP Injection</option>
-						<option value="sqli" >- SQL Injection</option>
+						<option value="database" >- SQL Injection</option>
 						<option value="xpath" >- XPath Injection</option>
-						<option value="unserialize">- Unserialize / POP</option>
-<!-- 						<option value="other" >- other</option> -->
+						<option value="other" >- other</option>
 						<option value="client" >All client-side</option>
 						<option value="xss" >- Cross-Site Scripting</option>
 						<option value="httpheader" >- HTTP Response Splitting</option>
@@ -96,7 +106,7 @@ $_smarty_tpl->properties['nocache_hash'] = '1621955607d40c52a77_64501409';
 				</div>
 				
 				<div class="fm-vuln-select select-coding">
-					<label for="vuln-trup">Encoding </label>
+					<label for="vuln-trup">Encoding</label>
 					<span></span>
 					<select name="encoding" id="vuln-encoding">
 					<!--?php 
@@ -119,18 +129,6 @@ $_smarty_tpl->properties['nocache_hash'] = '1621955607d40c52a77_64501409';
 					</select>
 					<a href="javascript:;" class="select-btn"><em>︿</em></a>
 				</div>
-
-			</div>
-			<div class="fm-re">
-				<label for="reg-ex">RegEx </label>
-				<input type="text" name="regex" id="reg-ex" placeholder="Search content by regex."/>
-                <a href="javascript:;" class="sub-btn" id="sub-regex">
-                    <span class="line line-top"></span>
-                    <span class="line line-right"></span>
-                    <span class="line line-bottom"></span>
-                    <span class="line line-left"></span>
-                	Search
-                </a>
 			</div>
 		</form>
 	</div>

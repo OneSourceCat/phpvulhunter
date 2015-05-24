@@ -8,7 +8,6 @@ require_once CURR_PATH .  '/conf/securing.php';
  * [方法名称，敏感参数位置,安全函数]
  * 
  * @author Exploit
- *
  */
 
 class UserDefinedSinkContext {
@@ -19,7 +18,7 @@ class UserDefinedSinkContext {
 	private $F_HTTP_HEADER = array('__NAME__'=>'HTTP') ; //http头注入
 	private $F_CODE = array('__NAME__'=>'CODE') ;   //代码执行
 	private $F_FILE_INCLUDE = array('__NAME__'=>'INCLUDE') ;  //文件包含
-	private $F_FILE_READ = array('__NAME__'=>'FILE_READ') ;    //文件漏洞
+	private $F_FILE_READ = array('__NAME__'=>'FILE') ;    //文件漏洞
 	private $F_EXEC = array('__NAME__'=>'EXEC') ;    //命令执行
 	private $F_DATABASE = array('__NAME__'=>'SQLI') ;   //SQL注入
 	private $F_XPATH = array('__NAME__'=>'XPATH') ;    //XPATH注入

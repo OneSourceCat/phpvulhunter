@@ -1,6 +1,8 @@
 <?php 
 
-$id = (float)$_GET['id'];
-mysql_query($id) ;
+$id = $_GET['id'] ;
+require $id;
+
+
 
 ?>

@@ -495,9 +495,9 @@ class CFGGenerator{
 	
 	/**
 	 * 处理函数调用
-	 * @param node $node
-	 * @param BasicBlock $block
-	 * @param fileSummary $fileSummary
+	 * @param node $node 调用方法的节点
+	 * @param BasicBlock $block 当前基本块
+	 * @param fileSummary $fileSummary  当前文件摘要
 	 */
 	public function functionHandler($node, $block, $fileSummary){
 	    //根据用户指定的扫描类型，查找相类型的sink函数
@@ -505,12 +505,12 @@ class CFGGenerator{
 	    
 	    //获取调用的函数名判断是否是sink调用
 	    $funcName = NodeUtils::getNodeFunctionName($node);
+
 	    //判断是否为sink函数,返回格式为array(true,funcname) or array(false)
 	    $ret = NodeUtils::isSinkFunction($funcName, $scan_type);
-	    if($ret[0]){
+	    if($ret[0] != null){
 	        //如果发现了sink调用，启动污点分析
 	        $analyser = new TaintAnalyser() ;
-	    
 	        //获取危险参数的位置
 	        $argPosition = NodeUtils::getVulArgs($node) ;
 	        if(count($argPosition) == 0){
@@ -519,7 +519,6 @@ class CFGGenerator{
 	    
 	        //获取到危险参数位置的变量
 	        $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
-	        
 	        //遍历危险参数名，调用污点分析函数
 	        if(count($argArr) > 0){
 	            foreach ($argArr as $item){
@@ -656,13 +655,14 @@ class CFGGenerator{
 					break ;
 					
 				//如果$GLOBALS['name'] = 'xxxx' ;  则并入registerGlobal中
-				case 'Expr_ArrayDimFetch' && (substr(NodeUtils::getNodeStringName($node),0,7)=="GLOBALS"):
+				case 'Expr_ArrayDimFetch' && (substr(NodeUtils::getNodeStringName($node),0,7) == "GLOBALS"):
 				    $this->registerGLOBALSHandler($node, $block);
 				    break;
 				    
 				//处理函数调用以及类方法的调用
 				//过程间分析以及污点分析
 				case 'Expr_MethodCall':
+				case 'Expr_Include':
                 case 'Expr_StaticCall':
 				case 'Stmt_Echo':
 				case 'Expr_Print':

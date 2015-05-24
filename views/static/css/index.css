@@ -7,6 +7,8 @@ body{
 	background:#222;
 	font-family:"microsoft yahei";
 	overflow:scroll;
+	min-width:800px;
+	min-height:600px;
 }
 
 .menu{
@@ -75,11 +77,12 @@ body{
 }
 .in-menu .select-btn,
 .in-menu .sub-btn,
-#err_cont a{
+#err_cont a,
+.code-box a{
 	text-decoration:none;
 	display:inline-block;
 	height:24px;
-	line-height:20px;
+	line-height:22px;
 	position:absolute;
 	-webkit-box-sizing:border-box;
 	-moz-box-sizing:border-box;
@@ -91,6 +94,7 @@ body{
 	text-align:center;
 	border:1px solid red;/*#fc0101;*/
 	border-radius:8px;
+	background:rgba(0,0,0,0.9);
 	-webkit-transition:0.6s ease-in-out;
     -moz-transition:0.6s ease-in-out;
     -o-transition:0.6s ease-in-out;
@@ -130,7 +134,7 @@ body{
 
 .fm-file,
 .fm-vuln,
-.fm-re{
+.fm-project{
 	position:absolute;
 	left:0;
 	width:100%;
@@ -141,15 +145,17 @@ body{
 	-o-transition:all 0.6s ease-in-out;
 	transition:all 0.6s ease-in-out;
 }
-.fm-file{
-	top:0;
+.fm-project{
+	top:0%;
 }
-.fm-vuln{
+.fm-file{
 	top:35%;
 }
-.fm-re{
+
+.fm-vuln{
 	top:70%;
 }
+
 .fm-vuln-select{
 	position:absolute;
 	height:100%;
@@ -259,7 +265,9 @@ body{
 }
 .sub-btn:hover,
 .fm-vuln-select select:hover + .select-btn,
-.fm-vuln-select select:focus + .select-btn{
+.fm-vuln-select select:focus + .select-btn,
+#err_cont a:hover,
+.code-box a:hover{
 	color:#fff;
 	border-color:#2dcb70;
 	background:#2dcb70;
@@ -318,10 +326,10 @@ body{
 	border-radius:80px;
 	background:rgba(0,0,0,0);
 }
-#err_cont a:hover{
+/*#err_cont a:hover{
 	background:#2dcb70;
 	border-color:#2dcb70;
-}
+}*/
 #err_cont span{
 	display:inline-block;
 	width:60%;
@@ -349,15 +357,177 @@ body{
 	margin:10%;
 	margin-top:110px;
 	color:#fff;
+	/*z-index:100;*/
 }
 .content-panel ul li{
-	height:140px;
-	width:90%;
+	/*height:140px;*/
+	width:86%;
 	margin:15px 0;
 	list-style:none;
 	border:1px solid #2dcb70;
 	border-radius:40px;
-	padding:10px 30px;
+	padding:15px 7%;
+	position:relative;
+}
+.content-text{
+}
+.content-panel ul li h4,
+.content-panel ul li h5,
+.content-panel ul li h6{
+	display:inline-block;
+	width:120px;
+	height:20px;
+	line-height:20px;
+	font-size:16px;
+	color:#217FBC;
+}
+.content-panel ul li h5,
+.content-panel ul li h6{
+	width:90px;
+	padding-left:30px;
+	color:#f81;
+}
+.content-panel ul li h6{
+	padding-left:0;
+}
+.content-panel ul li span{
+	display:inline-block;
+	font-size:14px;
+	margin-right:20px;
+}
+.node span,
+.var span{
+
+}
+.code-box{
+	position:absolute;
+	right:7%;
+	top:60px;
+	width:86%;
+	height:0;/*190px;*/
+	background:none;
+}
+.code-box a{
+	right:0;
+	top:0;
+	display:block;
+	width:96px;
+	height:24px;
+	line-height:22px;
+	border-radius:24px;
+	background:none;
+	z-index:200;
+	/*color:#217fbc;*/
+	-webkit-transition:all 0.6s ease-in-out;
+	-moz-transition:all 0.6s ease-in-out;
+	-ms-transition:all 0.6s ease-in-out;
+	-o-transition:all 0.6s ease-in-out;
+	transition:all 0.6s ease-in-out;
+}
+.code-box .code{
+	width:100%;
+	height:0;
+	/*z-index:90;*/
+	-webkit-transition:all 0.6s ease-in-out;
+	-moz-transition:all 0.6s ease-in-out;
+	-ms-transition:all 0.6s ease-in-out;
+	-o-transition:all 0.6s ease-in-out;
+	transition:all 0.6s ease-in-out;
+	background:rgba(0,0,0,0.9);
+	border-radius:10px;
+	overflow:auto;
+	z-index:150;
+}
+.code-box .code pre{
+	font:14px "microsoft yahei";
+	color:#fff;
+	position:relative;
+	z-index:180;
+}
+.code-box .code table{
+	/*background:red;*/
+	position:absolute;
+	top:30px;
+	left:50px;
+	/*padding:20px 50px;*/
+	padding-bottom:30px;
+}
+.code-box .code table tr{
+	/*padding-left:100px;*/
+	/*background:green;*/
+}
+.code-box .code table td{
+	padding-right:50px;
+	height:20px;
+	line-height:20px;
+}
+.code-box .code .code-viewer-arg{
+	display:none;
+	opacity:0;
+}
+.code-box .code .code-viewer-sink{
+	display:block;
+	opacity:1;
+}
+.code-box .close{
+	width:24px;
+	height:24px;
+	right:24px;
+	font-size:16px;
+}
+
+.highLight-call{
+	color:#f81;
+	/*background:red;*/
+}
+.highLight-arg{
+	color:#2dcb70;
+	/*background:yellow;*/
+}
+
+.code-selecter{
+	z-index:190;
+	position:absolute;
+	top:0;
+	left:0;
+	background:#000;
+	height:24px;
+	width:90%;
+	border-radius:8px;
+	-webkit-transition:all 0.6s ease;
+	-moz-transition:all 0.6s ease;
+	-ms-transition:all 0.6s ease;
+	-o-transition:all 0.6s ease;
+	transition:all 0.6s ease;
+}
+
+.code-selecter .sink-select,
+.code-selecter .arg-select{
+	position:absolute;
+	top:0;
+	border:1px solid rgba(0,0,0,1);
+	width:100px;
+	/*line-height:24px;*/
+	-webkit-transition:all 0.4s ease;
+	-moz-transition:all 0.4s ease;
+	-ms-transition:all 0.4s ease;
+	-o-transition:all 0.4s ease;
+	transition:all 0.4s ease;
+}
+.code-selecter .sink-select{
+	left:40px;
+	background:#2dcb70;
+}
+.code-selecter .arg-select{
+	left:160px;
+	background:rgba(0,0,0,0);
+}
+.code-selecter .sink-select:hover{
+	border-color:#2dcb70;
+}
+.code-selecter .arg-select:hover{
+	border-color:#2dcb70;
+	background:rgba(0,0,0,0);
 }
 
 .waiting{
@@ -562,7 +732,7 @@ body{
 	height:30px;
 	position:fixed;
 	bottom:0;
-	background:rgba(24,24,24,0.8);
+	background:rgba(24,24,24,0.9);
 	color:#fff;
 }
 .footer .info{
@@ -575,12 +745,11 @@ body{
 	font-size:14px;
 }
 .footer .info a,
-.filepath a{
+.count abbr{
 	color:#f91;
 	text-decoration:none;
 }
-.footer .filepath{
-	padding-left:10px;
+.footer .count{
 	height:30px;
 	line-height:30px;
 	position:absolute;
@@ -593,14 +762,19 @@ body{
     -ms-transition:all 0.6s ease;
     transition:all 0.6s ease;
 }
+.footer .count span{
+	color:#fff;
+	margin-left:10px;
+}
 
-@media screen and (max-width:1000px){
+@media screen and (max-width:1268px){
 	.menu{
 /*		margin-top:0px;
 		margin-left:-200px;*/
 		width:30%;
 		height:100%;
 		margin-top:-30px;
+		min-width:240px;
 	}
 	.in-menu{
 		width:100%;
@@ -615,19 +789,21 @@ body{
 	}
 	.fm-file,
 	.fm-vuln,
-	.fm-re{
+	.fm-project{
 		height:20%;
 	}
-	.fm-file{
+	.fm-project{
 		top:10%;
 	}
-	.fm-vuln{
-		height:40%;
+	.fm-file{
 		top:25%;
 	}
-	.fm-re{
-		top:55%;
+	
+	.fm-vuln{
+		height:40%;
+		top:40%;
 	}
+	
 	.in-menu form input,
 	.fm-vuln-select span,
 	.fm-vuln-select select{
@@ -654,6 +830,7 @@ body{
 
 	.content{
 		width:70%;
+		min-width:560px;
 	}
 	.content-panel{
 		width:90%;

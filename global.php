@@ -45,6 +45,7 @@ require_once CURR_PATH . '/libs/Smarty_setup.php';
 require_once CURR_PATH . '/CFGGenerator.php';
 
 header("Content-type:text/html;charset=utf-8") ;
+header("Cache-Control: no-cache, must-revalidate");
 
 //设置递归层数
 ini_set('xdebug.max_nesting_level', 100);
