@@ -51,7 +51,7 @@ class SqliAnalyser {
 		}
 		
 		//数值型注入，转义无效
-		if($var->getType() == "int" && in_array("addslashes", $saniArr)){
+		if($var->getType() == "valueInt" && in_array("addslashes", $saniArr)){
 			return false ;
 		}
 		

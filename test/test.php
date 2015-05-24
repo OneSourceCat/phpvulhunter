@@ -1,5 +1,6 @@
 <?php 
-$id = $_GET['id'] ;
-$id.="xxxx";
-echo $id ;
+
+$id = (float)$_GET['id'];
+mysql_query($id) ;
+
 ?>

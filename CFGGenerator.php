@@ -246,10 +246,11 @@ class CFGGenerator{
 				$dataFlow->setValue($concat) ;
 			}
 		}else{
-			//不属于已有的任何一个symbol类型,如函数调用
+			//不属于已有的任何一个symbol类型,如函数调用,类型转换
             if($part && ($part->getType() == "Expr_FuncCall" || 
                 $part->getType() == "Expr_MethodCall" || 
-			    $part->getType() == "Expr_StaticCall") ){
+			    $part->getType() == "Expr_StaticCall" ) ){
+                
 				//处理 id = urlencode($_GET['id']) ;
 				if(!SymbolUtils::isValue($part)){
 					$funcName = NodeUtils::getNodeFunctionName($part) ;
@@ -280,18 +281,24 @@ class CFGGenerator{
     					EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $this->fileSummary) ;
 				    }
 				}
-				
-				
-				
-				//处理内置函数
-				
+
+			}
+			
+			//处理类型强制转换
+			if($part 
+			    && ($part->getType() == "Expr_Cast_Int" || $part->getType() == "Expr_Cast_Double") 
+			    && $type == "right"){
+			    $dataFlow->getLocation()->setType("int") ;
+			    $symbol = SymbolUtils::getSymbolByNode($part->expr) ;
+			    $dataFlow->setValue($symbol) ;
 			}
 			
 			//处理三元表达式
 			if($part && $part->getType() == "Expr_Ternary"){
 				BIFuncUtils::ternaryHandler($type, $part, $dataFlow) ;
 			}
-		}
+			
+		}//else
 		
 		//处理完一条赋值语句，加入DataFlowMap
 		if($type == "right"){

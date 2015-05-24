@@ -112,17 +112,16 @@ class TaintAnalyser {
 					continue ;
 				}
 				//判断是否被单引号包裹
-
 				$is_start_with = $this->startWith($vars[$i-1]->getValue(), "'");
 				$is_end_with = $this->endsWith($vars[$i+1]->getValue(), "'") ;
 
 				if($is_start_with != -1 && $is_end_with != -1){
-					$vars[$i]->setType("int") ;
+					$vars[$i]->setType("valueInt") ;
 				}
 			}else{
 				//如果没有前驱和后继 ，即为开头和结尾,且为var类型，直接设为int
 				if($vars[$i] instanceof VariableSymbol){
-					$vars[$i]->setType("int") ;
+					$vars[$i]->setType("valueInt") ;
 				}
 			}
 		}
@@ -514,11 +513,19 @@ class TaintAnalyser {
 	 * 		(2)false	=>没有净化
 	 * 'XSS','SQLI','HTTP','CODE','EXEC','LDAP','INCLUDE','FILE','XPATH','FILEAFFECT'
 	 * @param string $type 漏洞的类型，使用TypeUtils可以获取
+	 * @param Symbol $var 危险参数
 	 * @param array $saniArr 危险参数的净化信息栈
 	 * @param array $encodingArr 危险参数的编码信息栈
 	 */
 	public function isSanitization($type,$var,$saniArr,$encodingArr){
-		$is_clean = null ; 
+		$is_clean = null ;
+		
+		//如果symbol类型为int，直接返回安全true
+		if(!in_array($var->getType(), array('string','valueInt'))){
+		    return true ;
+		}
+		
+		//根据不同的漏洞类型进行判断
 		switch ($type){
 			case 'SQLI':
 				$sql_analyser = new SqliAnalyser() ;

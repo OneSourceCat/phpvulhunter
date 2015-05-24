@@ -18,9 +18,7 @@ class SanitizationHandler {
 	public static function setSanitiInfo($node, $dataFlow, $block, $fileSummary){
 	    $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	    $sanitiInfo = self::SantiniFuncHandler($node, $fileSummary);
-	    //print_r($sanitiInfo);
 	    if($sanitiInfo){
-	        
 	        //向上追踪变量，相同变量的净化信息，全部添加
 	        $funcParams = NodeUtils::getNodeFuncParams($node);
 	        
