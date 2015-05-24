@@ -103,6 +103,7 @@ if (!is_file($serialPath)){
     fclose($fileHandler);
 }
 
+$results = null;
 if(($serial_str = file_get_contents($serialPath)) != ''){
     $results = unserialize($serial_str) ;
 }else{
@@ -138,50 +139,9 @@ if(($serial_str = file_get_contents($serialPath)) != ''){
 
 
 
-//2、初始化模块
-$allFiles = FileUtils::getPHPfile($project_path);
-$mainlFiles = FileUtils::mainFileFinder($project_path);
-$initModule = new InitModule() ;
-$initModule->init($project_path, $allFiles) ;
-
-
-//3、循环每个文件  进行分析工作
-if(is_file($project_path)){
-	load_file($project_path) ;
-}elseif (is_dir($project_path)){
-	$path_list = $mainlFiles;
-	foreach ($path_list as $path){
-		try{
-		    print_r($path.'<br/>');
-			load_file($path) ;
-		}catch(Exception $e){
-			continue ;
-		}	
-	}
-}else{
-	//请求不合法
-	echo "工程不存在!" ;
-	exit() ;
-}
-
-//4、获取ResultContext  序列化
-$results = ResultContext::getInstance() ;
-
-
-file_put_contents($serialPath, serialize($results)) ;
 
 //5、处理results 传给template
-$tempRes = array();
-foreach ($results->getResArr() as $result){
-    $record = $result->getRecord();
-    array_push($tempRes, $record);
-}
-
-$results = $tempRes;
-
-
-//5、处理results 传给template
-$template_res = convertResults(ResultContext::getInstance()) ;
+$template_res = convertResults($results) ;
 $smarty->assign('results',$template_res);
 $smarty->display('content.html');
 

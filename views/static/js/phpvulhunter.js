@@ -107,7 +107,6 @@ function sendCodeViewReq( tag_a )
 {
     var grandparent = tag_a.parentNode.parentNode;
     var codeFile = grandparent.getElementsByTagName('span');
-    if( cutstr($(codeFile[0]).html()) == cutstr($(codeFile[6]).html()) )
     $.ajax({
         type : "POST",
         url : "CodeViewer.php",

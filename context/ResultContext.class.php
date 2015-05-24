@@ -30,7 +30,7 @@ class ResultContext {
     public function isRecordExists($record){
 		foreach ($this->resArr as $value){
 		    $value_record = $value->getRecord() ; 
-			if($value_record == $record){
+			if($value_record == $record->getRecord()){
 				return true ;
 			}
 		}

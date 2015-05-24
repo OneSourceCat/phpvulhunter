@@ -611,12 +611,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($node_path, $var_path, $node, $var, $type){
-		echo "<pre>" ;
-		echo "有漏洞=====>". $type ."<br/>" ;
-		echo "漏洞变量：<br/>" ;
-		print_r($var) ;
-		echo "漏洞节点：<br/>" ;
-		print_r($node) ;
+// 		echo "<pre>" ;
+// 		echo "有漏洞=====>". $type ."<br/>" ;
+// 		echo "漏洞变量：<br/>" ;
+// 		print_r($var) ;
+// 		echo "漏洞节点：<br/>" ;
+// 		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;
@@ -630,9 +630,7 @@ class TaintAnalyser {
 		}else{
 			$resultContext->addResElement($record) ;
 		}
-
 	}
-	
-	
+
 }
 ?>
