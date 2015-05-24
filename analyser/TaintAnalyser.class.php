@@ -200,7 +200,7 @@ class TaintAnalyser {
 	 * @param FileSummary $fileSummary 当前文件的文件摘要
 	 * 
 	 */
-	public function currBlockTaintHandler($block,$node,$argName,$fileSummary){
+	public function currBlockTaintHandler($block,$node,$argName,$fileSummary){ 
 		//获取数据流信息
 		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
@@ -611,12 +611,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($node_path, $var_path, $node, $var, $type){
-// 		echo "<pre>" ;
-// 		echo "有漏洞=====>". $type ."<br/>" ;
-// 		echo "漏洞变量：<br/>" ;
-// 		print_r($var) ;
-// 		echo "漏洞节点：<br/>" ;
-// 		print_r($node) ;
+		echo "<pre>" ;
+		echo "有漏洞=====>". $type ."<br/>" ;
+		echo "漏洞变量：<br/>" ;
+		print_r($var) ;
+		echo "漏洞节点：<br/>" ;
+		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;

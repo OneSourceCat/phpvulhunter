@@ -519,6 +519,7 @@ class CFGGenerator{
 	    
 	        //获取到危险参数位置的变量
 	        $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
+        
 	        //遍历危险参数名，调用污点分析函数
 	        if(count($argArr) > 0){
 	            foreach ($argArr as $item){
@@ -604,6 +605,10 @@ class CFGGenerator{
 		$nodes = $block->getContainedNodes() ;
 		//循环nodes集合，搜集信息加入到blocksummary中
 		foreach ($nodes as $node){
+		    if($node->getType() == 'Expr_ErrorSuppress'){
+		        $node = $node->expr ;
+		    }
+		    
 			switch ($node->getType()){
 				//处理赋值语句			
 				case 'Expr_Assign':  
@@ -667,6 +672,7 @@ class CFGGenerator{
 				case 'Stmt_Echo':
 				case 'Expr_Print':
 				case 'Expr_FuncCall':
+				case 'Expr_Eval':
 					$this->functionHandler($node, $block, $this->fileSummary);
 					break ;
 				default:
@@ -1088,30 +1094,30 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 }
 
-// //扫描漏洞类型
-// $scan_type = 'ALL';
-// echo "<pre>" ;
-// //从用户那接受项目路径
-// // $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
-// // $allFiles = FileUtils::getPHPfile($project_path);
-// // //初始化
-// // $initModule = new InitModule() ;
-// // $initModule->init($project_path) ;
+//扫描漏洞类型
+$scan_type = 'ALL';
+echo "<pre>" ;
+//从用户那接受项目路径
+// $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
+// $allFiles = FileUtils::getPHPfile($project_path);
+// //初始化
+// $initModule = new InitModule() ;
+// $initModule->init($project_path) ;
 
-// $cfg = new CFGGenerator() ;
-// $visitor = new MyVisitor() ;
-// $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-// $traverser = new PhpParser\NodeTraverser ;
-// $path = CURR_PATH . '/test/test.php';
-// $cfg->getFileSummary()->setPath($path);
-// $code = file_get_contents($path);
-// $stmts = $parser->parse($code) ;
-// $traverser->addVisitor($visitor) ;
-// $traverser->traverse($stmts) ;
-// $nodes = $visitor->getNodes() ;
-// $pEntryBlock = new BasicBlock() ;
-// $pEntryBlock->is_entry = true ;
-// $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
+$cfg = new CFGGenerator() ;
+$visitor = new MyVisitor() ;
+$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+$traverser = new PhpParser\NodeTraverser ;
+$path = CURR_PATH . '/test/test.php';
+$cfg->getFileSummary()->setPath($path);
+$code = file_get_contents($path);
+$stmts = $parser->parse($code) ;
+$traverser->addVisitor($visitor) ;
+$traverser->traverse($stmts) ;
+$nodes = $visitor->getNodes() ;
+$pEntryBlock = new BasicBlock() ;
+$pEntryBlock->is_entry = true ;
+$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 
 
 ?>

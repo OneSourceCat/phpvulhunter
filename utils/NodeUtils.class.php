@@ -165,6 +165,9 @@ class NodeUtils{
             case 'Expr_Include':
                 return "include";
                 break;
+            case 'Expr_Eval':
+                return "eval" ;
+                break ;
             default:
                 return "";
                 break;
@@ -275,6 +278,18 @@ class NodeUtils{
     			}
     		}
     		return $ret ;
+    	}else if($funcName == "eval"){
+    	    $ret = array() ;
+    	    if($node->expr->getType() == "Expr_BinaryOp_Concat"){
+    	        $ret = self::getConcatParams($node->expr) ;
+    	    }else{
+    	        if(SymbolUtils::isValue($node->expr)){
+    	        	return array() ;
+    	        }else{
+    	        	$ret = self::getNodeStringName($node->expr) ;
+    	        }
+    	    }
+    	    return $ret ;
     	}
     	
     	//处理其他的函数
@@ -313,7 +328,8 @@ class NodeUtils{
     		return null;
     	}
     	$argsNameArr = self::getNodeFuncParams($node) ;	
-    	if($node->getType() == "Expr_Include"){
+    	if($node->getType() == "Expr_Include" || $node->getType() == "Expr_Eval"){
+    	    
     	    return array($argsNameArr) ;
     	}
     	
