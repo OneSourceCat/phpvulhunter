@@ -140,6 +140,10 @@ class TaintAnalyser {
 		}else if($flow->getValue() instanceof MutipleSymbol){
 			$vars = $flow->getValue()->getSymbols() ;
 		}else{
+		    if(!($flow->getValue() instanceof Symbol) && $flow->getValue() instanceof Node){
+		        $symbol = SymbolUtils::getSymbolByNode($flow->getValue()) ;
+		        $flow->setValue($symbol) ;
+		    }
 			$vars = array($flow->getValue()) ;
 		}
 		
@@ -205,6 +209,8 @@ class TaintAnalyser {
 		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
 		
+		print_r($flows) ;
+		exit ;
 		foreach ($flows as $flow){
 		    //print_r($flow) ;
 			if($flow->getName() == $argName){
@@ -611,12 +617,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($node_path, $var_path, $node, $var, $type){
-// 		echo "<pre>" ;
-// 		echo "有漏洞=====>". $type ."<br/>" ;
-// 		echo "漏洞变量：<br/>" ;
-// 		print_r($var) ;
-// 		echo "漏洞节点：<br/>" ;
-// 		print_r($node) ;
+		echo "<pre>" ;
+		echo "有漏洞=====>". $type ."<br/>" ;
+		echo "漏洞变量：<br/>" ;
+		print_r($var) ;
+		echo "漏洞节点：<br/>" ;
+		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;

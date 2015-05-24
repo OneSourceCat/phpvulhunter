@@ -18,10 +18,19 @@ class MutipleSymbol extends Symbol{
 	public function setItemByNode($node){
 		//处理三元表达式
 		if($node->getType() == "Expr_Ternary"){
+		    if($node->if->getType() == "Expr_Ternary"){
+		        $this->setItemByNode($node->if) ;
+		    }
+		    if($node->else->getType() == "Expr_Ternary"){
+		        $this->setItemByNode($node->else) ;
+		    }
 			$if_node = SymbolUtils::getSymbolByNode($node->if) ;
 			$else_node = SymbolUtils::getSymbolByNode($node->else) ;
-			$this->addSymbol($if_node) ;
-			$this->addSymbol($else_node) ;
+		
+			$if_node && $this->addSymbol($if_node) ;
+			$else_node && $this->addSymbol($else_node) ;
+		}else{
+		    return ;
 		}
 		
 	}
