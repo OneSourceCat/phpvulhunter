@@ -32,7 +32,7 @@ class FileAffectAnalyser {
 	 * @return boolean
 	 */
 	public function analyse($var, $saniArr, $encodingArr){
-		if(!empty($saniArr) && !empty($encodingArr)){
+		if(empty($saniArr) && empty($encodingArr)){
 			return false ;
 		}
 	

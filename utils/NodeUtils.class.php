@@ -162,7 +162,7 @@ class NodeUtils{
             case "Expr_Print":
             	return "print";
             	break;
-            case 'Expr_Include':
+        	case 'Expr_Include':
                 return "include";
                 break;
             case 'Expr_Eval':
@@ -211,7 +211,7 @@ class NodeUtils{
     	$symbol = new ConcatSymbol() ;
     	$symbol->setItemByNode($node) ;
     	$items = $symbol->getItems() ;
-    	
+
     	foreach ($items as $item){
     		if($item instanceof ValueSymbol){
     			continue ;
@@ -256,6 +256,15 @@ class NodeUtils{
     	   $ret = array() ;
     		if($node->expr->getType() == "Expr_BinaryOp_Concat"){
     			$ret = self::getConcatParams($node->expr) ;
+    		}elseif ($node->expr->getType() == "Scalar_Encapsed"){
+    		    $args = $node->expr->parts;
+    		    foreach ($args as $arg){
+     		        if (SymbolUtils::isValue($arg)){
+    		            continue;
+    		        }else{
+                        array_push($ret, NodeUtils::getNodeStringName($arg));
+    		        }
+    		    }
     		}else{
     			if(SymbolUtils::isValue($node->expr)){
     				return array() ;
@@ -326,9 +335,7 @@ class NodeUtils{
     		return null;
     	}
     	$argsNameArr = self::getNodeFuncParams($node) ;	
-
     	if($node->getType() == "Expr_Include" || $node->getType() == "Expr_Eval"){
-    	    
     	    return array($argsNameArr) ;
     	}
     	

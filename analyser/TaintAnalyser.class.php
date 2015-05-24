@@ -204,11 +204,10 @@ class TaintAnalyser {
 	 * @param FileSummary $fileSummary 当前文件的文件摘要
 	 * 
 	 */
-	public function currBlockTaintHandler($block,$node,$argName,$fileSummary){ 
+	public function currBlockTaintHandler($block,$node,$argName,$fileSummary){
 		//获取数据流信息
 		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
-	
 		foreach ($flows as $flow){
 		    //print_r($flow) ;
 			if($flow->getName() == $argName){
@@ -219,13 +218,24 @@ class TaintAnalyser {
 				    if (!$target)
 				        continue;
 				    $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-				    $encodingArr = $target->getEncoding() ;
-				    $saniArr =  $target->getSanitization() ;
-				    
-				    $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
-				    if($res == true){
-				        return "safe" ;
-				    }
+				    $encodingArr = $flow->getLocation()->getEncoding() ;
+					$saniArr = $flow->getLocation()->getSanitization() ;
+					$safe = true ;
+					if ($flow && (count($variable) > 0)){
+						foreach($variable as $var){
+							if(is_object($var)){
+								$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+								if($res == false){
+								    $safe = false;
+								    break ;
+								}
+							}
+						}
+						if ($safe){
+						    $name = NodeUtils::getNodeStringName($var) ;
+						    return "safe" ;
+						}	
+					}
 				}
 
 				
@@ -322,13 +332,24 @@ class TaintAnalyser {
 		                        if (!$target)
 		                            continue ;
 		                        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-		                        $encodingArr = $target->getEncoding() ;
-		                        $saniArr =  $target->getSanitization() ;
-		                        	
-		                        $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
-		                        if($res == true){
-		                            return "safe" ;
-		                        }
+    		                    $encodingArr = $flow->getLocation()->getEncoding() ;
+        						$saniArr = $flow->getLocation()->getSanitization() ;
+        						$safe = true ;
+        						if ($flow && (count($variable) > 0)){
+        							foreach($variable as $var){
+        								if(is_object($var)){
+        									$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+        									if($res == false){
+        									    $safe = false;
+        									    break ;
+        									}
+        								}
+        							}
+        							if ($safe){
+        							    $name = NodeUtils::getNodeStringName($var) ;
+        							    return "safe" ;
+        							}	
+        						}
 		                    }
 		                    	
 		                    //获取flow中的右边赋值变量
@@ -400,13 +421,24 @@ class TaintAnalyser {
 		                            if (!$target)
 		                                continue;
 		                            $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
-		                            $encodingArr = $target->getEncoding() ;
-		                            $saniArr =  $target->getSanitization() ;
-		    
-		                            $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
-		                            if($res == true){
-		                                return "safe" ;
-		                            }
+                                    $encodingArr = $flow->getLocation()->getEncoding() ;
+            						$saniArr = $flow->getLocation()->getSanitization() ;
+            						$safe = true ;
+            						if ($flow && (count($variable) > 0)){
+            							foreach($variable as $var){
+            								if(is_object($var)){
+            									$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
+            									if($res == false){
+            									    $safe = false;
+            									    break ;
+            									}
+            								}
+            							}
+            							if ($safe){
+            							    $name = NodeUtils::getNodeStringName($var) ;
+            							    return "safe" ;
+            							}	
+            						}
 		                        }
 		    
 		    
@@ -459,7 +491,7 @@ class TaintAnalyser {
 	    if (!$fileSummaryMap){
 	        return ;
 	    }
-	        
+	    
 	    $node_path = $fileSummary->getPath() ;
 		foreach ($fileSummaryMap as $fsummary){
 			if($fsummary instanceof FileSummary){
@@ -473,19 +505,23 @@ class TaintAnalyser {
 						if (!$flow->getLocation()){
 						    continue;
 						}
-						    
+
 						$encodingArr = $flow->getLocation()->getEncoding() ;
 						$saniArr = $flow->getLocation()->getSanitization() ;
-						
+						$safe = true ;
 						if ($flow && (count($variable) > 0)){
 							foreach($variable as $var){
 								if(is_object($var)){
 									$res = $this->isSanitization($type, $var, $saniArr, $encodingArr) ;
-									if($res == true){
-										$name = NodeUtils::getNodeStringName($var) ;
-										return "safe" ;
+									if($res == false){
+									    $safe = false;
+									    break ;
 									}
 								}
+							}
+							if ($safe){
+							    $name = NodeUtils::getNodeStringName($var) ;
+							    return "safe" ;
 							}	
 						}
 					
@@ -500,7 +536,7 @@ class TaintAnalyser {
 								//报告漏洞
 								$var_path = $fsummary->getPath() ;
 								$this->report($node_path, $var_path, $node, $flow->getLocation(),$type) ;
-							}	
+							}
 						}
 					}
 				}
@@ -523,7 +559,13 @@ class TaintAnalyser {
 	 */
 	public function isSanitization($type,$var,$saniArr,$encodingArr){
 		$is_clean = null ;
-		
+		$var_type = '' ;
+		if($var instanceof Node){
+		    $var = SymbolUtils::getSymbolByNode($var);
+		}
+		if ($var instanceof ValueSymbol){
+		    return true;
+		}
 		//如果symbol类型为int，直接返回安全true
 		if(!in_array($var->getType(), array('string','valueInt'))){
 		    return true ;
@@ -588,7 +630,7 @@ class TaintAnalyser {
     public function analysis($block, $node, $argName, $fileSummary){
 	    //传入变量本身就是source
         $varName = substr($argName, 0, strpos($argName, '['));
-	    if(in_array($varName, $this->sourcesArr) || in_array($argName, $this->sourcesArr)){
+        if(in_array($varName, $this->sourcesArr) || in_array($argName, $this->sourcesArr)){
 	        //报告漏洞
 	        $path = $fileSummary->getPath() ;
 	        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
@@ -616,12 +658,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($node_path, $var_path, $node, $var, $type){
-		echo "<pre>" ;
-		echo "有漏洞=====>". $type ."<br/>" ;
-		echo "漏洞变量：<br/>" ;
-		print_r($var) ;
-		echo "漏洞节点：<br/>" ;
-		print_r($node) ;
+// 		echo "<pre>" ;
+// 		echo "有漏洞=====>". $type ."<br/>" ;
+// 		echo "漏洞变量：<br/>" ;
+// 		print_r($var) ;
+// 		echo "漏洞节点：<br/>" ;
+// 		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;
