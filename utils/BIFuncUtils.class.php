@@ -69,6 +69,7 @@ class BIFuncUtils {
 			$dataFlow->setValue($ter_symbol) ;
 		}
 	}
+
 	
 }
 

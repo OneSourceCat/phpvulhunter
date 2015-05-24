@@ -7,8 +7,12 @@
  */
 class MutipleSymbol extends Symbol{
 	private $symbols = array();  
-	
-	/**
+
+    public function setSymbols($symbols){
+        $this->symbols = $symbols;
+    }
+
+ /**
 	 * 分离isset结构中的类型
 	 * isset($id) ? $_GET['id'] : 2;
 	 * 转为:

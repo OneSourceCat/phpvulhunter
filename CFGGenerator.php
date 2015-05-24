@@ -143,15 +143,7 @@ class CFGGenerator{
 		$block->addNode($block->loop_var) ;
 		unset($block->loop_var) ;
 	}
-	
-	/**
-	 * 给定AST Nodes集合，返回结束的行号
-	 * @param unknown $nodes
-	 */
-	public function getEndLine($nodes){
-		return end($nodes)->getAttribute('endLine') ;
-	}
-	
+
 	/**
 	 * 分析传入node赋值语句，以及当前block,
 	 * 生成block summary中的一条记录
@@ -202,7 +194,6 @@ class CFGGenerator{
 			}
 
 		}elseif ($part && SymbolUtils::isVariable($part)){
-			
 			//加入dataFlow
 			$vars = new VariableSymbol() ;
 			$vars->setValue($part);
@@ -214,7 +205,6 @@ class CFGGenerator{
 			}
 			
 		}elseif ($part && SymbolUtils::isConstant($part)){
-			
 			//加入dataFlow
 			$con = new ConstantSymbol() ;
 			$con->setValueByNode($part) ;
@@ -297,6 +287,21 @@ class CFGGenerator{
 			if($part && $part->getType() == "Expr_Ternary"){
 				BIFuncUtils::ternaryHandler($type, $part, $dataFlow) ;
 			}
+			
+			//处理"xxxx$id"的内容
+			if($part && $part->getType() == "Scalar_Encapsed"){
+			    $symbols_list = array() ;
+			    foreach ($part->parts as $value){
+			        if(!SymbolUtils::isValue($value) && is_object($value)){
+			            $sym = SymbolUtils::getSymbolByNode($value) ;
+			            array_push($symbols_list, $sym) ;
+			        }
+			    }
+			    $multi_symbol = new MutipleSymbol() ;
+			    $multi_symbol->setSymbols($symbols_list) ;
+			    $dataFlow->setValue($multi_symbol) ;
+			}
+			
 			
 		}//else
 		
@@ -499,7 +504,7 @@ class CFGGenerator{
 	 * @param BasicBlock $block 当前基本块
 	 * @param fileSummary $fileSummary  当前文件摘要
 	 */
-	public function functionHandler($node, $block, $fileSummary){
+	public function functionHandler($node, $block, $fileSummary){  
 	    //根据用户指定的扫描类型，查找相类型的sink函数
 	    global $scan_type;
 	    
@@ -706,13 +711,14 @@ class CFGGenerator{
 			$pEntryBlock->addOutEdge($block_edge) ;
 			$currBlock->addInEdge($block_edge) ;
 		}
+		
 		//处理只有一个node节点，不是数组
         if (!is_array($nodes)){
             $nodes = array($nodes);
         }
+        
 		//迭代每个AST node
 		foreach($nodes as $node){
-			//print_r($node) ;
 			//搜集节点中的require include require_once include_once的PHP文件名称
 			$this->fileSummary->addIncludeToMap(NodeUtils::getNodeIncludeInfo($node)) ;
 			
@@ -727,7 +733,6 @@ class CFGGenerator{
 			if(in_array($node->getType(), $JUMP_STATEMENT)){
 				//生成基本块的摘要
 				$this->simulate($currBlock) ;
-
 				$nextBlock = new BasicBlock() ;
 				//对每个分支，建立相应的基本块
 				$branches = $this->getBranches($node) ;
@@ -856,14 +861,17 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
 		if($node instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr){
 			if(!($node->left instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr) && 
 			    !($node->right instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
-			    
-				array_push($this->branches,$node->left) ;
-				array_push($this->branches,$node->right) ;
+			    $left_branch = new Branch("if", $node->left) ;
+			    $right_branch = new Branch("else", $node->right) ;
+				array_push($this->branches,$left_branch) ;
+				array_push($this->branches,$right_branch) ;
 			}else{
 				if(!($node->left instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
-					array_push($this->branches,$node->left) ;
+				    $left_branch = new Branch("if", $node->left) ;
+					array_push($this->branches,$left_branch) ;
 				}elseif(!($node->right instanceof PhpParser\Node\Expr\BinaryOp\LogicalOr)){
-					array_push($this->branches,$node->right) ;
+				    $right_branch = new Branch("else", $node->right) ;
+					array_push($this->branches,$right_branch) ;
 				}
 			}
 		}
@@ -876,12 +884,13 @@ class nodeFunctionVisitor extends PhpParser\NodeVisitorAbstract{
     public $block;
     public $fileSummary;
     public $cfgGen;
-
+    
     public function leaveNode(Node $node){
         //处理过程间代码，即调用的方法定义中的源码
         if(($node->getType() == 'Expr_FuncCall' ||
             $node->getType() == 'Expr_MethodCall' ||
-            $node->getType() == 'Expr_StaticCall')){
+            $node->getType() == 'Expr_StaticCall' ||
+            $node->getType() == "Expr_Isset")){
             $this->cfgGen->functionHandler($node, $this->block, $this->fileSummary);
         }
     }
@@ -1092,30 +1101,30 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 }
 
-// //扫描漏洞类型
-// $scan_type = 'ALL';
-// echo "<pre>" ;
-// //从用户那接受项目路径
-// // $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
-// // $allFiles = FileUtils::getPHPfile($project_path);
-// // //初始化
-// // $initModule = new InitModule() ;
-// // $initModule->init($project_path) ;
+//扫描漏洞类型
+$scan_type = 'ALL';
+echo "<pre>" ;
+//从用户那接受项目路径
+// $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
+// $allFiles = FileUtils::getPHPfile($project_path);
+// //初始化
+// $initModule = new InitModule() ;
+// $initModule->init($project_path) ;
 
-// $cfg = new CFGGenerator() ;
-// $visitor = new MyVisitor() ;
-// $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-// $traverser = new PhpParser\NodeTraverser ;
-// $path = CURR_PATH . '/test/test.php';
-// $cfg->getFileSummary()->setPath($path);
-// $code = file_get_contents($path);
-// $stmts = $parser->parse($code) ;
-// $traverser->addVisitor($visitor) ;
-// $traverser->traverse($stmts) ;
-// $nodes = $visitor->getNodes() ;
-// $pEntryBlock = new BasicBlock() ;
-// $pEntryBlock->is_entry = true ;
-// $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
+$cfg = new CFGGenerator() ;
+$visitor = new MyVisitor() ;
+$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+$traverser = new PhpParser\NodeTraverser ;
+$path = CURR_PATH . '/test/test.php';
+$cfg->getFileSummary()->setPath($path);
+$code = file_get_contents($path);
+$stmts = $parser->parse($code) ;
+$traverser->addVisitor($visitor) ;
+$traverser->traverse($stmts) ;
+$nodes = $visitor->getNodes() ;
+$pEntryBlock = new BasicBlock() ;
+$pEntryBlock->is_entry = true ;
+$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 
 
 ?>
