@@ -1,4 +1,5 @@
 <?php
+use PhpParser\Node;
 /**
  * Symbol的工具类
  * @author Administrator
@@ -13,7 +14,10 @@ class SymbolUtils {
 	 * @return boolean
 	 */
 	public static function isValue($node){
-		$type = $node->getType() ;
+	    $type = null;
+	    if ($node instanceof Node){
+	        $type = $node->getType() ;
+	    }
 		if(in_array($type, array("Scalar_String","Scalar_LNumber","Scalar_DNumber","Name","Expr_ConstFetch"))){
 			return true ;
 		}else{

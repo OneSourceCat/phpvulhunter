@@ -26,7 +26,6 @@ function load_file($path){
 	
 	$pEntryBlock = new BasicBlock() ;
 	$pEntryBlock->is_entry = true ;
-	
 	//开始分析
 	$cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 }
@@ -155,9 +154,9 @@ if(($serial_str = file_get_contents($serialPath)) != ''){
     file_put_contents($serialPath, serialize($results)) ;
 }
 
-$t_end = time();
-$t = $t_end - $t_start;
-
+// $t_end = time();
+// $t = $t_end - $t_start;
+// print_r($results);
 //5、处理results 传给template
 $template_res = convertResults($results) ;
 $smarty->assign('results',$template_res);

@@ -116,6 +116,7 @@ class FileSummaryGenerator {
 	                $fileSummary->addDataFlow($dataFlow);
 	                $block->getBlockSummary()->addDataFlowItem($dataFlow);
 	                break ;
+	            
 	           default:
 	               break;
 	        }
@@ -210,14 +211,7 @@ class FileSummaryGenerator {
 	        }else if($type == "right"){
 	            $dataFlow->setValue($concat) ;
 	        }
-	    }elseif($part && $part->getType() == "Expr_Ternary"){
-			//处理三元表达式
-			$ter_symbol = new MutipleSymbol() ;
-			$ter_symbol->setItemByNode($part) ;
-			if($type == 'right'){
-				$dataFlow->setValue($ter_symbol) ;
-			}
-		}else{
+	    }else{
 	        //不属于已有的任何一个symbol类型,如函数调用
             if($part && ($part->getType() == "Expr_FuncCall" || 
 			    $part->getType() == "Expr_MethodCall" || 
@@ -230,6 +224,10 @@ class FileSummaryGenerator {
                     SanitizationHandler::setSanitiInfo($part, $dataFlow, $block, $fileSummary) ;
                     EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $fileSummary) ;
                 }
+	        }
+	        //处理三元表达式
+	        if($part && $part->getType() == "Expr_Ternary"){
+	            BIFuncUtils::ternaryHandler($type, $part, $dataFlow) ;
 	        }
 	    }
 	    

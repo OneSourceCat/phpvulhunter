@@ -15,7 +15,7 @@ class MutipleSymbol extends Symbol{
 	 * 		array($_GET[id],2)
 	 * @param unknown $node
 	 */
-	public function setItemByNode($node){
+    public function setItemByNode($node){
 		//处理三元表达式
 		if($node->getType() == "Expr_Ternary"){
 		    if($node->if->getType() == "Expr_Ternary"){
@@ -34,6 +34,7 @@ class MutipleSymbol extends Symbol{
 		}
 		
 	}
+	
 	
 	private function addSymbol($symbol){
 		array_push($this->symbols, $symbol) ;

@@ -69,6 +69,9 @@ class SqliAnalyser {
 	 * @return bool
 	 */
 	public function analyse($var,$saniArr,$encodingArr){
+	    if(empty($saniArr) && empty($encodingArr)){
+	        return false ;
+	    }
 		//处理编码
 		AnalyseUtils::initSaniti($saniArr) ;
 		AnalyseUtils::initEncodeList($encodingArr) ;

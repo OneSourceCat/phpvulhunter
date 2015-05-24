@@ -505,10 +505,8 @@ class CFGGenerator{
 	    
 	    //获取调用的函数名判断是否是sink调用
 	    $funcName = NodeUtils::getNodeFunctionName($node);
-
 	    //判断是否为sink函数,返回格式为array(true,funcname) or array(false)
 	    $ret = NodeUtils::isSinkFunction($funcName, $scan_type);
-
 	    if($ret[0] != null){
 	        //如果发现了sink调用，启动污点分析
 	        $analyser = new TaintAnalyser() ;
@@ -609,7 +607,6 @@ class CFGGenerator{
 		    if($node->getType() == 'Expr_ErrorSuppress'){
 		        $node = $node->expr ;
 		    }
-		    
 			switch ($node->getType()){
 				//处理赋值语句			
 				case 'Expr_Assign':  
@@ -1095,31 +1092,30 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 }
 
-//扫描漏洞类型
-$scan_type = 'ALL';
-echo "<pre>" ;
-//从用户那接受项目路径
-$project_path = 'D:\MySoftware\wamp\www\code\phpvulhunter\test\test.php';
-$project_path = str_replace('\\', '/', $project_path);
-$allFiles = FileUtils::getPHPfile($project_path);
-// //初始化
-$initModule = new InitModule() ;
-$initModule->init($project_path, $allFiles) ;
+// //扫描漏洞类型
+// $scan_type = 'ALL';
+// echo "<pre>" ;
+// //从用户那接受项目路径
+// // $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
+// // $allFiles = FileUtils::getPHPfile($project_path);
+// // //初始化
+// // $initModule = new InitModule() ;
+// // $initModule->init($project_path) ;
 
-$cfg = new CFGGenerator() ;
-$visitor = new MyVisitor() ;
-$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-$traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/test.php';
-$cfg->getFileSummary()->setPath($path);
-$code = file_get_contents($path);
-$stmts = $parser->parse($code) ;
-$traverser->addVisitor($visitor) ;
-$traverser->traverse($stmts) ;
-$nodes = $visitor->getNodes() ;
-$pEntryBlock = new BasicBlock() ;
-$pEntryBlock->is_entry = true ;
-$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
+// $cfg = new CFGGenerator() ;
+// $visitor = new MyVisitor() ;
+// $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+// $traverser = new PhpParser\NodeTraverser ;
+// $path = CURR_PATH . '/test/test.php';
+// $cfg->getFileSummary()->setPath($path);
+// $code = file_get_contents($path);
+// $stmts = $parser->parse($code) ;
+// $traverser->addVisitor($visitor) ;
+// $traverser->traverse($stmts) ;
+// $nodes = $visitor->getNodes() ;
+// $pEntryBlock = new BasicBlock() ;
+// $pEntryBlock->is_entry = true ;
+// $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 
 
 ?>
