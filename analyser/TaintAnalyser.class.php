@@ -208,9 +208,7 @@ class TaintAnalyser {
 		//获取数据流信息
 		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
-		
-		print_r($flows) ;
-		exit ;
+	
 		foreach ($flows as $flow){
 		    //print_r($flow) ;
 			if($flow->getName() == $argName){
