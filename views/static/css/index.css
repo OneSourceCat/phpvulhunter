@@ -516,14 +516,14 @@ body{
 }
 .code-selecter .sink-select{
 	left:40px;
-	background:#2dcb70;
+	background:#f81;
 }
 .code-selecter .arg-select{
 	left:160px;
 	background:rgba(0,0,0,0);
 }
 .code-selecter .sink-select:hover{
-	border-color:#2dcb70;
+	border-color:#f81;
 }
 .code-selecter .arg-select:hover{
 	border-color:#2dcb70;

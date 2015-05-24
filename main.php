@@ -89,14 +89,27 @@ if(!isset($_POST['path']) || !isset($_POST['type'])){
 }
 
 
+
+$t_start = time();
+
+
 //1、从web ui中获取并加载项目工程
-$project_path = $_POST['path'] ;  //扫描的工程路径
+$project_path = $_POST['prj_path'] ;  //扫描的工程路径
+$scan_path = $_POST['path'] ;   //扫描文件路径
 $scan_type = $_POST['type'] ;     //扫描的类型
 $encoding = $_POST['encoding'] ;  //CMS的编码   UTF-8 或者  GBK
-$scan_type = $scanType = strtoupper($scan_type);
 
+// $project_path = 'C:/Users/xyw55/Desktop/test/she1.1\phpshe1.1' ;  //扫描的工程路径
+// $scan_path = 'C:/Users/xyw55/Desktop/test/she1.1\phpshe1.1/index.php' ;   //扫描文件路径
+// $scan_type = 'all' ;     //扫描的类型
+// $encoding = 'GBK' ;  //CMS的编码   UTF-8 或者  GBK
+
+
+$scan_type = $scanType = strtoupper($scan_type);
 $project_path = str_replace('\\', '/', $project_path);
-$fileName = str_replace('/', '_', $project_path);
+$scan_path = str_replace('\\', '/', $scan_path);
+
+$fileName = str_replace('/', '_', $scan_path);
 $fileName = str_replace(':', '_', $fileName);
 $serialPath = CURR_PATH . "/data/resultConetxtSerialData/" . $fileName;
 
@@ -105,13 +118,15 @@ if (!is_file($serialPath)){
     $fileHandler = fopen($serialPath, 'w');
     fclose($fileHandler);
 }
-
 $results = null;
 if(($serial_str = file_get_contents($serialPath)) != ''){
     $results = unserialize($serial_str) ;
+
 }else{
+
     //3、初始化模块
-    $allFiles = FileUtils::getPHPfile($project_path);  
+    $allFiles = FileUtils::getPHPfile($project_path);
+    $mainlFiles = FileUtils::mainFileFinder($scan_path);
     $initModule = new InitModule() ;
     $initModule->init($project_path, $allFiles) ;
     
@@ -119,14 +134,15 @@ if(($serial_str = file_get_contents($serialPath)) != ''){
     if(is_file($project_path)){
     	load_file($project_path) ;
     }elseif (is_dir($project_path)){
-        $mainlFiles = FileUtils::mainFileFinder($project_path);
-    	$path_list = $mainlFiles;
+        $path_list = $mainlFiles;
+        //$path_list = array('C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload/admin/admin.php');
+        //$path_list = array('C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/allTests.php');
     	foreach ($path_list as $path){
     		try{
     			load_file($path) ;
     		}catch(Exception $e){
     			continue ;
-    		}	
+    		}
     	}
     }else{
     	//请求不合法
@@ -139,9 +155,8 @@ if(($serial_str = file_get_contents($serialPath)) != ''){
     file_put_contents($serialPath, serialize($results)) ;
 }
 
-
-
-
+$t_end = time();
+$t = $t_end - $t_start;
 
 //5、处理results 传给template
 $template_res = convertResults($results) ;
