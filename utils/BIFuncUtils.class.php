@@ -12,18 +12,15 @@ class BIFuncUtils {
 	 * @return multitype:number
 	 */
 	public static function getSingleFuncs(){
-		return  array(
-					'urldecode' => 0,
-					'urlencode' => 0,
-					'intval' => 0,
-					'is_numeric' => 0,
-					'is_float' => 0,
+	    global $F_SECURES_ALL ;
+	    $ret = array(
 					'trim' => 0,
 					'iconv' => 2,
 					'explode' => 1,
 					'preg_match' => 1,
-					
 				) ;
+
+		return  $ret ;
 	}
 	
 	
@@ -40,7 +37,7 @@ class BIFuncUtils {
 			if($type == "right" && array_key_exists($funcName, $single_func)){
 				$position = $single_func[$funcName] ;
 				$value = $part->args[$position]->value ;
-
+                
 				//解决trim(urlencode($id))的方法嵌套问题
 				if($value->getType() == 'Expr_FuncCall'){
 					$new_name = NodeUtils::getNodeFunctionName($value) ;

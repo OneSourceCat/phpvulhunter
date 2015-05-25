@@ -11,6 +11,7 @@ require_once 'IncludeAnalyser.class.php';
 require_once 'LDPAAnalyser.class.php';
 require_once 'XPathAnalyser.class.php';
 
+use PhpParser\Node ;
 
 /**
  * 用于污点分析的类
@@ -149,6 +150,11 @@ class TaintAnalyser {
 		
 		//设置var的type，如果有引号包裹为string，否则为数值型
 		$this->addTypeByVars($vars) ;
+		foreach ($vars as $key => $value){
+		    if($value == null){
+		        array_slice($vars, $key) ;
+		    }
+		}
 		return $vars ;
 	}
 	
@@ -204,12 +210,20 @@ class TaintAnalyser {
 	 * @param FileSummary $fileSummary 当前文件的文件摘要
 	 * 
 	 */
-	public function currBlockTaintHandler($block,$node,$argName,$fileSummary){
+	public function currBlockTaintHandler($block,$node,$argName,$fileSummary, $flowNum=0){
+	    $tempNum = $flowNum;
 		//获取数据流信息
 		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
+		
+		//将处理过的flow移除
+        while ($tempNum){
+            $tempNum --;
+            array_shift($flows);
+        }
+
 		foreach ($flows as $flow){
-		    //print_r($flow) ;
+		    $flowNum ++; 
 			if($flow->getName() == $argName){
 				//处理净化信息,如果被编码或者净化则返回safe
 				//先对左边的变量进行查询
@@ -218,36 +232,32 @@ class TaintAnalyser {
 			        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 			        $encodingArr = $target->getEncoding() ;
 			        $saniArr =  $target->getSanitization() ;
-			    
 			        $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
 			        if($res == true){
 			            return "safe" ;
 			        }
 			    }
-
 				
 				//获取flow中的右边赋值变量
 				//得到flow->getValue()的变量node
 				//$sql = $a . $b ;  =>  array($a,$b)
 				$vars = $this->getVarsByFlow($flow) ;
-				
-				$retarr = array();
 				foreach($vars as $var){
-				    
-				    if($var instanceof ValueSymbol) continue ;
-				    				    
+				    if($var instanceof ValueSymbol || !is_object($var)){
+				        continue ;
+				    } 		    
 					$varName = $this->getVarName($var) ;
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
 						//报告漏洞
 						$path = $fileSummary->getPath() ;
 						$this->report($path, $path, $node, $flow->getLocation(), $type) ;
-					}else{
+					}else{				
 						//首先进行文件夹的分析
 						$this->multiFileHandler($block, $varName, $node, $fileSummary) ;
 						
 						//文件间分析失败，递归
-						$this->currBlockTaintHandler($block, $node, $varName, $fileSummary) ;
+						$this->currBlockTaintHandler($block, $node, $varName, $fileSummary, $flowNum) ;
 					}
 				}
 			}
@@ -264,13 +274,20 @@ class TaintAnalyser {
 	 * @param Node $node 调用sink的node 
 	 * @param FileSummary $fileSummary 当前文件的文件摘要
 	 */
-	public function multiBlockHandler($block, $argName, $node, $fileSummary){
+	public function multiBlockHandler($block, $argName, $node, $fileSummary, $flowNum=0){
 		if($this->pathArr){
 			$this->pathArr = array() ;
 		}
 		
 		$this->getPrevBlocks($block) ;
 		$block_list = $this->pathArr ;
+		
+		//单基本块进入
+		if(empty($block_list)){
+		   // $this->currBlockTaintHandler($block, $node, $argName, $fileSummary) ;
+		    return ;
+		}
+		
 		!empty($block) && array_push($block_list, $block) ;
 		
 		//如果前驱基本块为空，说明完成回溯，算法停止
@@ -278,16 +295,22 @@ class TaintAnalyser {
 			return  ;
 		}
 		
+
 		foreach($block_list as $bitem){
 		    //处理非平行结构的前驱基本块
 		    if(!is_array($bitem)){
 		        $flows = $bitem->getBlockSummary()->getDataFlowMap() ;
 		        $flows = array_reverse($flows) ;
-		        
+		        $tempNum = $flowNum ;
+		        while ($tempNum){
+		            $tempNum --;
+		            array_shift($flows);
+		        }
 		        //如果flow中没有信息，则换下一个基本块
 		        if($flows == null){
 		            //找到新的argName
 		            foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
+		                $flowNum ++;
 		                if($flow->getName() == $argName){
 		                    $vars = $this->getVarsByFlow($flow) ;
 		                    foreach ($vars as $var){
@@ -300,7 +323,7 @@ class TaintAnalyser {
 		                            $this->report($path, $path, $node, $flow->getLocation(),$type) ;
 		                            //return true ;
 		                        }
-		                        $this->multiBlockHandler($bitem, $varName, $node, $fileSummary) ;
+		                        $this->multiBlockHandler($bitem, $varName, $node, $fileSummary,$flowNum) ;
 		                    }
 		                    return ;
 		                }else{
@@ -309,7 +332,7 @@ class TaintAnalyser {
 		                    if($block_list == null){
 		                        return ;
 		                    }else{
-		                        $this->multiBlockHandler($bitem, $argName, $node, $fileSummary) ;
+		                        $this->multiBlockHandler($bitem, $argName, $node, $fileSummary,$flowNum) ;
                                    return ;
 		                    }
 		    
@@ -318,6 +341,7 @@ class TaintAnalyser {
 		        }else{
 		            //对于每个flow,寻找变量argName
 		            foreach ($flows as $flow){
+		                $flowNum ++;
 		                if($flow->getName() == $argName){
 		                    //处理净化信息,如果被编码或者净化则返回safe
 		                    //先对左边的变量进行查询
@@ -364,7 +388,8 @@ class TaintAnalyser {
 		                                $bitem,
 		                                $varName,
 		                                $node,
-		                                $fileSummary
+		                                $fileSummary,
+		                                $flowNum
 		                            ) ;
 		                        }
 		                    }
@@ -379,6 +404,11 @@ class TaintAnalyser {
 		        foreach ($bitem as $block_item){
 		            $flows = $block_item->getBlockSummary()->getDataFlowMap() ;
 		            $flows = array_reverse($flows) ;
+		            $tempNum = $flowNum ;
+		            while ($tempNum){
+		                $tempNum --;
+		                array_shift($flows);
+		            }
 		            //如果flow中没有信息，则换下一个基本块
 		            if($flows == null){
 		                //找到新的argName
@@ -405,6 +435,7 @@ class TaintAnalyser {
 		            }else{
 		                //对于每个flow,寻找变量argName
 		                foreach ($flows as $flow){
+		                    $flowNum ++;
 		                    if($flow->getName() == $argName){
 		                        //处理净化信息,如果被编码或者净化则返回safe
 		                        //先对左边的变量进行查询
@@ -419,8 +450,7 @@ class TaintAnalyser {
 		                                return "safe" ;
 		                            }
 		                        }
-		    
-		    
+	
 		                        //获取flow中的右边赋值变量
 		                        //得到flow->getValue()的变量node
 		                        //$sql = $a . $b ;  =>  array($a,$b)
@@ -429,7 +459,7 @@ class TaintAnalyser {
 		                            if($var instanceof ValueSymbol){
 		                                continue ;
 		                            }
-		    
+		                            
 		                            $varName = $this->getVarName($var) ;
 		                            //如果var右边有source项,直接报告漏洞
 		                            if(in_array($varName, $this->sourcesArr)){
@@ -441,10 +471,22 @@ class TaintAnalyser {
 		                                //首先进行文件夹的分析
 		                                //首先根据fileSummary获取到fileSummaryMap
 		                                $fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
-		                                $fileSummaryMap && $this->multiFileHandler($block, $varName, $node, $fileSummaryMap) ;
-		                                	
+		                                $fileSummaryMap && $this->multiFileHandler(
+		                                    $block, 
+		                                    $varName, 
+		                                    $node, 
+		                                    $fileSummaryMap,
+		                                    $flowNum
+		                                ) ;
+		                                	 
 		                                //文件间分析失败，递归
-		                                $ret = $this->multiBlockHandler($block_item, $varName, $node, $fileSummary) ;
+		                                $ret = $this->multiBlockHandler(
+		                                    $block_item, 
+		                                    $varName, 
+		                                    $node, 
+		                                    $fileSummary,
+		                                    $flowNum
+		                                ) ;
 		                            }
 		                        }
 		                        return ;
@@ -465,7 +507,7 @@ class TaintAnalyser {
 	 * @param Node $node 调用sink的node
 	 * @param array $fileSummaryMap 要分析的require文件的summary的list
 	 */
-	public function multiFileHandler($block, $argName, $node, $fileSummary){
+	public function multiFileHandler($block, $argName, $node, $fileSummary,$flowNum=0){
 	    //首先根据fileSummary获取到fileSummaryMap
 	    $fileSummaryMap = FileSummaryGenerator::getIncludeFilesDataFlows($fileSummary) ;
 	    if (!$fileSummaryMap){
@@ -476,7 +518,14 @@ class TaintAnalyser {
 		foreach ($fileSummaryMap as $fsummary){
 			if($fsummary instanceof FileSummary){
 				$flows = $fsummary->getFlowsMap() ;
+				$tempNum = $flowNum ;
+				while ($tempNum){
+				    $tempNum --;
+				    array_shift($flows) ;
+				}
+				
 				foreach ($flows as $flow){
+				    $flowNum ++;
 					if($flow->getName() == $argName){
 						//处理净化信息,如果被编码或者净化则返回safe
 						//被isSanitization函数取代
@@ -524,7 +573,17 @@ class TaintAnalyser {
 	 * @param array $saniArr 危险参数的净化信息栈
 	 * @param array $encodingArr 危险参数的编码信息栈
 	 */
-	public function isSanitization($type,$var,$saniArr,$encodingArr){
+	public function isSanitization($type,$var,$saniArr_obj,$encodingArr){
+	    //整理saniArr
+	    $saniArr = array() ;
+	    if(is_object($saniArr_obj)){
+	        foreach ($saniArr_obj as $value){
+	            array_push($saniArr, $value->funcName) ;
+	        }
+	    }else{
+	        $saniArr = $saniArr_obj ;
+	    }
+        
 		$is_clean = null ;
 		$var_type = '' ;
 		if($var instanceof Node){
@@ -533,6 +592,7 @@ class TaintAnalyser {
 		if ($var instanceof ValueSymbol){
 		    return true;
 		}
+		
 		//如果symbol类型为int，直接返回安全true
 		if(!in_array($var->getType(), array('string','valueInt'))){
 		    return true ;

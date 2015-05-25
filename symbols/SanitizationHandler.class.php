@@ -16,12 +16,21 @@ class SanitizationHandler {
 	 * @param 数据流 $dataFlow
 	 */
 	public static function setSanitiInfo($node, $dataFlow, $block, $fileSummary){
+
 	    $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	    $sanitiInfo = self::SantiniFuncHandler($node, $fileSummary);
+
 	    if($sanitiInfo){
+	        $args = NodeUtils::getFuncParamsNode($node);
+	        if (count($args) > 0){
+	            if (!$dataFlow->getValue()){
+	                $arg = SymbolUtils::getSymbolByNode($args[0]);
+	                $dataFlow->setValue($arg);
+	            }
+	        }
+	        
 	        //向上追踪变量，相同变量的净化信息，全部添加
 	        $funcParams = NodeUtils::getNodeFuncParams($node);
-	        
 	        //traceback
 	        $sameVarSanitiInfo = array();
 	        foreach ($funcParams as $param){
@@ -35,6 +44,7 @@ class SanitizationHandler {
 	            }
 	            $sameVarSanitiInfo = array_merge($sameVarSanitiInfo,$ret['funcs']);
 	        }
+	        
 	        //加入此变量的净化信息中
 	        foreach ($sameVarSanitiInfo as $oneFunction){
 	            $dataFlow->getLocation()->addSanitization($oneFunction) ;
@@ -43,6 +53,7 @@ class SanitizationHandler {
 	        $dataFlow->getLocation()->addSanitization($sanitiInfo) ;
 	    }
 	    $funcName = NodeUtils::getNodeFunctionName($node) ;
+
 	    //清除反作用的函数
 	    SanitizationHandler::clearSantiInfo($funcName, $node, $dataFlow) ;
 	}

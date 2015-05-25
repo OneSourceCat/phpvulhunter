@@ -1,28 +1,30 @@
-<?php	
+<?php
+// $file=array();
+// $sql = $_GET['X'] ;
+// //检查目录权限
+// check_write(PBBLOG_ROOT.'/home/data/config.php',2) ;
 
-if(isset($_GET['Submit'])){
-	
-	// Retrieve data
-	
-	$id = $_GET['id'];
+    if (is_dir($path))
+    {
+        if ($check_type==1)
+        {
+            $testfile = $path.'/test.tmp';
+        }
+        else
+        {
+            check_write($path);
+            $testfile = $path.'default'.'/test.tmp';
+        }
 
-	$getid = "SELECT first_name, last_name FROM users WHERE user_id = '$id'";
-	$result = mysql_query($getid) or die('<pre>' . mysql_error() . '</pre>' );
+        @chmod($testfile,0777);
+        $fp = @fopen($testfile,'ab');
+        @unlink($testfile);
+        if ($fp===false)
+        {
 
-	$num = mysql_numrows($result);
+        }
+    }
 
-	$i = 0;
 
-	while ($i < $num) {
 
-		$first = mysql_result($result,$i,"first_name");
-		$last = mysql_result($result,$i,"last_name");
-		
-		$html .= '<pre>';
-		$html .= 'ID: ' . $id . '<br>First name: ' . $first . '<br>Surname: ' . $last;
-		$html .= '</pre>';
-
-		$i++;
-	}
-}
 ?>

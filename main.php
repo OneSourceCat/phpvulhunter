@@ -5,6 +5,15 @@ require_once 'global.php';
 
 $smarty = new Smarty_setup();
 
+
+function endsWith($source, $target){
+    if(strrchr($source,$target) == $target){
+        return true ;
+    }else{
+        return false ;
+    }
+}
+
 /**
  * 处理单个文件的静态检测
  * 输入PHP文件
@@ -89,8 +98,6 @@ if(!isset($_POST['path']) || !isset($_POST['type'])){
 
 
 
-$t_start = time();
-
 
 //1、从web ui中获取并加载项目工程
 $project_path = $_POST['prj_path'] ;  //扫描的工程路径
@@ -98,15 +105,19 @@ $scan_path = $_POST['path'] ;   //扫描文件路径
 $scan_type = $_POST['type'] ;     //扫描的类型
 $encoding = $_POST['encoding'] ;  //CMS的编码   UTF-8 或者  GBK
 
-// $project_path = 'C:/Users/xyw55/Desktop/test/she1.1\phpshe1.1' ;  //扫描的工程路径
-// $scan_path = 'C:/Users/xyw55/Desktop/test/she1.1\phpshe1.1/index.php' ;   //扫描文件路径
-// $scan_type = 'all' ;     //扫描的类型
-// $encoding = 'GBK' ;  //CMS的编码   UTF-8 或者  GBK
+if(endsWith($project_path, "/")){
+    $last = count($project_path) - 2 ;
+    $project_path = substr($project_path, 0, $last) ;
+}
 
+if(endsWith($scan_path, "/")){
+    $last = count($scan_path) - 2 ;
+    $scan_path = substr($scan_path, 0, $last) ;
+}
 
 $scan_type = $scanType = strtoupper($scan_type);
-$project_path = str_replace('\\', '/', $project_path);
-$scan_path = str_replace('\\', '/', $scan_path);
+$project_path = str_replace(array('\\','//'), '/', $project_path);
+$scan_path = str_replace(array('\\','//'), '/', $scan_path);
 
 $fileName = str_replace('/', '_', $scan_path);
 $fileName = str_replace(':', '_', $fileName);
@@ -120,9 +131,7 @@ if (!is_file($serialPath)){
 $results = null;
 if(($serial_str = file_get_contents($serialPath)) != ''){
     $results = unserialize($serial_str) ;
-
 }else{
-
     //3、初始化模块
     $allFiles = FileUtils::getPHPfile($project_path);
     $mainlFiles = FileUtils::mainFileFinder($scan_path);
@@ -134,11 +143,9 @@ if(($serial_str = file_get_contents($serialPath)) != ''){
     	load_file($project_path) ;
     }elseif (is_dir($project_path)){
         $path_list = $mainlFiles;
-        //$path_list = array('C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload/admin/admin.php');
-        //$path_list = array('C:/Users/xyw55/Desktop/test/dvwa/external/phpids/0.6/tests/allTests.php');
     	foreach ($path_list as $path){
     		try{
-    			load_file($path) ;
+    		    load_file($path) ;
     		}catch(Exception $e){
     			continue ;
     		}
@@ -154,9 +161,7 @@ if(($serial_str = file_get_contents($serialPath)) != ''){
     file_put_contents($serialPath, serialize($results)) ;
 }
 
-// $t_end = time();
-// $t = $t_end - $t_start;
-// print_r($results);
+
 //5、处理results 传给template
 $template_res = convertResults($results) ;
 $smarty->assign('results',$template_res);

@@ -152,6 +152,7 @@ class CFGGenerator{
 	 * @param string $type 处理赋值语句的var和expr类型（left or right）
 	 */
 	private function assignHandler($node,$block,$dataFlow,$type){
+	    global $scan_type ;
 		$part = null ;
 		if($type == "left"){
 			$part = $node->var ;
@@ -236,71 +237,54 @@ class CFGGenerator{
 				$dataFlow->setValue($concat) ;
 			}
 		}else{
-			//不属于已有的任何一个symbol类型,如函数调用,类型转换
-            if($part && ($part->getType() == "Expr_FuncCall" || 
-                $part->getType() == "Expr_MethodCall" || 
-			    $part->getType() == "Expr_StaticCall" ) ){
-                
-				//处理 id = urlencode($_GET['id']) ;
-				if(!SymbolUtils::isValue($part)){
-					$funcName = NodeUtils::getNodeFunctionName($part) ;
-					BIFuncUtils::assignFuncHandler($part, $type, $dataFlow, $funcName) ;
-				}
-				
-				//处理编码和净化信息
-				if($type == 'right'){
-				    //处理iconv等函数
-				    //处理 id = urlencode($_GET['id']) ;
-				    $singleFuncs = BIFuncUtils::getSingleFuncs();
-				    $funcName = NodeUtils::getNodeFunctionName($part);
-				    
-				    if (array_key_exists($funcName, $singleFuncs)){
-				        global $F_ENCODING_STRING ;
-				        if (in_array($funcName, $F_ENCODING_STRING)){
-				            EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $this->fileSummary) ;
-				        }
-				        //将函数加入净化栈
-				        $oneFunction = new OneFunction($funcName);
-				        $dataFlow->getLocation()->addSanitization($oneFunction) ;
-				    }else{
-    					//检查是否为sink函数
-     					$this->functionHandler($part, $block, $this->fileSummary);
-     					
-    					//处理净化信息和编码信息
-    					SanitizationHandler::setSanitiInfo($part,$dataFlow, $block, $this->fileSummary) ;
-    					EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $this->fileSummary) ;
-				    }
-				}
+		    //不属于已有的任何一个symbol类型,如函数调用,类型转换
+		    if($part && ($part->getType() == "Expr_FuncCall" ||
+		        $part->getType() == "Expr_MethodCall" ||
+		        $part->getType() == "Expr_StaticCall" ) ){
+		    
+		        //处理 id = urlencode($_GET['id']) ;
+		        if(!SymbolUtils::isValue($part)){
+		            $funcName = NodeUtils::getNodeFunctionName($part) ;
+		            BIFuncUtils::assignFuncHandler($part, $type, $dataFlow, $funcName) ;
+		            if($dataFlow->getValue() != null){
+		                return  ;
+		            }
+		        }
+		    
+		        //处理编码和净化信息
+		        if($type == 'right'){
+		            //处理iconv等函数
+		            //处理 id = urlencode($_GET['id']) ;
+		            $encode_convert = array('iconv') ;
+		            $funcName = NodeUtils::getNodeFunctionName($part);
+		            if (array_key_exists($funcName, $encode_convert)){
+		                //将函数加入净化栈
+		                $oneFunction = new OneFunction($funcName);
+		                $dataFlow->getLocation()->addSanitization($oneFunction) ;
+		            }else{
+		                //检查是否为sink函数
+		                $this->functionHandler($part, $block, $this->fileSummary);
+		    
+		                //处理净化信息和编码信息
+		                SanitizationHandler::setSanitiInfo($part,$dataFlow, $block, $this->fileSummary) ;
+		                EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $this->fileSummary) ;
+		            }
+		        }
+		    }
 
-			}
-			
-			//处理类型强制转换
-			if($part 
-			    && ($part->getType() == "Expr_Cast_Int" || $part->getType() == "Expr_Cast_Double") 
-			    && $type == "right"){
-			    $dataFlow->getLocation()->setType("int") ;
-			    $symbol = SymbolUtils::getSymbolByNode($part->expr) ;
-			    $dataFlow->setValue($symbol) ;
-			}
-			
-			//处理三元表达式
-			if($part && $part->getType() == "Expr_Ternary"){
-				BIFuncUtils::ternaryHandler($type, $part, $dataFlow) ;
-			}
-			
-			//处理"xxxx$id"的内容
-			if($part && $part->getType() == "Scalar_Encapsed"){
-			    $symbols_list = array() ;
-			    foreach ($part->parts as $value){
-			        if(!SymbolUtils::isValue($value) && is_object($value)){
-			            $sym = SymbolUtils::getSymbolByNode($value) ;
-			            array_push($symbols_list, $sym) ;
-			        }
-			    }
-			    $multi_symbol = new MutipleSymbol() ;
-			    $multi_symbol->setSymbols($symbols_list) ;
-			    $dataFlow->setValue($multi_symbol) ;
-			}
+		    //处理类型强制转换
+		    if($part
+		        && ($part->getType() == "Expr_Cast_Int" || $part->getType() == "Expr_Cast_Double")
+		        && $type == "right"){
+		        $dataFlow->getLocation()->setType("int") ;
+		        $symbol = SymbolUtils::getSymbolByNode($part->expr) ;
+		        $dataFlow->setValue($symbol) ;
+		    }
+
+		    //处理三元表达式
+		    if($part && $part->getType() == "Expr_Ternary"){
+		        BIFuncUtils::ternaryHandler($type, $part, $dataFlow) ;
+		    }
 			
 			
 		}//else
@@ -507,11 +491,11 @@ class CFGGenerator{
 	public function functionHandler($node, $block, $fileSummary){  
 	    //根据用户指定的扫描类型，查找相类型的sink函数
 	    global $scan_type;
-	    
 	    //获取调用的函数名判断是否是sink调用
 	    $funcName = NodeUtils::getNodeFunctionName($node);
 	    //判断是否为sink函数,返回格式为array(true,funcname) or array(false)
 	    $ret = NodeUtils::isSinkFunction($funcName, $scan_type);
+
 	    if($ret[0] != null){
 	        //如果发现了sink调用，启动污点分析
 	        $analyser = new TaintAnalyser() ;
@@ -520,7 +504,7 @@ class CFGGenerator{
 	        if(count($argPosition) == 0){
 	            return ;
 	        }
-	    
+	         
 	        //获取到危险参数位置的变量
 	        $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
 
@@ -529,7 +513,7 @@ class CFGGenerator{
 	            foreach ($argArr as $item){
 	                if(is_array($item)){
 	                    foreach ($item as $v){
-	                        $analyser->analysis($block, $node, $v, $fileSummary) ;
+	                       $analyser->analysis($block, $node, $v, $fileSummary) ;
 	                    }
 	                }else{
 	                    $analyser->analysis($block, $node, $item, $fileSummary) ;
@@ -538,7 +522,7 @@ class CFGGenerator{
 	            }
 	            	
 	        }
-	    
+
 	    }else{
 	        //如果不是sink调用，启动过程间分析
 	        $context = Context::getInstance() ;
@@ -547,23 +531,24 @@ class CFGGenerator{
             	$this->fileSummary->getPath(),
             	$this->fileSummary->getIncludeMap()
 	        );
-	        
+
 			//check
 	        if(!$funcBody || !is_object($funcBody)) return ;
 			
 	        if($funcBody->getType() == "Stmt_ClassMethod"){
 	        	$funcBody->stmts = $funcBody->stmts[0] ;
 	        }
-	
+	        
 	        //构建相应方法体的block和summary
 	        $nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
-
 	        //ret危险参数的位置比如：array(0)
 	        $ret = $this->sinkFunctionHandler($funcBody, $nextblock, $block);
+	        
 	        if(!$ret){
 	            return ;
 	        }
-
+	        
+	        
 	        //找到了array('del',array(0)) ;
 	        $userDefinedSink = UserDefinedSinkContext::getInstance() ;
 
@@ -574,11 +559,12 @@ class CFGGenerator{
 	        //加入用户sink上下文
 	        $item = array($funcName,$ret) ;
 	        $userDefinedSink->addByTagName($item, $type) ;
-	    	        
+	        
 	        //开始污点分析
             $argPosition = NodeUtils::getVulArgs($node) ;
+            
             $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);	            
-
+            
 	        if(count($argArr) > 0){
 	        	$analyser = new TaintAnalyser() ;
 	        	foreach ($argArr as $item){
@@ -1105,11 +1091,12 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 $scan_type = 'ALL';
 echo "<pre>" ;
 //从用户那接受项目路径
-// $project_path = 'C:/users/xyw55/Desktop/test/simple-log_v1.3.1/upload';
-// $allFiles = FileUtils::getPHPfile($project_path);
-// //初始化
-// $initModule = new InitModule() ;
-// $initModule->init($project_path) ;
+$project_path = 'E:/School_of_software/information_security/PHPVulScanner_project/simple-log_v1.3.12/upload/';
+//$project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test/test.php" ;
+$allFiles = FileUtils::getPHPfile($project_path);
+//初始化
+$initModule = new InitModule() ;
+$initModule->init($project_path, $allFiles) ;
 
 $cfg = new CFGGenerator() ;
 $visitor = new MyVisitor() ;

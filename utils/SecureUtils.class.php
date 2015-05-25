@@ -41,6 +41,7 @@ class SecureUtils {
 			'LDAP' => $F_SECURING_LDAP,
 			'INCLUDE' => $F_SECURING_FILE,
 			'XPATH' => $F_SECURING_XPATH,
+		    'FILE' => $F_SECURING_FILE,
 			'FILEAFFECT' => $F_SECURING_FILE
 		) ;
 		

@@ -1,7 +1,7 @@
-<?php /* Smarty version 3.1.23, created on 2015-05-24 07:48:23
+<?php /* Smarty version 3.1.23, created on 2015-05-24 15:19:11
          compiled from "views/template/navigation.html" */ ?>
 <?php
-/*%%SmartyHeaderCode:22231556166272c5615_76362883%%*/
+/*%%SmartyHeaderCode:290235561cfcf394a52_75379736%%*/
 if(!defined('SMARTY_DIR')) exit('no direct access allowed');
 $_valid = $_smarty_tpl->decodeProperties(array (
   'file_dependency' => 
@@ -9,21 +9,21 @@ $_valid = $_smarty_tpl->decodeProperties(array (
     'ec4feeb21b21903d6f3d0b9b7aad22aa8062f668' => 
     array (
       0 => 'views/template/navigation.html',
-      1 => 1432446500,
+      1 => 1432457982,
       2 => 'file',
     ),
   ),
-  'nocache_hash' => '22231556166272c5615_76362883',
+  'nocache_hash' => '290235561cfcf394a52_75379736',
   'has_nocache_code' => false,
   'version' => '3.1.23',
-  'unifunc' => 'content_55616627313824_64598365',
+  'unifunc' => 'content_5561cfcf6dc8a2_77369373',
 ),false);
 /*/%%SmartyHeaderCode%%*/
-if ($_valid && !is_callable('content_55616627313824_64598365')) {
-function content_55616627313824_64598365 ($_smarty_tpl) {
+if ($_valid && !is_callable('content_5561cfcf6dc8a2_77369373')) {
+function content_5561cfcf6dc8a2_77369373 ($_smarty_tpl) {
 ?>
 <?php
-$_smarty_tpl->properties['nocache_hash'] = '22231556166272c5615_76362883';
+$_smarty_tpl->properties['nocache_hash'] = '290235561cfcf394a52_75379736';
 ?>
 <div class="menu">
 	<div class="logo">
@@ -101,6 +101,7 @@ $_smarty_tpl->properties['nocache_hash'] = '22231556166272c5615_76362883';
 						<option value="client" >All client-side</option>
 						<option value="xss" >- Cross-Site Scripting</option>
 						<option value="httpheader" >- HTTP Response Splitting</option>
+						<option value="unserialize" >Unserialize / POP</option>
 					</select>
 					<a href="javascript:;" class="select-btn"><em>︿</em></a>
 				</div>

@@ -223,6 +223,68 @@ class NodeUtils{
     
     
     /**
+     * 获取concat中的所有变量名
+     * @param Node $node
+     */
+    private static function getConcatParamsNode($node){
+        $retArr = array() ;
+        if($node->getType() != "Expr_BinaryOp_Concat"){
+            return $retArr ;
+        }
+        $symbol = new ConcatSymbol() ;
+        $symbol->setItemByNode($node) ;
+        $items = $symbol->getItems() ;
+    
+        foreach ($items as $item){
+            if($item instanceof ValueSymbol){
+                continue ;
+            }
+            array_push($retArr, $item->getValue()) ;
+        }
+        return $retArr ;
+    }
+    
+    /**
+     * 获取函数的参数名称
+     * @param Node $node 函数调用的node
+     * @return array(arg1[,arg2,arg3,...])
+     */
+    public static function getFuncParamsNode($node){
+        if (!$node instanceof Node){
+            return null;
+        }
+        //支持echo和print
+        $funcName = self::getNodeFunctionName($node) ;
+         
+        //处理其他的函数
+        $argsArr = array();
+        if ($node->args){
+            foreach ($node->args as $arg){
+                //如果为concat类型
+                if($arg->value->getType() == "Expr_BinaryOp_Concat"){
+                    $concatArr = self::getConcatParamsNode($arg->value) ;
+                    $argsArr = array_merge($argsArr, $concatArr);
+                }else{
+                    array_push($argsArr, $arg->value);
+                }
+            }
+        }elseif($node->params){
+            foreach ($node->params as $arg){
+                if($arg->getType() == "Expr_BinaryOp_Concat"){
+                    $concatArr = self::getConcatParamsNode($arg->value) ;
+                    $argsArr = array_merge($argsArr, $concatArr);
+                }else{
+                    array_push($argsArr, $arg->value);
+                }
+            }
+        }
+        return $argsArr;
+    }
+    
+    
+    
+    
+    /**
      * 获取函数的参数名称
      * @param Node $node 函数调用的node
      * @return array(arg1[,arg2,arg3,...])
@@ -609,6 +671,22 @@ class NodeUtils{
     	return array(false);
     	
     }
+    
+    /**
+     * 判断方法是否是编码或者安全函数
+     * @param unknown $funcName
+     */
+    public static function isEncodeOrSecureFunction($funcName){
+        global $F_SECURES_ALL, $F_ENCODING_STRING, $F_DECODING_STRING;
+        $list = array_merge($F_SECURES_ALL, $F_ENCODING_STRING, $F_DECODING_STRING) ;
+        foreach($list as $value){
+            if($funcName){
+                return true ;
+            }
+        }
+        return false ;
+    }
+    
     
 	/**
 	 * 根据sink方法的名称获取危险参数的位置
