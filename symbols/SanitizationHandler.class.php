@@ -364,6 +364,9 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
             $part = $node->expr;
             if(SymbolUtils::isValue($part)){
                 //return value
+                if(!is_array($this->sanitiInfo['type'])){
+                    $this->sanitiInfo['type'] = array($this->sanitiInfo['type']) ;
+                }
                 $type = array_intersect($this->sanitiInfo['type'], $SECURES_TYPE_ALL);
                 $this->sanitiInfo = array(true,'type'=>$type);
             }elseif (SymbolUtils::isVariable($part)){

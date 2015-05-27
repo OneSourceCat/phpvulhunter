@@ -403,6 +403,7 @@ class NodeUtils{
     		return null;
     	}
     	$argsNameArr = self::getNodeFuncParams($node) ;	
+        
     	if($node->getType() == "Expr_Include" || $node->getType() == "Expr_Eval"){
     	    return array($argsNameArr) ;
     	}

@@ -31,7 +31,7 @@ class SecureUtils {
 	public static function getSecureListByType($type){
 		global  $F_SECURING_SQL,$F_SECURING_XSS,
 				$F_SECURING_PREG,$F_SECURING_SYSTEM,$F_SECURING_LDAP,
-				$F_SECURING_XPATH,$F_SECURING_FILE;
+				$F_SECURING_XPATH,$F_SECURING_FILE,$F_SECURING_STRING;
 		$mappings = array(
 			'SQLI' => $F_SECURING_SQL,
 			'XSS' => $F_SECURING_XSS,
@@ -45,7 +45,7 @@ class SecureUtils {
 			'FILEAFFECT' => $F_SECURING_FILE
 		) ;
 		
-		return $mappings[$type] ;
+		return array_merge($mappings[$type],$F_SECURING_STRING) ;
 	}
 	
 	/**

@@ -211,7 +211,6 @@ class TaintAnalyser {
 		//获取数据流信息
 		$flows = $block->getBlockSummary() ->getDataFlowMap() ;
 		$flows = array_reverse($flows); //逆序处理flows
-		
 		//将处理过的flow移除
         while ($tempNum){
             $tempNum --;
@@ -278,7 +277,6 @@ class TaintAnalyser {
 		
 		//单基本块进入
 		if(empty($block_list)){
-		   // $this->currBlockTaintHandler($block, $node, $argName, $fileSummary) ;
 		    return ;
 		}
 		
@@ -305,6 +303,19 @@ class TaintAnalyser {
 		            foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
 		                $flowNum ++;
 		                if($flow->getName() == $argName){
+		                    if(is_object($flow->getLocation())){
+		                        $target = $flow->getLocation() ;
+		                        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+		                        $encodingArr = $target->getEncoding() ;
+		                        $saniArr =  $target->getSanitization() ;
+		                    
+		                        $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
+		                        if($res == true){
+		                            return "safe" ;
+		                        }
+		                    }
+		                    
+		                    
 		                    $vars = $this->getVarsByFlow($flow) ;
 		                    foreach ($vars as $var){
 		                        $varName = $this->getVarName($var) ; 
@@ -407,6 +418,19 @@ class TaintAnalyser {
 		                //找到新的argName
 		                foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
 		                    if($flow->getName() == $argName){
+		                        //判断是否净化
+		                        if(is_object($flow->getLocation())){
+		                            $target = $flow->getLocation() ;
+		                            $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
+		                            $encodingArr = $target->getEncoding() ;
+		                            $saniArr =  $target->getSanitization() ;
+		                        
+		                            $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
+		                            if($res == true){
+		                                return "safe" ;
+		                            }
+		                        }
+		                        
 		                        $vars = $this->getVarsByFlow($flow) ;
 		                        foreach ($vars as $var){
 		                            $varName = $this->getVarName($var) ;
@@ -676,12 +700,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($node_path, $var_path, $node, $var, $type){
-// 		echo "<pre>" ;
-// 		echo "有漏洞=====>". $type ."<br/>" ;
-// 		echo "漏洞变量：<br/>" ;
-// 		print_r($var) ;
-// 		echo "漏洞节点：<br/>" ;
-// 		print_r($node) ;
+		echo "<pre>" ;
+		echo "有漏洞=====>". $type ."<br/>" ;
+		echo "漏洞变量：<br/>" ;
+		print_r($var) ;
+		echo "漏洞节点：<br/>" ;
+		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;
