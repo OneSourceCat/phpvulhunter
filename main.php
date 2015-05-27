@@ -5,7 +5,12 @@ require_once 'global.php';
 
 $smarty = new Smarty_setup();
 
-
+/**
+ * 判断是否以字符串结尾
+ * @param string $source
+ * @param string $target
+ * @return boolean
+ */
 function endsWith($source, $target){
     if(strrchr($source,$target) == $target){
         return true ;
@@ -156,13 +161,16 @@ if(($serial_str = file_get_contents($serialPath)) != ''){
     	exit() ;
     }
     
-    //5、获取ResultContext  序列化
+    //5、处理results 序列化
     $results = ResultContext::getInstance() ;
     file_put_contents($serialPath, serialize($results)) ;
+    
 }
 
 
-//5、处理results 传给template
+
+
+//6、传给template
 $template_res = convertResults($results) ;
 $smarty->assign('results',$template_res);
 $smarty->display('content.html');

@@ -1,13 +1,10 @@
 <?php
-
 require_once 'global.php';
-
 //定义PHP语句类别
 $RETURN_STATEMENT = array('Stmt_Return') ;
 $STOP_STATEMENT = array('Stmt_Throw','Stmt_Break','Stmt_Continue') ;
 $LOOP_STATEMENT = array('Stmt_For','Stmt_While','Stmt_Foreach','Stmt_Do') ;
 $JUMP_STATEMENT = array('Stmt_If','Stmt_Switch','Stmt_TryCatch','Expr_Ternary','Expr_BinaryOp_LogicalOr') ;
-
 use PhpParser\Node ;
 class CFGGenerator{
 	//AST解析类
@@ -18,7 +15,6 @@ class CFGGenerator{
 	
 	//全局的filesummary对象
 	private $fileSummary ;
-
 	//构造器
 	public function __construct(){
 		$this->parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
@@ -143,7 +139,6 @@ class CFGGenerator{
 		$block->addNode($block->loop_var) ;
 		unset($block->loop_var) ;
 	}
-
 	/**
 	 * 分析传入node赋值语句，以及当前block,
 	 * 生成block summary中的一条记录
@@ -161,7 +156,6 @@ class CFGGenerator{
 		}else{
 			return ;
 		}
-
 		//处理$GLOBALS的赋值
 		//$GLOBAL['name'] = "chongrui" ; 数据流信息为 $name = "chongrui" ;
 		if ($part && SymbolUtils::isArrayDimFetch($part) && 
@@ -193,7 +187,6 @@ class CFGGenerator{
 			}else if($type == "right"){
 				$dataFlow->setValue($vs) ;
 			}
-
 		}elseif ($part && SymbolUtils::isVariable($part)){
 			//加入dataFlow
 			$vars = new VariableSymbol() ;
@@ -271,7 +264,6 @@ class CFGGenerator{
 		            }
 		        }
 		    }
-
 		    //处理类型强制转换
 		    if($part
 		        && ($part->getType() == "Expr_Cast_Int" || $part->getType() == "Expr_Cast_Double")
@@ -280,7 +272,6 @@ class CFGGenerator{
 		        $symbol = SymbolUtils::getSymbolByNode($part->expr) ;
 		        $dataFlow->setValue($symbol) ;
 		    }
-
 		    //处理三元表达式
 		    if($part && $part->getType() == "Expr_Ternary"){
 		        BIFuncUtils::ternaryHandler($type, $part, $dataFlow) ;
@@ -329,7 +320,6 @@ class CFGGenerator{
 				$valueFlow->setValue($node->expr) ;
 				$block->getBlockSummary()->addDataFlowItem($valueFlow) ;
 			}
-
 		}
 	}
 	
@@ -495,7 +485,6 @@ class CFGGenerator{
 	    $funcName = NodeUtils::getNodeFunctionName($node);
 	    //判断是否为sink函数,返回格式为array(true,funcname) or array(false)
 	    $ret = NodeUtils::isSinkFunction($funcName, $scan_type);
-
 	    if($ret[0] != null){
 	        //如果发现了sink调用，启动污点分析
 	        $analyser = new TaintAnalyser() ;
@@ -507,7 +496,6 @@ class CFGGenerator{
 	         
 	        //获取到危险参数位置的变量
 	        $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
-
 	        //遍历危险参数名，调用污点分析函数
 	        if(count($argArr) > 0){
 	            foreach ($argArr as $item){
@@ -522,8 +510,8 @@ class CFGGenerator{
 	            }
 	            	
 	        }
-
 	    }else{
+	        
 	        //如果不是sink调用，启动过程间分析
 	        $context = Context::getInstance() ;
             $funcBody = $context->getClassMethodBody(
@@ -531,10 +519,43 @@ class CFGGenerator{
             	$this->fileSummary->getPath(),
             	$this->fileSummary->getIncludeMap()
 	        );
-
+			
+			
 			//check
 	        if(!$funcBody || !is_object($funcBody)) return ;
 			
+	        //处理递归
+	        if($funcBody->getType() == "Stmt_Function"){
+	            $traverser = new PhpParser\NodeTraverser;
+	            $visitor = new RecursionFunctionVisitor() ;
+	            $visitor->funcName = $funcName ;
+	            $traverser->addVisitor($visitor) ;
+	            $traverser->traverse(array($funcBody)) ;
+	            if($visitor->isRecursion == true){
+	                return ;
+	            }
+	        }else if($funcBody->getType() == "Stmt_ClassMethod"){
+	            $traverser = new PhpParser\NodeTraverser;
+	            $visitor = new RecursionFunctionVisitor() ;
+	            $visitor->funcName = $funcName ;
+	            $traverser->addVisitor($visitor) ;
+	            $traverser->traverse(array($funcBody)) ;
+	            if($visitor->isRecursion == true){
+	                return ;
+	            }
+	        
+	        }else if($funcBody->getType() == "Stmt_StaticCall"){
+	            $traverser = new PhpParser\NodeTraverser;
+	            $visitor = new RecursionFunctionVisitor() ;
+	            $visitor->funcName = $funcName ;
+	            $traverser->addVisitor($visitor) ;
+	            $traverser->traverse(array($funcBody)) ;
+	            if($visitor->isRecursion == true){
+	                return ;
+	            }
+	             
+	        }
+	        
 	        if($funcBody->getType() == "Stmt_ClassMethod"){
 	        	$funcBody->stmts = $funcBody->stmts[0] ;
 	        }
@@ -547,15 +568,12 @@ class CFGGenerator{
 	        if(!$ret){
 	            return ;
 	        }
-	        
-	        
+  
 	        //找到了array('del',array(0)) ;
 	        $userDefinedSink = UserDefinedSinkContext::getInstance() ;
-
 	        //$type应该从visitor中获取，使用$ret返回
 	        $type = $ret['type'] ;
 	        unset($ret['type']) ;
-
 	        //加入用户sink上下文
 	        $item = array($funcName,$ret) ;
 	        $userDefinedSink->addByTagName($item, $type) ;
@@ -732,7 +750,6 @@ class CFGGenerator{
 				//加入循环条件
 				$this->addLoopVariable($node, $currBlock) ;
 				$this->simulate($currBlock) ;
-
 				//处理循环体
 				$nextBlock = new BasicBlock() ;
 				$this->CFGBuilder($node->stmts, NULL, $currBlock, $nextBlock) ;
@@ -774,9 +791,6 @@ class CFGGenerator{
 	}
 	
 }
-
-
-
 /**
  * 跳转语句的分支结构类
  * @author Administrator
@@ -811,7 +825,6 @@ class Branch{
 	}
 	
 }
-
 /**
  * 获取PHP File中所有的AST节点的访问者
  * @author Administrator
@@ -830,7 +843,6 @@ class MyVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 	
 }
-
 /**
  * 用来遍历LogicalOr节点，并将所有的分支分离出来
  * @author Administrator
@@ -866,6 +878,52 @@ class BranchVisitor extends PhpParser\NodeVisitorAbstract{
 }
 
 
+/**
+ * 处理递归语句
+ * 如果是递归，则返回true
+ * @author Exploit
+ *
+ */
+class RecursionFunctionVisitor extends PhpParser\NodeVisitorAbstract{
+    public $funcName ;
+    public $isRecursion = false;
+    public function leaveNode(Node $node){
+        //方法调用
+        if($node->getType() == "Expr_FuncCall"){
+            if($node->name == $this->funcName){
+                $this->isRecursion = true ;
+            }
+        }
+
+        //静态方法
+        if($node->getType() == "Expr_StaticCall"){
+            $name = explode(":", $this->funcName) ;
+            if(count($name) >= 2){
+                $name = $name[1] ;
+            }else{
+                $name = $this->funcName ;
+            }
+
+            if($node->name == $name){
+                $this->isRecursion = true ;
+            }
+        }
+
+        //类方法
+        if($node->getType() == "Expr_MethodCall"){
+            $name = explode(":", $this->funcName) ;
+            if(count($name) >= 2){
+                $name = $name[1] ;
+            }else{
+                $name = $this->funcName ;
+            }
+            if($node->name == $name){
+                $this->isRecursion = true ;
+            }
+        }
+    }
+}
+
 class nodeFunctionVisitor extends PhpParser\NodeVisitorAbstract{
     public $block;
     public $fileSummary;
@@ -881,15 +939,12 @@ class nodeFunctionVisitor extends PhpParser\NodeVisitorAbstract{
         }
     }
 }
-
-
 /**
  * 处理方法调用
  * @author Exploit
  *
  */
 class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
-
 	public $posArr ;   //参数列表
 	public $block ;  //当前基本块
 	public $vars = array();    //返回的数据array()
@@ -982,7 +1037,6 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	    if($blockList == null || count($blockList) == 0){
             return  array($argName);
 	    }
-
 	    if(!is_array($blockList[0])){
 	        //如果不是平行结构
 	        $flows = $block->getBlockSummary()->getDataFlowMap();
@@ -1005,7 +1059,6 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	        return $retarr;
 	        
 	    }
-
 	}
 	
 	/**
@@ -1023,8 +1076,11 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	    foreach($args as $arg){
 	        //args[$arg-1] sinks函数的危险参数位置商量调整
 	        if ($arg > 0){
-	            $argNameStr = NodeUtils::getNodeStringName($node->args[$arg-1]) ;   //sql
-	            $ret = $this->sinkMultiBlockTraceback($argNameStr ,$block,0);  //array(where,id)
+	            if(count($node->args) > 0){
+	                $argNameStr = NodeUtils::getNodeStringName($node->args[$arg-1]) ;   //sql
+	                $ret = $this->sinkMultiBlockTraceback($argNameStr ,$block,0);  //array(where,id)
+	            }
+	            
 	        }
 	    }
 	    return $ret ;
@@ -1087,31 +1143,34 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	}
 }
 
-//扫描漏洞类型
-$scan_type = 'ALL';
-echo "<pre>" ;
-//从用户那接受项目路径
-$project_path = 'E:/School_of_software/information_security/PHPVulScanner_project/simple-log_v1.3.12/upload/';
-//$project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test/test.php" ;
-$allFiles = FileUtils::getPHPfile($project_path);
-//初始化
-$initModule = new InitModule() ;
-$initModule->init($project_path, $allFiles) ;
 
-$cfg = new CFGGenerator() ;
-$visitor = new MyVisitor() ;
-$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-$traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/test.php';
-$cfg->getFileSummary()->setPath($path);
-$code = file_get_contents($path);
-$stmts = $parser->parse($code) ;
-$traverser->addVisitor($visitor) ;
-$traverser->traverse($stmts) ;
-$nodes = $visitor->getNodes() ;
-$pEntryBlock = new BasicBlock() ;
-$pEntryBlock->is_entry = true ;
-$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
+// //扫描漏洞类型
+// $scan_type = 'ALL';
+// echo "<pre>" ;
+// //从用户那接受项目路径
+// $project_path = 'E:/School_of_software/information_security/PHPVulScanner_project/simple-log_v1.3.12/upload/';
+// //$project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test/test.php" ;
+// $allFiles = FileUtils::getPHPfile($project_path);
+// //初始化
+// $initModule = new InitModule() ;
+// $initModule->init($project_path, $allFiles) ;
+// $cfg = new CFGGenerator() ;
+// $visitor = new MyVisitor() ;
+// $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+// $traverser = new PhpParser\NodeTraverser ;
+// $path = CURR_PATH . '/test/test.php';
+// $cfg->getFileSummary()->setPath($path);
+// $code = file_get_contents($path);
+// $stmts = $parser->parse($code) ;
+// $traverser->addVisitor($visitor) ;
+// $traverser->traverse($stmts) ;
+// $nodes = $visitor->getNodes() ;
+// $pEntryBlock = new BasicBlock() ;
+// $pEntryBlock->is_entry = true ;
+// $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
+
+
+
 
 
 ?>

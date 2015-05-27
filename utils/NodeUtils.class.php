@@ -143,6 +143,9 @@ class NodeUtils{
             case "Expr_MethodCall":           
                 $objectName = NodeUtils::getNodeStringName($node->var);
                 $methodName = $node->name;
+                if(is_object($objectName) || is_object($methodName)){
+                    return "";
+                }
                 return "$objectName:$methodName";
                 break;
             //class::static function()
@@ -167,6 +170,9 @@ class NodeUtils{
                 break;
             case 'Expr_Eval':
                 return "eval" ;
+                break ;
+            case 'Expr_Isset':
+                return "isset";
                 break ;
             default:
                 return "";
@@ -655,18 +661,7 @@ class NodeUtils{
                 }
                 return array(false) ;
                 break;
-            case 'UNSERIALIZE':
-                global $F_POP;
-                //如果是系统的sink
-                if (key_exists($funcName, $F_POP)){
-                    return array(true, $F_POP[$funcName][0]);
-                }
-                //如果是用户的sink
-                if (key_exists($funcName, $userDefinedSink->getF_POP())){
-                    return array(true,$U_SINK_ALL[$funcName]) ;
-                }
-                return array(false) ;
-                break;
+            
     	}
     	return array(false);
     	

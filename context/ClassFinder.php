@@ -2,8 +2,6 @@
 
 require CURR_PATH . '/vendor/autoload.php' ;
 
-ini_set('xdebug.max_nesting_level', 2000);
-
 /**
  *  上下文对象
  *  存储全局信息（类信息）
@@ -350,7 +348,8 @@ class InFunctionVisitor extends PhpParser\NodeVisitorAbstract{
     public function leaveNode(PhpParser\Node $node){
         if(($node->getType() == 'Expr_FuncCall' ||
             $node->getType() == 'Expr_MethodCall' ||
-            $node->getType() == 'Expr_StaticCall')){
+            $node->getType() == 'Expr_StaticCall'||
+            $node->getType() == "Expr_Isset")){
             $funcName = NodeUtils::getNodeFunctionName($node);
             
             $funcName = substr($funcName, strpos($funcName, ':')+1);

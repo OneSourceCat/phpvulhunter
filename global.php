@@ -47,9 +47,9 @@ require_once CURR_PATH . '/CFGGenerator.php';
 header("Content-type:text/html;charset=utf-8") ;
 header("Cache-Control: no-cache, must-revalidate");
 //设置递归层数
-ini_set('xdebug.max_nesting_level', 500);
+ini_set('xdebug.max_nesting_level', 2000);
 //设置最大执行时间
-ini_set("max_execution_time", "3600*4");
+ini_set("max_execution_time", "0");
 //设置内存限制大小
 ini_set('memory_limit', '1000M') ;
 

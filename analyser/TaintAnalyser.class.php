@@ -1,5 +1,4 @@
 <?php
-
 require_once 'SqliAnalyser.class.php';
 require_once 'XssAnalyser.class.php';
 require_once 'FileAffectAnalyser.class.php';
@@ -10,9 +9,7 @@ require_once 'HeaderAnalyser.class.php';
 require_once 'IncludeAnalyser.class.php';
 require_once 'LDPAAnalyser.class.php';
 require_once 'XPathAnalyser.class.php';
-
 use PhpParser\Node ;
-
 /**
  * 用于污点分析的类
  * 污点分析的任务：
@@ -115,7 +112,6 @@ class TaintAnalyser {
 				//判断是否被单引号包裹
 				$is_start_with = $this->startWith($vars[$i-1]->getValue(), "'");
 				$is_end_with = $this->endsWith($vars[$i+1]->getValue(), "'") ;
-
 				if($is_start_with != -1 && $is_end_with != -1){
 					$vars[$i]->setType("valueInt") ;
 				}
@@ -178,9 +174,9 @@ class TaintAnalyser {
 			
 			if(count($blocks) == 1){
 				//前驱的节点只有一个
-				if(!in_array($blocks[0],$this->pathArr)){
+				if(!in_array($blocks[0],$this->pathArr,true)){
 					array_push($this->pathArr,$blocks[0]) ;
-				} 
+				}
 			}else{
 				//前驱节点有多个
 				if(!in_array($blocks,$this->pathArr)){
@@ -221,7 +217,6 @@ class TaintAnalyser {
             $tempNum --;
             array_shift($flows);
         }
-
 		foreach ($flows as $flow){
 		    $flowNum ++; 
 			if($flow->getName() == $argName){
@@ -263,7 +258,6 @@ class TaintAnalyser {
 			}
 			
 		}
-
 	}
 	
 	
@@ -295,7 +289,6 @@ class TaintAnalyser {
 			return  ;
 		}
 		
-
 		foreach($block_list as $bitem){
 		    //处理非平行结构的前驱基本块
 		    if(!is_array($bitem)){
@@ -652,8 +645,6 @@ class TaintAnalyser {
 	 * @param string $argName 危险参数名
 	 * @param FileSummary 当前文件摘要
 	 */
-
-
     public function analysis($block, $node, $argName, $fileSummary){
 	    //传入变量本身就是source
         $varName = substr($argName, 0, strpos($argName, '['));
@@ -685,12 +676,12 @@ class TaintAnalyser {
 	 * @param string 漏洞的类型
 	 */
 	public function report($node_path, $var_path, $node, $var, $type){
-		echo "<pre>" ;
-		echo "有漏洞=====>". $type ."<br/>" ;
-		echo "漏洞变量：<br/>" ;
-		print_r($var) ;
-		echo "漏洞节点：<br/>" ;
-		print_r($node) ;
+// 		echo "<pre>" ;
+// 		echo "有漏洞=====>". $type ."<br/>" ;
+// 		echo "漏洞变量：<br/>" ;
+// 		print_r($var) ;
+// 		echo "漏洞节点：<br/>" ;
+// 		print_r($node) ;
 		
 		//获取结果集上下文
 		$resultContext = ResultContext::getInstance() ;
@@ -704,7 +695,6 @@ class TaintAnalyser {
 		}else{
 			$resultContext->addResElement($record) ;
 		}
-
 	}
 	
 	

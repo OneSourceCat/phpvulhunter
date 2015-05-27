@@ -75,6 +75,9 @@ body{
 	color:#000;
 	cursor:pointer;
 }
+#file-path{
+	padding-right:80px;
+}
 .in-menu .select-btn,
 .in-menu .sub-btn,
 #err_cont a,
@@ -803,7 +806,7 @@ body{
 		height:40%;
 		top:40%;
 	}
-	
+
 	.in-menu form input,
 	.fm-vuln-select span,
 	.fm-vuln-select select{
