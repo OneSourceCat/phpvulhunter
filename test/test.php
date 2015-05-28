@@ -1,12 +1,11 @@
 <?php
-if(1){
-    echo 1 ;
-}
-$id=intval($_GET['id']);
-$info=mysql_query("select * from ".table('members')." where uid='{$id}' LIMIT 1");
+define('IN_QISHI', true);
+require_once(dirname(__FILE__).'/../data/config.php');
+require_once(dirname(__FILE__).'/include/admin_common.inc.php');
+require_once(ADMIN_ROOT_PATH.'include/admin_article_fun.php');
+require_once(ADMIN_ROOT_PATH.'include/upload.php');
 
-if(3){
-    echo 3 ;
-}
+$article = get_news($offset, $perpage,$joinsql.$wheresql.$oederbysql);
+
 
 ?>

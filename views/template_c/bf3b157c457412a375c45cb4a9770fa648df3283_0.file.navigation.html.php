@@ -1,7 +1,7 @@
-<?php /* Smarty version 3.1.23, created on 2015-05-23 05:05:31
+<?php /* Smarty version 3.1.23, created on 2015-05-28 10:02:55
          compiled from "views/template/navigation.html" */ ?>
 <?php
-/*%%SmartyHeaderCode:1074555600a9b1661f1_87585127%%*/
+/*%%SmartyHeaderCode:143885566e7cf03c620_40730305%%*/
 if(!defined('SMARTY_DIR')) exit('no direct access allowed');
 $_valid = $_smarty_tpl->decodeProperties(array (
   'file_dependency' => 
@@ -9,25 +9,27 @@ $_valid = $_smarty_tpl->decodeProperties(array (
     'bf3b157c457412a375c45cb4a9770fa648df3283' => 
     array (
       0 => 'views/template/navigation.html',
-      1 => 1432357421,
+      1 => 1432807207,
       2 => 'file',
     ),
   ),
-  'nocache_hash' => '1074555600a9b1661f1_87585127',
+  'nocache_hash' => '143885566e7cf03c620_40730305',
   'has_nocache_code' => false,
   'version' => '3.1.23',
-  'unifunc' => 'content_55600a9b18e3c8_20287284',
+  'unifunc' => 'content_5566e7cf063c05_82761777',
 ),false);
 /*/%%SmartyHeaderCode%%*/
-if ($_valid && !is_callable('content_55600a9b18e3c8_20287284')) {
-function content_55600a9b18e3c8_20287284 ($_smarty_tpl) {
+if ($_valid && !is_callable('content_5566e7cf063c05_82761777')) {
+function content_5566e7cf063c05_82761777 ($_smarty_tpl) {
 ?>
 <?php
-$_smarty_tpl->properties['nocache_hash'] = '1074555600a9b1661f1_87585127';
+$_smarty_tpl->properties['nocache_hash'] = '143885566e7cf03c620_40730305';
 ?>
 <div class="menu">
 	<div class="logo">
 		<!-- <img src="static/images/logo.pn" alt="PHPvulhunter" /> -->
+	</div>
+	<div class="timeused">
 	</div>
 	<div class="in-menu">
 		<form>

@@ -179,7 +179,7 @@ class TaintAnalyser {
 				}
 			}else{
 				//前驱节点有多个
-				if(!in_array($blocks,$this->pathArr)){
+				if(!in_array($blocks,$this->pathArr,true)){
 					array_push($this->pathArr,$blocks) ;
 				} 
 			}

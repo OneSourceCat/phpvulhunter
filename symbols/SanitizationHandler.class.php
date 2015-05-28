@@ -19,7 +19,7 @@ class SanitizationHandler {
 
 	    $dataFlows = $block->getBlockSummary()->getDataFlowMap();
 	    $sanitiInfo = self::SantiniFuncHandler($node, $fileSummary);
-
+	    $sanitiInfo=null;
 	    if($sanitiInfo){
 	        $args = NodeUtils::getFuncParamsNode($node);
 	        if (count($args) > 0){
@@ -233,7 +233,7 @@ class SanitizationHandler {
 	        
 	        $funcBody = $context->getClassMethodBody($funcName, $path, $require_array);
 	        if(!$funcBody) return null;
-	        
+
 	        $visitor = new SanitiFunctionVisitor();
 	        $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 	        $traverser = new PhpParser\NodeTraverser ;
@@ -374,11 +374,13 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
                 $context = Context::getInstance() ;
                 $funcBody = $context->getFunctionBody($this->funcName);
                 if(!$funcBody) return null;
+
                 $nodes = $funcBody->stmts;
                 $cfg = new CFGGenerator() ;
                 $block = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
                 
                 $ret = $this->sanitiMultiBlockHandler($node->expr,$block);
+
                 if ($ret[0]){
                     $type = array_intersect($this->sanitiInfo['type'], $ret['type']);
                     $this->sanitiInfo = array(true,'type'=>$type);
@@ -468,9 +470,11 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
         
         $flows = $block->getBlockSummary()->getDataFlowMap();
         //当前块flows没有遍历完
-        if(count($flows) != $flowsNum)
+        if(count($flows) != $flowsNum){
             return $this->sanitiTracebackBlock($arg, $block, $flowsNum);
-        
+        }else {
+            $flowsNum = 0;
+        }
         if($blockList == null || count($blockList) == 0){
             return  ;
         }
@@ -478,7 +482,7 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
         if(!is_array($blockList[0])){
             //如果不是平行结构
             $flows = $block->getBlockSummary()->getDataFlowMap();
-            if(count($flows) == $flowsNum){
+            if(!$flowsNum){
                 $block = $blockList[0];
                 $ret = $this->sanitiTracebackBlock($arg, $block, 0);
                 return $ret;
@@ -486,29 +490,35 @@ class SanitiFunctionVisitor extends PhpParser\NodeVisitorAbstract{
             $ret = $this->sanitiTracebackBlock($arg, $block, $flowsNum);
             return $ret;
         }else{
+            
             //平行结构
             //分别遍历每一个平行基本块及其以上，对得到的净化信息，合并共有的，返回
             global $SECURES_TYPE_ALL;
             $retarr = $SECURES_TYPE_ALL;
+            $isFind = false;
             foreach ($blockList[0] as $block){
+
                 $flows = $block->getBlockSummary()->getDataFlowMap();
-                if(count($flows) == $flowsNum){
+                if(!$flowsNum){
+                    $ret = null;
                     $ret = $this->sanitiTracebackBlock($arg, $block, 0);
-                    if ($ret[0])
+                    if ($ret[0]){
                         $retarr = array_intersect($ret, $retarr);
-                    else 
-                        return array(false); 
+                        $isFind = true;
+                    }
                 }else{
                     $ret = $this->sanitiTracebackBlock($arg, $block, $flowsNum);
                     if ($ret[0]){
                         $retarr = array_intersect($ret['type'], $retarr);
+                        $isFind = true;
                     }
-                    else
-                        return array(false);
                 }
             }
-            return array(true,'type'=>$retarr);
-            
+            if ($isFind){
+                return array(true,'type'=>$retarr);
+            }else{
+                return array(false);
+            }
         }
         
     }

@@ -47,6 +47,8 @@ $(function(){
         // $('#path').attr('href',path.replace('\\','/'));
         $('.count').css({'opacity':'1'});
         $('.waiting').css({'display':'block','opacity':'1'});
+        startTimeCounter();
+        timeDisplay();
 		sendScanReq();
         return false;
 	})
@@ -101,7 +103,7 @@ function scanCheck()
 	return true;
 }
 // -----------------------------------------------------------/**/
- 
+        
 // 发送code viewer的AJAX请求 ----------------------------------------
 function sendCodeViewReq( tag_a )
 {
@@ -117,10 +119,15 @@ function sendCodeViewReq( tag_a )
         },
         success : function( data ){
             if( data.flag ){
-                var HL_Call = cutstr( $(codeFile[5]).html() );
-                var HL_Arg = cutstr( $(codeFile[9]).html() );
+
+                var sink_start = parseInt( $(codeFile[3]).html() );
+                var sink_end = parseInt( $(codeFile[4]).html() );
+
+                var arg_start = parseInt( $(codeFile[7]).html() );
+                var arg_end = parseInt( $(codeFile[8]).html() );
+
                 var code = findNext( tag_a );
-                var line = /.+?\r?[\n>]|\r?[\s]+?/ig;
+                var line = /.+?\r?\n|.*?\?>|\r?[\s]+?/ig;
                 var fomart = document.createElement('pre');
 
                 var code_box = document.createElement('table');
@@ -131,10 +138,11 @@ function sendCodeViewReq( tag_a )
                     var code_column_2 = document.createElement('td');
                     code_column_1.appendChild( document.createTextNode(i) );
                     code_column_2.appendChild( document.createTextNode(result[0]) );
-                    if( HL_Call == cutstr(result[0]) ){
+
+                    if( i >= sink_start && i <= sink_end ){//( HL_Call == cutstr(result[0]) ){
                         code_line.className = "highLight-call";
                     }
-                    if( HL_Arg == cutstr(result[0]) && !data.msg_arg ){
+                    if( i >= arg_start && i <= arg_end && !data.msg_arg ){//( HL_Arg == cutstr(result[0]) && !data.msg_arg ){
                         code_line.className = "highLight-arg";
                     }
                     code_line.appendChild( code_column_1 );
@@ -167,7 +175,7 @@ function sendCodeViewReq( tag_a )
                         var code_column_2 = document.createElement('td');
                         code_column_1.appendChild( document.createTextNode(i) );
                         code_column_2.appendChild( document.createTextNode(result[0]) );
-                        if( HL_Arg == cutstr(result[0]) ){
+                        if( i >= arg_start && i <= arg_end ){
                             code_line.className = "highLight-arg";
                         }
                         code_line.appendChild( code_column_1 );
@@ -210,6 +218,8 @@ function sendScanReq()
             encoding : $("#vuln-encoding").val()
         },
         success : function( data ){
+            stopTimeCounter();
+            $('.timeused').html( 'Time Used : '+h+':'+m+':'+s+':'+ms );
             $('.waiting').css({'opacity':'0'});
             setTimeout(function(){
                 $('.waiting').css({'display':'none'});
@@ -226,6 +236,7 @@ function sendScanReq()
             addResultOnclidc();
         },
         error :  function( jqXHR ){
+            stopTimeCounter();
             $('#err_cont').append('<span>Error, error code : '+jqXHR.status+'!</span>');
             $('#err_cont').css({'display':'block'}).animate({'opacity':'1'},0.8);
             return false;
@@ -378,12 +389,43 @@ function cutstr( str )
     }
     return s;
 }
-// function html_encode( str )
-// {
-//     var r = "", c;
-//     for ( var i = 0; i < str.length; i++ ) {
-//         c = str.charCodeAt(i);
-//         r += (c < 32 || c == 38 || c > 127) ? ("&#" + c + ";") : str.charAt(i);
-//     }
-//     return r;
-// }
+
+// timecounter
+var start;
+var status = 0;
+var time = 0;
+var h, m, s, ms;
+function startTimeCounter()
+{
+    h = m = s = ms = 0;
+    status = 1;
+    start = new Date();
+}
+
+function stopTimeCounter()
+{
+    status = 0;
+    setTimeout( function(){
+        $('.timecounter').html('');
+    }, 3000);
+}
+
+function timeDisplay()
+{
+    setTimeout("timeDisplay();", 50);
+    if( status == 1 ){
+        var now = new Date();
+        // h = now.getHours() - start.getHours();
+        // m = now.getMinutes() - start.getMinutes();
+        // s = now.getSeconds() - start.getSeconds();
+        time = now.getTime() - start.getTime();
+        //time = time / 1000;
+        h = Math.floor(time / 3600000);$('#h').html(h);
+        time = time % 3600000;
+        m = Math.floor(time / 60000);$('#m').html(m);
+        time = time % 60000;
+        s = Math.floor(time / 1000);$('#s').html(s);
+        ms = time % 1000;$('#ms').html(ms);
+    }
+    
+}

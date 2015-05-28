@@ -127,7 +127,7 @@ $scan_path = str_replace(array('\\','//'), '/', $scan_path);
 $fileName = str_replace('/', '_', $scan_path);
 $fileName = str_replace(':', '_', $fileName);
 $serialPath = CURR_PATH . "/data/resultConetxtSerialData/" . $fileName;
-
+sleep(10);
 if (!is_file($serialPath)){
     //创建文件
     $fileHandler = fopen($serialPath, 'w');

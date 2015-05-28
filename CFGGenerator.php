@@ -257,7 +257,7 @@ class CFGGenerator{
 		            }else{
 		                //检查是否为sink函数
 		                $this->functionHandler($part, $block, $this->fileSummary);
-		    
+		                  
 		                //处理净化信息和编码信息
 		                SanitizationHandler::setSanitiInfo($part,$dataFlow, $block, $this->fileSummary) ;
 		                EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $this->fileSummary) ;
@@ -519,7 +519,6 @@ class CFGGenerator{
             	$this->fileSummary->getPath(),
             	$this->fileSummary->getIncludeMap()
 	        );
-			
 			
 			//check
 	        if(!$funcBody || !is_object($funcBody)) return ;
@@ -1144,36 +1143,36 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 }
 
 
-//扫描漏洞类型
-$scan_type = 'ALL';
-echo "<pre>" ;
+// //扫描漏洞类型
+// $scan_type = 'ALL';
+// echo "<pre>" ;
 
 
 // //从用户那接受项目路径
-// $project_path = 'E:/School_of_software/information_security/PHPVulScanner_project/simple-log_v1.3.12/upload/';
+// $project_path = 'C:/Users/xyw55/Desktop/test/74cms_3.3';
 // //$project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test/test.php" ;
 // $allFiles = FileUtils::getPHPfile($project_path);
 // //初始化
 // $initModule = new InitModule() ;
 // $initModule->init($project_path, $allFiles) ;
 
+// echo '123';
+// $cfg = new CFGGenerator() ;
+// $visitor = new MyVisitor() ;
+// $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+// $traverser = new PhpParser\NodeTraverser ;
+// $path = CURR_PATH . '/test/test.php';
+// $cfg->getFileSummary()->setPath($path);
+// $code = file_get_contents($path);
+// $stmts = $parser->parse($code) ;
+// $traverser->addVisitor($visitor) ;
+// $traverser->traverse($stmts) ;
+// $nodes = $visitor->getNodes() ;
+// $pEntryBlock = new BasicBlock() ;
+// $pEntryBlock->is_entry = true ;
+// $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 
-$cfg = new CFGGenerator() ;
-$visitor = new MyVisitor() ;
-$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-$traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/test.php';
-$cfg->getFileSummary()->setPath($path);
-$code = file_get_contents($path);
-$stmts = $parser->parse($code) ;
-$traverser->addVisitor($visitor) ;
-$traverser->traverse($stmts) ;
-$nodes = $visitor->getNodes() ;
-$pEntryBlock = new BasicBlock() ;
-$pEntryBlock->is_entry = true ;
-$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
-
-
+//echo '456';
 
 
 

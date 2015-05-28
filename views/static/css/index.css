@@ -75,9 +75,6 @@ body{
 	color:#000;
 	cursor:pointer;
 }
-#file-path{
-	padding-right:80px;
-}
 .in-menu .select-btn,
 .in-menu .sub-btn,
 #err_cont a,
@@ -297,6 +294,19 @@ body{
 	line-height:80px;
 	font-size:30px;
 }
+
+.timeused{
+	position:absolute;
+	left:750px;
+	top:40%;
+	width:280px;
+	height:30px;
+	color:#fff;
+	font-size:20px;
+	line-height:30px;
+	text-align:center;
+}
+
 
 #err_cont{
 	display:none;
@@ -550,13 +560,37 @@ body{
     -ms-transition:all 0.6s ease;
     transition:all 0.6s ease;
 }
+.wait-left{
+	position:absolute;
+	right:60%;
+	top:50%;
+	width:200px;
+	height:280px;
+	margin-top:-140px;
+}
+.wait-right{
+	position:absolute;
+	top:50%;
+	left:60%;
+	width:300px;
+	height:100px;
+	margin-top:-50px;
+	margin-left:-40px;
+}
+
+.div-line{
+	position:absolute;
+	top:20%;
+	left:50%;
+	width:2px;
+	height:60%;
+	background:#AD403D;
+}
 
 .loading{
 	position:absolute;
-	left:50%;
-	top:50%;
-	margin-left:-100px;
-	margin-top:-100px;
+	left:0;
+	top:0;
 	width:0;
 	height:0;
 	border-right:100px solid rgba(0,0,0,0);
@@ -613,14 +647,12 @@ body{
 	}
 }
 .load-font{
-	width:60%;
+	width:100%;
 	height:60px;
 	line-height:60px;
 	position:absolute;
-	top:50%;
-	left:20%;
-	margin-top:100px;
-	text-align:center;
+	bottom:0;
+	left:0;
 	font-size:30px;
 }
 .load-font span{
@@ -727,7 +759,20 @@ body{
 	color:#AD403D;
 }
 
-
+.timecounter{
+	width:100%;
+	height:100%;
+	color:#AD403D;
+	font-size:50px;
+}
+.timecounter span{
+	display:inline-block;
+	width:20%;
+	height:100%;
+	line-height:1em;
+	
+	text-align:right;
+}
 
 .footer{
 	z-index:999;
@@ -806,7 +851,7 @@ body{
 		height:40%;
 		top:40%;
 	}
-
+	
 	.in-menu form input,
 	.fm-vuln-select span,
 	.fm-vuln-select select{
@@ -829,6 +874,11 @@ body{
 	.select-coding{
 		left:0;
 		top:35%;
+	}
+	.timeused{
+		left:0;
+		top:70%;
+		width:100%;
 	}
 
 	.content{
