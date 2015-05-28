@@ -47,6 +47,10 @@ class MutipleSymbol extends Symbol{
 	public function getSymbols() {
 		return $this->symbols;
 	}
+	
+	public function getValue(){
+	    return $this->getSymbols() ;
+	}
 
 }
 

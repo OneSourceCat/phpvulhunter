@@ -54,6 +54,10 @@ class NodeUtils{
                        
             //$a[],$[a]$a[]][]    
             case "Expr_ArrayDimFetch":
+                //处理GLOBALS
+                if($node->var->name == "GLOBALS"){
+                    return $node->dim->value; 
+                }
             	//不处理_GET _POST等
             	$userInput = Sources::getUserInput() ;
             	if(in_array($node->var->name, $userInput)){
@@ -85,10 +89,9 @@ class NodeUtils{
             //$this->property对象属性
             case "Expr_PropertyFetch":
                 $names = $node->getSubNodeNames();
-                //print_r($names);
                 $ret = '';
                 foreach ($names as $name)
-                     $ret .= NodeUtils::getNodeStringName($node->$name);
+                     $ret .= NodeUtils::getNodeStringName($node->$name) . ":";
                 $ret .= $node->name;
                 return $ret;
                 break;    

@@ -14,6 +14,7 @@ require_once CURR_PATH . '/utils/TypeUtils.class.php';
 require_once CURR_PATH . '/utils/multiBlockHandlerUtils.class.php';
 require_once CURR_PATH . '/utils/SecureUtils.class.php';
 require_once CURR_PATH . '/utils/BIFuncUtils.class.php';
+require_once CURR_PATH . '/utils/CommonUtils.class.php';
 
 require_once CURR_PATH . '/symbols/Symbol.class.php' ;
 require_once CURR_PATH . '/symbols/ValueSymbol.class.php';
@@ -47,7 +48,7 @@ require_once CURR_PATH . '/CFGGenerator.php';
 header("Content-type:text/html;charset=utf-8") ;
 
 //设置递归层数
-ini_set('xdebug.max_nesting_level', 500);
+ini_set('xdebug.max_nesting_level', 1000);
 //设置最大执行时间
 ini_set("max_execution_time", "0");
 //设置内存限制大小

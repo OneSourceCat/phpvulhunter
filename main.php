@@ -5,19 +5,6 @@ require_once 'global.php';
 
 $smarty = new Smarty_setup();
 
-/**
- * 判断是否以字符串结尾
- * @param string $source
- * @param string $target
- * @return boolean
- */
-function endsWith($source, $target){
-    if(strrchr($source,$target) == $target){
-        return true ;
-    }else{
-        return false ;
-    }
-}
 
 /**
  * 处理单个文件的静态检测
@@ -110,12 +97,12 @@ $scan_path = $_POST['path'] ;   //扫描文件路径
 $scan_type = $_POST['type'] ;     //扫描的类型
 $encoding = $_POST['encoding'] ;  //CMS的编码   UTF-8 或者  GBK
 
-if(endsWith($project_path, "/")){
+if(CommonUtils::endsWith($project_path, "/")){
     $last = count($project_path) - 2 ;
     $project_path = substr($project_path, 0, $last) ;
 }
 
-if(endsWith($scan_path, "/")){
+if(CommonUtils::endsWith($scan_path, "/")){
     $last = count($scan_path) - 2 ;
     $scan_path = substr($scan_path, 0, $last) ;
 }

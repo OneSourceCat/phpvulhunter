@@ -1,4 +1,5 @@
 <?php
+
 define('IN_QISHI', true);
 require_once(dirname(__FILE__).'/../data/config.php');
 require_once(dirname(__FILE__).'/include/admin_common.inc.php');
