@@ -1,7 +1,7 @@
-<?php /* Smarty version 3.1.23, created on 2015-05-21 06:30:12
+<?php /* Smarty version 3.1.23, created on 2015-05-28 13:27:50
          compiled from "views/template/footer.html" */ ?>
 <?php
-/*%%SmartyHeaderCode:29021555d5f542eb814_24476740%%*/
+/*%%SmartyHeaderCode:90395566fbb6b6b1f2_91580771%%*/
 if(!defined('SMARTY_DIR')) exit('no direct access allowed');
 $_valid = $_smarty_tpl->decodeProperties(array (
   'file_dependency' => 
@@ -9,29 +9,27 @@ $_valid = $_smarty_tpl->decodeProperties(array (
     '8ad47a34110551e1bf46e29d266d0841a95757d3' => 
     array (
       0 => 'views/template/footer.html',
-      1 => 1432181814,
+      1 => 1432808389,
       2 => 'file',
     ),
   ),
-  'nocache_hash' => '29021555d5f542eb814_24476740',
+  'nocache_hash' => '90395566fbb6b6b1f2_91580771',
   'has_nocache_code' => false,
   'version' => '3.1.23',
-  'unifunc' => 'content_555d5f542ee432_13742947',
+  'unifunc' => 'content_5566fbb6b6de28_66527810',
 ),false);
 /*/%%SmartyHeaderCode%%*/
-if ($_valid && !is_callable('content_555d5f542ee432_13742947')) {
-function content_555d5f542ee432_13742947 ($_smarty_tpl) {
+if ($_valid && !is_callable('content_5566fbb6b6de28_66527810')) {
+function content_5566fbb6b6de28_66527810 ($_smarty_tpl) {
 ?>
 <?php
-$_smarty_tpl->properties['nocache_hash'] = '29021555d5f542eb814_24476740';
+$_smarty_tpl->properties['nocache_hash'] = '90395566fbb6b6b1f2_91580771';
 ?>
+
 <div class="footer">
-	<div class="filepath">
-		<span>File Path : </span>
-		<a id="path" href="#" target="_blank">
-			<abbr title="#"></abbr>
-		</a>
+	<div class="count">
 	</div>
+	
 	<div class="info">
         ©2015
         <a target="_blank" href="https://github.com/OneSourceCat/phpvulhunter.git">
@@ -39,10 +37,6 @@ $_smarty_tpl->properties['nocache_hash'] = '29021555d5f542eb814_24476740';
         </a>
         . All Rights Reserved.
     </div>
-      <!-- <li>
-        Contact:
-        <a href="mailto:chongrui123@gmail.com"><abbr title="联系我们">chongrui123@gmail.com</a></abbr>
-      </li> -->
 </div><?php }
 }
 ?>
