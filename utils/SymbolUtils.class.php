@@ -114,6 +114,17 @@ class SymbolUtils {
 			$concat = new ConcatSymbol() ;
 			$concat->setItemByNode($node) ;
 			return $concat ;
+		}elseif($node && $node->getType() == "Scalar_Encapsed"){
+		    $arr = array() ;
+		    $symbol = new MutipleSymbol() ;
+		    foreach ($node->parts as $item){
+		        if(is_object($item) && self::isValue($item) == false){
+		            $sym = self::getSymbolByNode($item) ;
+		            array_push($arr, $sym) ;
+		        }
+		    }
+		    $symbol->setSymbols($arr) ;
+		    return $symbol ;
 		}else{
 			return null ;
 		}

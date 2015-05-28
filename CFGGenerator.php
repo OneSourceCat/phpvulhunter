@@ -87,7 +87,6 @@ class CFGGenerator{
 					$catch_branch = new Branch($catch->type, $catch->stmts) ;
 					array_push($branches, $catch_branch) ;
 				}
-				
 				break ;
 			
 			case 'Expr_Ternary':
@@ -275,6 +274,12 @@ class CFGGenerator{
 		    //处理三元表达式
 		    if($part && $part->getType() == "Expr_Ternary"){
 		        BIFuncUtils::ternaryHandler($type, $part, $dataFlow) ;
+		    }
+		    
+		    //处理双引号中包含的变量
+		    if($part && $part->getType() == "Scalar_Encapsed"){
+		        $symbol = SymbolUtils::getSymbolByNode($part) ;
+		        $dataFlow->setValue($symbol) ;
 		    }
 			
 			
@@ -485,7 +490,8 @@ class CFGGenerator{
 	    $funcName = NodeUtils::getNodeFunctionName($node);
 	    //判断是否为sink函数,返回格式为array(true,funcname) or array(false)
 	    $ret = NodeUtils::isSinkFunction($funcName, $scan_type);
-	    if($ret[0] != null){
+
+	    if($ret[0] != null && $ret[0] === true){
 	        //如果发现了sink调用，启动污点分析
 	        $analyser = new TaintAnalyser() ;
 	        //获取危险参数的位置
@@ -495,7 +501,6 @@ class CFGGenerator{
 	        }
 	        //获取到危险参数位置的变量
 	        $argArr = NodeUtils::getFuncParamsByPos($node, $argPosition);
-
 	        //遍历危险参数名，调用污点分析函数
 	        if(count($argArr) > 0){
 	            foreach ($argArr as $item){
@@ -511,7 +516,6 @@ class CFGGenerator{
 	            	
 	        }
 	    }else{
-	        
 	        //如果不是sink调用，启动过程间分析
 	        $context = Context::getInstance() ;
             $funcBody = $context->getClassMethodBody(
@@ -519,8 +523,7 @@ class CFGGenerator{
             	$this->fileSummary->getPath(),
             	$this->fileSummary->getIncludeMap()
 	        );
-			
-			
+
 			//check
 	        if(!$funcBody || !is_object($funcBody)) return ;
 			
@@ -559,9 +562,10 @@ class CFGGenerator{
 	        if($funcBody->getType() == "Stmt_ClassMethod"){
 	        	$funcBody->stmts = $funcBody->stmts[0] ;
 	        }
-	        
+            
 	        //构建相应方法体的block和summary
 	        $nextblock = $this->CFGBuilder($funcBody->stmts, NULL, NULL, NULL) ;
+            
 	        //ret危险参数的位置比如：array(0)
 	        $ret = $this->sinkFunctionHandler($funcBody, $nextblock, $block);
 	        
@@ -767,8 +771,8 @@ class CFGGenerator{
 				//print_r($currBlock->getBlockSummary()) ;
 				return $currBlock ;
 			}else{
-				$currBlock->addNode($node);
-				//print_r($currBlock->getBlockSummary()) ;
+			    $currBlock->addNode($node);
+			    //print_r($currBlock->getBlockSummary()) ;
 			}
 		}
 		
@@ -1025,10 +1029,9 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 	 * @return array
 	 */
 	public function sinkMultiBlockTraceback($argName,$block,$flowsNum=0){
-	    //print_r("enter sinkMultiBlockTraceback<br/>");
 	    $mulitBlockHandlerUtils = new multiBlockHandlerUtils($block);
 	    $blockList = $mulitBlockHandlerUtils->getPathArr();
-	    
+
 	    $flows = $block->getBlockSummary()->getDataFlowMap();
 	    //当前块flows没有遍历完
 	    if(count($flows) != $flowsNum)
@@ -1144,34 +1147,35 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 }
 
 
-//扫描漏洞类型
-$scan_type = 'ALL';
-echo "<pre>" ;
-
+// //扫描漏洞类型
+// $scan_type = 'ALL';
+// echo "<pre>" ;
 
 // //从用户那接受项目路径
 // $project_path = 'E:/School_of_software/information_security/PHPVulScanner_project/simple-log_v1.3.12/upload/';
-// //$project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test/test.php" ;
+// $project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test/test.php" ;
+// $project_path = "E:/School_of_software/information_security/PHPVulScanner_project/74cms_3.3/" ;
 // $allFiles = FileUtils::getPHPfile($project_path);
+
 // //初始化
 // $initModule = new InitModule() ;
 // $initModule->init($project_path, $allFiles) ;
 
 
-$cfg = new CFGGenerator() ;
-$visitor = new MyVisitor() ;
-$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-$traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/test.php';
-$cfg->getFileSummary()->setPath($path);
-$code = file_get_contents($path);
-$stmts = $parser->parse($code) ;
-$traverser->addVisitor($visitor) ;
-$traverser->traverse($stmts) ;
-$nodes = $visitor->getNodes() ;
-$pEntryBlock = new BasicBlock() ;
-$pEntryBlock->is_entry = true ;
-$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
+// $cfg = new CFGGenerator() ;
+// $visitor = new MyVisitor() ;
+// $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+// $traverser = new PhpParser\NodeTraverser ;
+// $path = CURR_PATH . '/test/test.php';
+// $cfg->getFileSummary()->setPath($path);
+// $code = file_get_contents($path);
+// $stmts = $parser->parse($code) ;
+// $traverser->addVisitor($visitor) ;
+// $traverser->traverse($stmts) ;
+// $nodes = $visitor->getNodes() ;
+// $pEntryBlock = new BasicBlock() ;
+// $pEntryBlock->is_entry = true ;
+// $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 
 
 

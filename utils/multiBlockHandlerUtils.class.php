@@ -30,7 +30,9 @@ class multiBlockHandlerUtils{
             if(!$edges) return $this->pathArr;
              
             foreach ($edges as $edge){
-                array_push($blocks, $edge->getSource()) ;
+                if($edge->getSource()){
+                    array_push($blocks, $edge->getSource()) ;
+                }           
             }
              
             if(count($blocks) == 1){
