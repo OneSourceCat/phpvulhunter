@@ -20,7 +20,6 @@ class SqliAnalyser {
 	private function check_sanitization($var,$saniArr){
 		//CMS的编码
 		global $encoding ;
-
 		//如果数组为空，说明没有进行任何净化
 		if(count($saniArr) == 0){
 			return false ;

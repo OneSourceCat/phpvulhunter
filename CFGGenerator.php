@@ -233,39 +233,29 @@ class CFGGenerator{
 		    if($part && ($part->getType() == "Expr_FuncCall" ||
 		        $part->getType() == "Expr_MethodCall" ||
 		        $part->getType() == "Expr_StaticCall" ) ){
-		    
+
 		        //处理 id = urlencode($_GET['id']) ;
-		        if(!SymbolUtils::isValue($part)){
+		        if($type == 'right' && !SymbolUtils::isValue($part)){
 		            $funcName = NodeUtils::getNodeFunctionName($part) ;
 		            BIFuncUtils::assignFuncHandler($part, $type, $dataFlow, $funcName) ;
 		            if($dataFlow->getValue() != null){
+		                //如果处理完函数赋值，则立即返回
+		                $block->getBlockSummary()->addDataFlowItem($dataFlow);
 		                return  ;
-		            }
-		        }
-		    
-		        //处理编码和净化信息
-		        if($type == 'right'){
-		            //处理iconv等函数
-		            //处理 id = urlencode($_GET['id']) ;
-		            $encode_convert = array('iconv') ;
-		            $funcName = NodeUtils::getNodeFunctionName($part);
-		            if (array_key_exists($funcName, $encode_convert)){
-		                //将函数加入净化栈
-		                $oneFunction = new OneFunction($funcName);
-		                $dataFlow->getLocation()->addSanitization($oneFunction) ;
 		            }else{
+		                //处理 id = urlencode($_GET['id']) ;
 		                //检查是否为sink函数
 		                $this->functionHandler($part, $block, $this->fileSummary);
-		                  
+		                 
 		                //处理净化信息和编码信息
 		                SanitizationHandler::setSanitiInfo($part,$dataFlow, $block, $this->fileSummary) ;
 		                EncodingHandler::setEncodeInfo($part, $dataFlow, $block, $this->fileSummary) ;
 		            }
 		        }
+
 		    }
 		    //处理类型强制转换
-		    if($part
-		        && ($part->getType() == "Expr_Cast_Int" || $part->getType() == "Expr_Cast_Double")
+		    if($part && ($part->getType() == "Expr_Cast_Int" || $part->getType() == "Expr_Cast_Double")
 		        && $type == "right"){
 		        $dataFlow->getLocation()->setType("int") ;
 		        $symbol = SymbolUtils::getSymbolByNode($part->expr) ;
@@ -1147,34 +1137,34 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 }
 
 
-//扫描漏洞类型
-$scan_type = 'ALL';
-echo "<pre>" ;
+// //扫描漏洞类型
+// $scan_type = 'ALL';
+// echo "<pre>" ;
 
-//从用户那接受项目路径
-$project_path = 'E:/School_of_software/information_security/PHPVulScanner_project/simple-log_v1.3.12/upload/';
-$project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test/test.php" ;
-$project_path = "E:/School_of_software/information_security/PHPVulScanner_project/74cms_3.3/" ;
-$allFiles = FileUtils::getPHPfile($project_path);
+// // //从用户那接受项目路径
+// // $project_path = 'E:/School_of_software/information_security/PHPVulScanner_project/simple-log_v1.3.12/upload/';
+// // $project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test/test.php" ;
+// // $project_path = "E:/School_of_software/information_security/PHPVulScanner_project/74cms_3.3/" ;
+// // $allFiles = FileUtils::getPHPfile($project_path);
 
-//初始化
-$initModule = new InitModule() ;
-$initModule->init($project_path, $allFiles) ;
+// // //初始化
+// // $initModule = new InitModule() ;
+// // $initModule->init($project_path, $allFiles) ;
 
-$cfg = new CFGGenerator() ;
-$visitor = new MyVisitor() ;
-$parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-$traverser = new PhpParser\NodeTraverser ;
-$path = CURR_PATH . '/test/test.php';
-$cfg->getFileSummary()->setPath($path);
-$code = file_get_contents($path);
-$stmts = $parser->parse($code) ;
-$traverser->addVisitor($visitor) ;
-$traverser->traverse($stmts) ;
-$nodes = $visitor->getNodes() ;
-$pEntryBlock = new BasicBlock() ;
-$pEntryBlock->is_entry = true ;
-$ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
+// $cfg = new CFGGenerator() ;
+// $visitor = new MyVisitor() ;
+// $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
+// $traverser = new PhpParser\NodeTraverser ;
+// $path = CURR_PATH . '/test/test.php';
+// $cfg->getFileSummary()->setPath($path);
+// $code = file_get_contents($path);
+// $stmts = $parser->parse($code) ;
+// $traverser->addVisitor($visitor) ;
+// $traverser->traverse($stmts) ;
+// $nodes = $visitor->getNodes() ;
+// $pEntryBlock = new BasicBlock() ;
+// $pEntryBlock->is_entry = true ;
+// $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 
 
 

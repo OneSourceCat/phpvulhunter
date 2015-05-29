@@ -249,7 +249,7 @@ class TaintAnalyser {
 		
 		$this->getPrevBlocks($block) ;
 		$block_list = $this->pathArr ;
-		
+
 		//单基本块进入   算法停止
 		if(empty($block_list)){
 		    // 首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
@@ -281,8 +281,8 @@ class TaintAnalyser {
 		                        }
 		                    }
 		                    
-		                    
 		                    $vars = $this->getVarsByFlow($flow) ;
+		                    
 		                    foreach ($vars as $var){
 		                        $varName = $this->getVarName($var) ; 
 		                        //如果$varName 为source
@@ -373,8 +373,10 @@ class TaintAnalyser {
 		        foreach ($bitem as $block_item){   
 		            $flows = $block_item->getBlockSummary()->getDataFlowMap() ;
 		            $flows = array_reverse($flows) ;
+
 		            //如果flow中没有信息，则换下一个基本块
 		            if($flows == null){
+		                if($argName == 'key') echo "x3";
 		                //找到新的argName
 		                foreach ($block->getBlockSummary()->getDataFlowMap() as $flow){
 		                    if($flow->getName() == $argName){
@@ -431,7 +433,7 @@ class TaintAnalyser {
 		                                return "safe" ;
 		                            }
 		                        }
-	
+	                               
 		                        //获取flow中的右边赋值变量
 		                        //得到flow->getValue()的变量node
 		                        //$sql = $a . $b ;  =>  array($a,$b)
@@ -645,8 +647,6 @@ class TaintAnalyser {
 	        $this->getPrevBlocks($block) ;
 	        $block_list = $this->pathArr ;
 	        array_push($block_list, $block) ;
-	        //首先，在当前基本块中探测变量，如果有source和不完整的santi则报告漏洞
-	        //$this->currBlockTaintHandler($block, $node, $argName, $fileSummary) ;
 	        //多个基本块的处理
 	        $this->pathArr = array() ;
 	        $this->multiBlockHandler($block, $argName, $node, $fileSummary) ;

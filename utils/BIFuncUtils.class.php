@@ -34,7 +34,14 @@ class BIFuncUtils {
 	 */
 	public static function assignFuncHandler($part, $type, $dataFlow, $funcName){
 			$single_func = self::getSingleFuncs() ;
+			$encoding_convert = array('iconv') ;
 			if($type == "right" && array_key_exists($funcName, $single_func)){
+			    //首先搜索不安全字符的转换函数
+			    if(in_array($funcName, $encoding_convert)){
+			        $oneFunction = new OneFunction($funcName);
+			        $dataFlow->getLocation()->addSanitization($oneFunction) ;
+			    }
+			    
 				$position = $single_func[$funcName] ;
 				$value = $part->args[$position]->value ;
                 
