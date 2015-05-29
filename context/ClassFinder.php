@@ -145,8 +145,47 @@ class Context {
                 }
 	        }
 	    }
-	    $ret = $this->getFunction($path, $method);
-	    return $ret;
+	    
+	    $funcBody = $this->getFunction($path, $method);
+
+   
+	    //check
+	    if(!$funcBody || !is_object($funcBody)) return ;
+	    	
+	    //处理递归
+	    if($funcBody->getType() == "Stmt_Function"){
+	        $traverser = new PhpParser\NodeTraverser;
+	        $visitor = new RecursionFunctionVisitor() ;
+	        $visitor->funcName = $funcName ;
+	        $traverser->addVisitor($visitor) ;
+	        $traverser->traverse(array($funcBody)) ;
+	        if($visitor->isRecursion == true){
+	            return null;
+	        }
+	    }else if($funcBody->getType() == "Stmt_ClassMethod"){
+	        $traverser = new PhpParser\NodeTraverser;
+	        $visitor = new RecursionFunctionVisitor() ;
+	        $visitor->funcName = $funcName ;
+	        $traverser->addVisitor($visitor) ;
+	        $traverser->traverse(array($funcBody)) ;
+	        if($visitor->isRecursion == true){
+	            return null;
+	        }
+	         
+	    }else if($funcBody->getType() == "Stmt_StaticCall"){
+	        $traverser = new PhpParser\NodeTraverser;
+	        $visitor = new RecursionFunctionVisitor() ;
+	        $visitor->funcName = $funcName ;
+	        $traverser->addVisitor($visitor) ;
+	        $traverser->traverse(array($funcBody)) ;
+	        if($visitor->isRecursion == true){
+	            return null;
+	        }
+	    
+	    }
+        
+	    
+	    return $funcBody;
 	}
 	
     /**
@@ -341,28 +380,6 @@ class ClassVisitor extends PhpParser\NodeVisitorAbstract{
 }
 
 
-
-class InFunctionVisitor extends PhpParser\NodeVisitorAbstract{
-    public $isSameFunction = false;
-    public $funcName;
-    public function leaveNode(PhpParser\Node $node){
-        if(($node->getType() == 'Expr_FuncCall' ||
-            $node->getType() == 'Expr_MethodCall' ||
-            $node->getType() == 'Expr_StaticCall'||
-            $node->getType() == "Expr_Isset")){
-            $funcName = NodeUtils::getNodeFunctionName($node);
-            
-            $funcName = substr($funcName, strpos($funcName, ':')+1);
-            if ($funcName == $this->funcName){
-                $this->isSameFunction = true;
-                return ;
-            }
-    
-
-        }
-    }
-}
-
 /*
 	用来获取方法体的遍历
 */
@@ -371,20 +388,12 @@ class FunctionBodyVisitor extends PhpParser\NodeVisitorAbstract{
 	public $startLine ;
 	public $endLine ;
     public $funcName ;
+    private $isSameFunction = false;
     
 	public function leaveNode(PhpParser\Node $node){
-		if(($node->getAttribute('startLine') == $this->startLine) && ($node->getAttribute('endLine') == $this->endLine)){
-		    $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
-		    $visitor = new InFunctionVisitor ;
-		    $traverser = new PhpParser\NodeTraverser ;
-		    $visitor->funcName = $this->funcName;
-		    $traverser->addVisitor($visitor) ;
-		    $traverser->traverse(array($node)) ;
-		    
-		    if ($visitor->isSameFunction){
-		        return ;		        
-		    }
-		    $this->func_body = $node ;
+		if(($node->getAttribute('startLine') == $this->startLine) && 
+		    ($node->getAttribute('endLine') == $this->endLine)){
+		        $this->func_body = $node ;
 		}
 
 	}
@@ -393,6 +402,53 @@ class FunctionBodyVisitor extends PhpParser\NodeVisitorAbstract{
 		return $this->func_body ;
 	}
 
+}
+
+
+/**
+ * 处理递归语句
+ * 如果是递归，则返回true
+ * @author Exploit
+ *
+ */
+class RecursionFunctionVisitor extends PhpParser\NodeVisitorAbstract{
+    public $funcName ;
+    public $isRecursion = false;
+    public function leaveNode(Node $node){
+        //方法调用
+        if($node->getType() == "Expr_FuncCall"){
+            if($node->name == $this->funcName){
+                $this->isRecursion = true ;
+            }
+        }
+
+        //静态方法
+        if($node->getType() == "Expr_StaticCall"){
+            $name = explode(":", $this->funcName) ;
+            if(count($name) >= 2){
+                $name = $name[1] ;
+            }else{
+                $name = $this->funcName ;
+            }
+
+            if($node->name == $name){
+                $this->isRecursion = true ;
+            }
+        }
+
+        //类方法
+        if($node->getType() == "Expr_MethodCall"){
+            $name = explode(":", $this->funcName) ;
+            if(count($name) >= 2){
+                $name = $name[1] ;
+            }else{
+                $name = $this->funcName ;
+            }
+            if($node->name == $name){
+                $this->isRecursion = true ;
+            }
+        }
+    }
 }
 
 

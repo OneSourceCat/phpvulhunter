@@ -106,6 +106,7 @@ if(CommonUtils::endsWith($scan_path, "/")){
 }
 
 $scan_type = $scanType = strtoupper($scan_type);
+$encoding = strtoupper($encoding);
 $project_path = str_replace(array('\\','//'), '/', $project_path);
 $scan_path = str_replace(array('\\','//'), '/', $scan_path);
 
