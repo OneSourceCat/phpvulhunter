@@ -8,8 +8,8 @@ class FileSummaryGenerator {
      * @return array(fileSummarys)
      */
     public static function getIncludeFilesDataFlows($fileSummary){
-        if (!is_object($fileSummary)){
-            return null;
+        if (is_object($fileSummary)){
+            return;
         }
         //1.得到include files
         $includeFiles = $fileSummary->getIncludeMap();
@@ -53,7 +53,7 @@ class FileSummaryGenerator {
 	public static function getFileSummary($absPath){
 	    if (!$absPath){
 	        return ;
-	    }
+		}
 	    $visitor = new MyVisitor() ;
 	    $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 	    $traverser = new PhpParser\NodeTraverser ;
