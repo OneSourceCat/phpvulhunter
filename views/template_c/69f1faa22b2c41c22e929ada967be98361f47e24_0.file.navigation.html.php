@@ -1,7 +1,7 @@
-<?php /* Smarty version 3.1.23, created on 2015-05-28 13:27:50
+<?php /* Smarty version 3.1.23, created on 2015-05-21 06:30:12
          compiled from "views/template/navigation.html" */ ?>
 <?php
-/*%%SmartyHeaderCode:5535566fbb6804a69_07678439%%*/
+/*%%SmartyHeaderCode:16180555d5f542dde73_01192222%%*/
 if(!defined('SMARTY_DIR')) exit('no direct access allowed');
 $_valid = $_smarty_tpl->decodeProperties(array (
   'file_dependency' => 
@@ -9,43 +9,30 @@ $_valid = $_smarty_tpl->decodeProperties(array (
     '69f1faa22b2c41c22e929ada967be98361f47e24' => 
     array (
       0 => 'views/template/navigation.html',
-      1 => 1432808389,
+      1 => 1432181814,
       2 => 'file',
     ),
   ),
-  'nocache_hash' => '5535566fbb6804a69_07678439',
+  'nocache_hash' => '16180555d5f542dde73_01192222',
   'has_nocache_code' => false,
   'version' => '3.1.23',
-  'unifunc' => 'content_5566fbb680b103_80841028',
+  'unifunc' => 'content_555d5f542e4511_36658000',
 ),false);
 /*/%%SmartyHeaderCode%%*/
-if ($_valid && !is_callable('content_5566fbb680b103_80841028')) {
-function content_5566fbb680b103_80841028 ($_smarty_tpl) {
+if ($_valid && !is_callable('content_555d5f542e4511_36658000')) {
+function content_555d5f542e4511_36658000 ($_smarty_tpl) {
 ?>
 <?php
-$_smarty_tpl->properties['nocache_hash'] = '5535566fbb6804a69_07678439';
+$_smarty_tpl->properties['nocache_hash'] = '16180555d5f542dde73_01192222';
 ?>
 <div class="menu">
 	<div class="logo">
 		<!-- <img src="static/images/logo.pn" alt="PHPvulhunter" /> -->
 	</div>
-	<div class="timeused">
-	</div>
 	<div class="in-menu">
 		<form>
-			<div class="fm-project">
-				<label for="project-path">Project Path</label>
-				<input type="text" name="prj_path" id="project-path" placeholder="Your project path."/>
-                <!-- <a href="javascript:;" class="sub-btn" id="sub-regex">
-                    <span class="line line-top"></span>
-                    <span class="line line-right"></span>
-                    <span class="line line-bottom"></span>
-                    <span class="line line-left"></span>
-                	Search
-                </a> -->
-			</div>
 			<div class="fm-file">
-				<label for="file-path">File Path</label>
+				<label for="file-path">File / Path </label>
 				<input type="text" name="path" id="file-path" placeholder="Your PHP file path."/>
                 <a href="javascript:;" class="sub-btn" id="sub-path">
                 	<span class="line line-top"></span>
@@ -54,10 +41,10 @@ $_smarty_tpl->properties['nocache_hash'] = '5535566fbb6804a69_07678439';
                     <span class="line line-left"></span>
                 	Scan
                 </a>
-			</div>	
+			</div>
 			<div class="fm-vuln">
 				<div class="fm-vuln-select select-type">
-					<label for="vuln-trup">Vuln Turp</label>
+					<label for="vuln-trup">Vuln Turp </label>
 					<span></span>
 					<select name="vuln" id="vuln-trup">
 					<!--?php 
@@ -109,7 +96,7 @@ $_smarty_tpl->properties['nocache_hash'] = '5535566fbb6804a69_07678439';
 				</div>
 				
 				<div class="fm-vuln-select select-coding">
-					<label for="vuln-trup">Encoding</label>
+					<label for="vuln-trup">Encoding </label>
 					<span></span>
 					<select name="encoding" id="vuln-encoding">
 					<!--?php 
@@ -132,6 +119,18 @@ $_smarty_tpl->properties['nocache_hash'] = '5535566fbb6804a69_07678439';
 					</select>
 					<a href="javascript:;" class="select-btn"><em>︿</em></a>
 				</div>
+
+			</div>
+			<div class="fm-re">
+				<label for="reg-ex">RegEx </label>
+				<input type="text" name="regex" id="reg-ex" placeholder="Search content by regex."/>
+                <a href="javascript:;" class="sub-btn" id="sub-regex">
+                    <span class="line line-top"></span>
+                    <span class="line line-right"></span>
+                    <span class="line line-bottom"></span>
+                    <span class="line line-left"></span>
+                	Search
+                </a>
 			</div>
 		</form>
 	</div>

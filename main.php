@@ -89,8 +89,6 @@ if(!isset($_POST['path']) || !isset($_POST['type'])){
 }
 
 
-
-
 //1、从web ui中获取并加载项目工程
 $project_path = $_POST['prj_path'] ;  //扫描的工程路径
 $scan_path = $_POST['path'] ;   //扫描文件路径
@@ -114,7 +112,8 @@ $scan_path = str_replace(array('\\','//'), '/', $scan_path);
 $fileName = str_replace('/', '_', $scan_path);
 $fileName = str_replace(':', '_', $fileName);
 $serialPath = CURR_PATH . "/data/resultConetxtSerialData/" . $fileName;
-sleep(10);
+
+
 if (!is_file($serialPath)){
     //创建文件
     $fileHandler = fopen($serialPath, 'w');
@@ -153,8 +152,6 @@ if(($serial_str = file_get_contents($serialPath)) != ''){
     file_put_contents($serialPath, serialize($results)) ;
     
 }
-
-
 
 
 //6、传给template

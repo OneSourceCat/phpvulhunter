@@ -8,6 +8,9 @@ class FileSummaryGenerator {
      * @return array(fileSummarys)
      */
     public static function getIncludeFilesDataFlows($fileSummary){
+        if (!is_object($fileSummary)){
+            return null;
+        }
         //1.得到include files
         $includeFiles = $fileSummary->getIncludeMap();
         $currentFilePath = $fileSummary->getPath();
@@ -22,7 +25,7 @@ class FileSummaryGenerator {
             //  得到DataFlows
             $fileSummaryContext = FileSummaryContext::getInstance();           
             $ret = $fileSummaryContext->findSummaryByPath($absPath);
-            if ($ret){
+            if (is_object($ret)){
                 //查看此文件是否有include文件
                 $pRetFiles = self::getIncludeFilesDataFlows($ret);
                 $retFileSummary = array_merge($pRetFiles, $retFileSummary);
@@ -30,7 +33,7 @@ class FileSummaryGenerator {
                 $retFileSummary = array_merge(array($ret), $retFileSummary);
             }else{
                 $includeFileSummary = self::getFileSummary($absPath);
-                if ($includeFileSummary){
+                if (is_object($includeFileSummary)){
                     $pRetFiles = self::getIncludeFilesDataFlows($includeFileSummary);
                     $retFileSummary = array_merge($pRetFiles, $retFileSummary);
                     $retFileSummary = array_merge(array($includeFileSummary), $retFileSummary);
@@ -48,8 +51,9 @@ class FileSummaryGenerator {
      * @param string $absPath
      */
 	public static function getFileSummary($absPath){
-	    if (!$absPath)
+	    if (!$absPath){
 	        return ;
+	    }
 	    $visitor = new MyVisitor() ;
 	    $parser = new PhpParser\Parser(new PhpParser\Lexer\Emulative) ;
 	    $traverser = new PhpParser\NodeTraverser ;

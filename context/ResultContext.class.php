@@ -23,6 +23,18 @@ class ResultContext {
 	}
 	
 	/**
+	 * 将结果集数组归并
+	 * @param unknown $arr
+	 */
+	public function mergeResultArray($arr){
+	    foreach ($arr as $value){
+	        if($this->isRecordExists($value) == false){
+	            array_push($this->resArr, $value) ;
+	        }
+	    }
+	}
+	
+	/**
 	 * 查看一条记录是否在结果集中存在
 	 * @param Result $record
 	 * @return boolean
