@@ -12,10 +12,8 @@ class InitModule {
      * @param string $project_path
      */    
     public function init($project_path, $allFiles){
-        
         $this->initContext($project_path);
         $context = Context::getInstance() ;
-        
         $this->initFileSummaryContext($project_path, $allFiles) ;
     }
     /**

@@ -62,7 +62,16 @@ class ResultContext {
 		return $this->resArr;
 	}
 
-	//--------------------单例模式---------------------------------
+	
+	/**
+     * @param multitype: $resArr
+     */
+    public function setResArr($resArr)
+    {
+        $this->resArr = $resArr;
+    }
+
+ //--------------------单例模式---------------------------------
 	private function __construct(){}
 
 	private function __clone(){}

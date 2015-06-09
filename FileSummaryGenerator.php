@@ -8,7 +8,7 @@ class FileSummaryGenerator {
      * @return array(fileSummarys)
      */
     public static function getIncludeFilesDataFlows($fileSummary){
-        if (is_object($fileSummary)){
+        if (!is_object($fileSummary)){
             return;
         }
         //1.得到include files
@@ -29,7 +29,6 @@ class FileSummaryGenerator {
                 //查看此文件是否有include文件
                 $pRetFiles = self::getIncludeFilesDataFlows($ret);
                 $retFileSummary = array_merge($pRetFiles, $retFileSummary);
-                
                 $retFileSummary = array_merge(array($ret), $retFileSummary);
             }else{
                 $includeFileSummary = self::getFileSummary($absPath);

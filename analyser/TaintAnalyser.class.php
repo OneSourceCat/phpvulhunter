@@ -1,4 +1,5 @@
 <?php
+
 require_once 'SqliAnalyser.class.php';
 require_once 'XssAnalyser.class.php';
 require_once 'FileAffectAnalyser.class.php';
@@ -9,7 +10,9 @@ require_once 'HeaderAnalyser.class.php';
 require_once 'IncludeAnalyser.class.php';
 require_once 'LDPAAnalyser.class.php';
 require_once 'XPathAnalyser.class.php';
+
 use PhpParser\Node ;
+
 /**
  * 用于污点分析的类
  * 污点分析的任务：
@@ -217,6 +220,10 @@ class TaintAnalyser {
 					$varName = $this->getVarName($var) ;
 					//如果var右边有source项
 					if(in_array($varName, $this->sourcesArr)){
+// 					    $ret = $this->multiFileHandler($block, $varName, $node, $fileSummary) ;
+// 					    if($ret == 'safe'){
+// 					        continue ;
+// 					    }
 						//报告漏洞
 						$path = $fileSummary->getPath() ;
 						$this->report($path, $path, $node, $flow->getLocation(), $type) ;
@@ -224,7 +231,6 @@ class TaintAnalyser {
 					}else{				
 						//首先进行文件夹的分析
 						$this->multiFileHandler($block, $varName, $node, $fileSummary) ;
-						
 						//文件间分析失败，递归
 						$this->currBlockTaintHandler($block, $node, $varName, $fileSummary, $flowNum) ;
 					}
@@ -515,7 +521,6 @@ class TaintAnalyser {
 					        $type = TypeUtils::getTypeByFuncName(NodeUtils::getNodeFunctionName($node)) ;
 					        $encodingArr = $target->getEncoding() ;
 					        $saniArr =  $target->getSanitization() ;
-					    
 					        $res = $this->isSanitization($type, $target, $saniArr, $encodingArr) ;
 					        if($res == true){
 					            return "safe" ;

@@ -1067,16 +1067,15 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 // echo "<pre>" ;
 
 
-// // //从用户那接受项目路径
-// // $project_path = 'E:/School_of_software/information_security/PHPVulScanner_project/simple-log_v1.3.12/upload/';
-// // $project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test/test.php" ;
-// // $project_path = "E:/School_of_software/information_security/PHPVulScanner_project/74cms_3.3/" ;
-// // $allFiles = FileUtils::getPHPfile($project_path);
+// //从用户那接受项目路径
+// $project_path = 'E:/School_of_software/information_security/PHPVulScanner_project/simple-log_v1.3.12/upload/';
+// $project_path = "D:/MySoftware/wamp/www/code/phpvulhunter/test" ;
+// //$project_path = "E:/School_of_software/information_security/PHPVulScanner_project/74cms_3.3/" ;
+// $allFiles = FileUtils::getPHPfile($project_path);
 
-// // //初始化
-// // $initModule = new InitModule() ;
-// // $initModule->init($project_path, $allFiles) ;
-
+// //初始化
+// $initModule = new InitModule() ;
+// $initModule->init($project_path, $allFiles) ;
 
 // $cfg = new CFGGenerator() ;
 // $visitor = new MyVisitor() ;
@@ -1094,7 +1093,6 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 // $pEntryBlock->is_entry = true ;
 // $ret = $cfg->CFGBuilder($nodes, NULL, NULL, NULL) ;
 
-// echo '456';
 
 
 ?>
