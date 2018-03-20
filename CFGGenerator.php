@@ -920,7 +920,7 @@ class FunctionVisitor extends PhpParser\NodeVisitorAbstract{
 			        $this->fileSummary->getIncludeMap()
 			    );
 			    
-			    if(!$funcBody) break ;
+			    if(!$funcBody) return False ;
 			    $cfg = new CFGGenerator() ;
 			    //$this->block->function[$nodeName]
 			    $arr = $this->sinkContext->getAllSinks() ;
